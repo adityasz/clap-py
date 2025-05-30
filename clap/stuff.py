@@ -1,6 +1,7 @@
+import argparse
 from ast import TypeVar
-from dataclasses import dataclass
-from typing import Optional, Literal, Union, Sequence, cast
+from dataclasses import asdict, dataclass
+from typing import Any, Literal, Optional, Sequence, Union, cast
 
 
 class _Short:
@@ -9,6 +10,16 @@ class _Short:
 
 class _Long:
     ...
+
+
+@dataclass
+class Group:
+    name: str
+
+
+@dataclass
+class MutexGroup:
+    parent: Optional[Group] = None
 
 
 short = _Short()
@@ -87,6 +98,8 @@ def arg[T, U](
     *,
     short: Optional[Union[str, bool]] = None,
     long: Optional[Union[str, bool]] = None,
+    group: Optional[Group] = None,
+    mutex: Optional[MutexGroup] = None,
     type: Optional[type[T]] = None,
     action: Optional[_Action] = "store",
     nargs: Optional[_Nargs] = None,
