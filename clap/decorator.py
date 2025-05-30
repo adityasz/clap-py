@@ -17,9 +17,10 @@ _HELP_TEMPLATE = """\
 """
 
 
-# Does not work with type checkers for some reason when `@dataclass_transform()` is used
 class ClapArgs(Protocol):
     """Protocol for class types that have a parse_args class method."""
+    def __getattr__(self, *args):
+        ...
     @classmethod
     def parse_args(cls: type[Self], args: Optional[list[str]] = None) -> Self:
         """Parse command line arguments and return an instance of the class."""
@@ -33,7 +34,7 @@ class Parser:
 
 
 @overload
-def arguments(cls: type, /) -> type[ClapArgs]:
+def arguments(cls: type[T], /) -> type[T]:
     ...
 
 @overload
@@ -43,7 +44,7 @@ def arguments(
     usage: Optional[str] = None,
     description: Optional[str] = None,
     epilog: Optional[str] = None,
-    parents: Optional[list[type[ClapArgs]]] = None,
+    parents: Optional[list[type]] = None,
     formatter_class = argparse.HelpFormatter,
     prefix_chars: str = "-",
     fromfile_prefix_chars: Optional[str] = None,
@@ -51,12 +52,11 @@ def arguments(
     add_help: bool = True,
     allow_abbrev: bool = True,
     exit_on_error: bool = True
-) -> Callable[[type], type[ClapArgs]]:
+) -> Callable[[type[T]], type[T]]:
     ...
 
-@dataclass_transform()
 def arguments(
-    cls: Optional[type] = None,
+    cls: Optional[type[T]] = None,
     /,
     *,
     name: Optional[str] = None,
@@ -71,9 +71,9 @@ def arguments(
     add_help: bool = True,
     allow_abbrev: bool = True,
     exit_on_error: bool = True
-) -> Union[type[ClapArgs], Callable[[type], type[ClapArgs]]]:
-    def wrap(cls: type) -> type[ClapArgs]:
-        cls._parser = create_parser(cls, conflict_handler, exit_on_error)
+) -> Union[type[T], Callable[[type[T]], type[T]]]:
+    def wrap(cls: type[T]) -> type[T]:
+        setattr(cls, "_parser", create_parser(cls, conflict_handler, exit_on_error))
 
         @classmethod
         def parse_args(cls_inner, args: Optional[list[str]] = None):
@@ -81,7 +81,7 @@ def arguments(
             parsed = cls_inner._parser.parse_args(args)
             return cls_inner(**vars(parsed))
 
-        cls.parse_args = parse_args
+        setattr(cls, "parse_args", parse_args)
         return cls
 
     if cls is None:
@@ -90,9 +90,9 @@ def arguments(
     return wrap(cls)
 
 
-@dataclass_transform()
+# @dataclass_transform()
 def subcommand(
-    cls: type,
+    cls: type[T],
     /,
     *,
     title: Optional[str] = "Commands",
@@ -103,5 +103,5 @@ def subcommand(
     required: bool = False,
     help: Optional[str] = None,
     metavar: Optional[str] = None
-) -> type:
+) -> type[T]:
     ...
