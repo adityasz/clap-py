@@ -1,13 +1,11 @@
 from .decorator import ClapArgs, arguments, Parser
 from .help import ColorChoice
-from .stuff import flag, option, positional
+from .stuff import arg
 
 __all__ = [
-    "arguments",
     "ClapArgs",
     "ColorChoice",
     "Parser",
-    "flag",
-    "option",
-    "positional"
+    "arg",
+    "arguments",
 ]
