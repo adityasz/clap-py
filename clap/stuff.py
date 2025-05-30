@@ -17,17 +17,20 @@ short = _Short()
 long = _Long()
 """Generate long from the case-converted field name."""
 
-_Action = Literal[
-    "store",
-    "store_const",
-    "store_true",
-    "store_false",
-    "append",
-    "append_const",
-    "extend",
-    "count",
-    "help",
-    "version"
+_Action = Union[
+    argparse.Action,
+    Literal[
+        "store",
+        "store_const",
+        "store_true",
+        "store_false",
+        "append",
+        "append_const",
+        "extend",
+        "count",
+        "help",
+        "version"
+    ]
 ]
 
 _Nargs = Union[Literal['?', '*', '+'], int]
@@ -38,11 +41,16 @@ U = TypeVar('U')
 
 @dataclass
 class Argument[T, U]:
-    """Represents the parameters of an argument for `argparse.ArgumentParser`."""
+    """The properties of a command-line argument."""
+
     short: Optional[Union[_Short, str]] = None
-    """The short flag for the argument (e.g., '-v')."""
+    """The short flag for the argument."""
     long: Optional[Union[_Long, str]] = None
-    """The long flag for the argument (e.g., '--version')."""
+    """The long flag for the argument."""
+    group: Optional[Group] = None
+    """The group for the argument."""
+    mutex: Optional[MutexGroup] = None
+    """The mutually exclusive group for the argument."""
     action: Optional[_Action] = None
     """The action to be taken when this argument is encountered."""
     nargs: Optional[_Nargs] = None
@@ -55,7 +63,7 @@ class Argument[T, U]:
     """The type to which the command-line argument should be converted."""
     choices: Optional[Sequence[str]] = None
     """A sequence of valid choices for the argument."""
-    required: bool = False
+    required: bool = True
     """Whether the argument is required or optional."""
     help: Optional[str] = None
     """A brief description of what the argument does."""
@@ -63,6 +71,13 @@ class Argument[T, U]:
     """The name for the argument in usage messages."""
     deprecated: bool = False
     """Whether this argument is deprecated and should not be used."""
+
+    def get_kwargs(self) -> dict[str, Any]:
+        kwargs = asdict(self)
+        for k, v in kwargs.items():
+            if v is None:
+                kwargs.pop(k)
+        return kwargs
 
 
 def arg[T, U](
@@ -83,6 +98,7 @@ def arg[T, U](
     metavar: Optional[str] = None,
     deprecated: bool = False
 ) -> Argument:
+    """Create a command-line argument."""
     short_name = None
     long_name = None
 
