@@ -1,7 +1,7 @@
 import argparse
 from ast import TypeVar
 from dataclasses import asdict, dataclass
-from typing import Any, Literal, Optional, Self, Sequence, Union, cast
+from typing import Any, Literal, Optional, Sequence, Union, cast
 
 
 class _Short:
@@ -9,6 +9,10 @@ class _Short:
 
 
 class _Long:
+    ...
+
+
+class Subcommand:
     ...
 
 
@@ -51,7 +55,7 @@ U = TypeVar('U')
 
 
 @dataclass
-class Argument[T, U]:
+class ArgumentInfo[T, U]:
     """The properties of a command-line argument."""
 
     short: Optional[Union[_Short, str]] = None
@@ -82,6 +86,8 @@ class Argument[T, U]:
     """The name for the argument in usage messages."""
     deprecated: bool = False
     """Whether this argument is deprecated and should not be used."""
+    commands: Optional[list[type]] = None
+    """..."""
 
     def get_kwargs(self) -> dict[str, Any]:
         kwargs = asdict(self)
@@ -92,11 +98,31 @@ class Argument[T, U]:
 
 
 @dataclass
-class Subcommand:
-    name: str
-    usage: str
-    help: str
-    arguments: list[Union[Argument, Self]]
+class SubcommandInfo:
+    subparser_info: "ParserInfo"
+    title: Optional[str] = "Commands"
+    description: Optional[str] = None
+    prog: Optional[str] = None
+    parser_class: Optional[type] = None
+    action: Optional[_Action] = None
+    required: bool = False
+    help: Optional[str] = None
+    metavar: Optional[str] = None
+
+    def get_kwargs(self) -> dict[str, Any]:
+        kwargs = asdict(self)
+        for k, v in kwargs.items():
+            if v is None:
+                kwargs.pop(k)
+        return kwargs
+
+
+@dataclass
+class ParserInfo:
+    arguments: dict[str, ArgumentInfo]
+    subcommands: dict[str, SubcommandInfo]
+    groups: dict[Group, ArgumentInfo]
+    mutexes: dict[MutexGroup, ArgumentInfo]
 
 
 def arg[T, U](
@@ -118,7 +144,7 @@ def arg[T, U](
     help: Optional[str] = None,
     metavar: Optional[str] = None,
     deprecated: bool = False
-) -> Argument:
+) -> ArgumentInfo:
     """Create a command-line argument."""
     short_name = None
     long_name = None
@@ -150,7 +176,7 @@ def arg[T, U](
         elif long is True:
                 long_name = _Long()
 
-    return Argument(
+    return ArgumentInfo(
         short=short_name,
         long=long_name,
         action=action,
@@ -164,3 +190,8 @@ def arg[T, U](
         metavar=metavar,
         deprecated=deprecated
     )
+
+
+def subcommand():
+    """Declare a field as containing subcommand arguments."""
+    return Subcommand()

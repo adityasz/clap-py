@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional, Union
 
 import clap
-from clap import arg, ColorChoice
+from clap import arg, subcommand, ColorChoice
 
 
 @clap.subcommand
@@ -61,7 +61,7 @@ class External:
     description="A fictional versioning CLI"
 )
 class Cli(clap.Parser):
-    command: Union[Clone, Diff, Push, Add, Stash, External]
+    command: Union[Clone, Diff, Push, Add, Stash, External] = subcommand()
 
 
 def main():
