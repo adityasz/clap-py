@@ -1,4 +1,4 @@
-from .decorator import ClapArgs, arguments, Parser
+from .decorator import ClapArgs, Parser, arguments, subcommand
 from .help import ColorChoice
 from .stuff import arg
 
@@ -8,4 +8,5 @@ __all__ = [
     "Parser",
     "arg",
     "arguments",
+    "subcommand",
 ]
