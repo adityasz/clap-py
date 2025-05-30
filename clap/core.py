@@ -3,9 +3,9 @@ import ast
 import inspect
 from dataclasses import dataclass
 from textwrap import dedent
-from typing import Literal, Optional, Self, Sequence, TypeVar, Union
+from typing import Self, TypeVar, Union
 
-from .stuff import argument
+from .stuff import Argument, Subcommand
 
 
 class DocstringExtractor(ast.NodeVisitor):
@@ -25,14 +25,6 @@ def extract_docstrings(cls: type):
 
 
 T = TypeVar('T')
-
-
-@dataclass
-class Subcommand:
-    name: str
-    usage: str
-    help: str
-    arguments: list[Union[Argument, Self]]
 
 
 def analyze_arguments(cls) -> list[Union[Argument, Subcommand]]:

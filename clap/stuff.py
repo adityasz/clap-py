@@ -1,7 +1,7 @@
 import argparse
 from ast import TypeVar
 from dataclasses import asdict, dataclass
-from typing import Any, Literal, Optional, Sequence, Union, cast
+from typing import Any, Literal, Optional, Self, Sequence, Union, cast
 
 
 class _Short:
@@ -89,6 +89,14 @@ class Argument[T, U]:
             if v is None:
                 kwargs.pop(k)
         return kwargs
+
+
+@dataclass
+class Subcommand:
+    name: str
+    usage: str
+    help: str
+    arguments: list[Union[Argument, Self]]
 
 
 def arg[T, U](

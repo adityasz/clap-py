@@ -1,9 +1,9 @@
-import sys
+import argparse
 from typing_extensions import dataclass_transform
-from packaging.version import Version
 from typing import Protocol, Optional, Union, Callable, Self, TypeVar, overload
 
 from .core import create_parser
+from .stuff import _Action
 
 T = TypeVar('T')
 
@@ -17,7 +17,7 @@ _HELP_TEMPLATE = """\
 """
 
 
-# does not help since dataclass_transform adds its own return type :-(
+# Does not work with type checkers for some reason when `@dataclass_transform()` is used
 class ClapArgs(Protocol):
     """Protocol for class types that have a parse_args class method."""
     @classmethod
@@ -40,12 +40,16 @@ def arguments(cls: type, /) -> type[ClapArgs]:
 def arguments(
     *,
     name: Optional[str] = None,
-    version: Optional[Version] = None,
-    parent: Optional[type[ClapArgs]] = None,
-    help_template: str = _HELP_TEMPLATE,
-    after_help: str = "",
-    max_term_width: int = 80,
+    usage: Optional[str] = None,
+    description: Optional[str] = None,
+    epilog: Optional[str] = None,
+    parents: Optional[list[type[ClapArgs]]] = None,
+    formatter_class = argparse.HelpFormatter,
+    prefix_chars: str = "-",
+    fromfile_prefix_chars: Optional[str] = None,
     conflict_handler: str = "error",
+    add_help: bool = True,
+    allow_abbrev: bool = True,
     exit_on_error: bool = True
 ) -> Callable[[type], type[ClapArgs]]:
     ...
@@ -56,26 +60,24 @@ def arguments(
     /,
     *,
     name: Optional[str] = None,
-    version: Optional[Version] = None,
-    parent: Optional[type[ClapArgs]] = None,
-    help_template: str = _HELP_TEMPLATE,
-    after_help: str = "",
-    max_term_width: int = 80,
+    usage: Optional[str] = None,
+    description: Optional[str] = None,
+    epilog: Optional[str] = None,
+    parents: Optional[list[type[ClapArgs]]] = None,
+    formatter_class = argparse.HelpFormatter,
+    prefix_chars: str = "-",
+    fromfile_prefix_chars: Optional[str] = None,
     conflict_handler: str = "error",
+    add_help: bool = True,
+    allow_abbrev: bool = True,
     exit_on_error: bool = True
 ) -> Union[type[ClapArgs], Callable[[type], type[ClapArgs]]]:
     def wrap(cls: type) -> type[ClapArgs]:
-        cls._help = ...  # figure out which subcommand's help to show
         cls._parser = create_parser(cls, conflict_handler, exit_on_error)
 
         @classmethod
         def parse_args(cls_inner, args: Optional[list[str]] = None):
             """Parse command line arguments and return an instance of the class."""
-            if True:
-                print("Parsed")
-                return
-            if "-h" in sys.argv or "--help" in sys.argv:
-                cls_inner._help()
             parsed = cls_inner._parser.parse_args(args)
             return cls_inner(**vars(parsed))
 
@@ -89,13 +91,17 @@ def arguments(
 
 
 @dataclass_transform()
-def subcommand(cls: type[T]) -> type[T]:
-    ...
-
-@dataclass_transform()
-def group(cls: type[T]) -> type[T]:
-    ...
-
-@dataclass_transform()
-def mutually_exclusive_group(cls: type[T]) -> type[T]:
+def subcommand(
+    cls: type,
+    /,
+    *,
+    title: Optional[str] = "Commands",
+    description: Optional[str] = None,
+    prog: Optional[str] = None,
+    parser_class: Optional[type] = None,
+    action: Optional[_Action] = None,
+    required: bool = False,
+    help: Optional[str] = None,
+    metavar: Optional[str] = None
+) -> type:
     ...
