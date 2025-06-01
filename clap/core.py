@@ -29,6 +29,7 @@ class ColorChoice(Enum):
 
 SUBCOMMAND_ATTR = "com.github.adityasz.clap_py.subcommand"
 SUBCOMMAND_KWARGS = "__subcommand_kwargs__"
+SUBCOMMAND_DEST = "__subcommand_dest__"
 COMMAND_ATTR = "com.github.adityasz.clap_py.command"
 COMMAND_DATA = "__command_data__"
 COMMAND_KWARGS = "__command_kwargs__"
@@ -111,6 +112,7 @@ class ArgparseArgInfo[T, U](_FilterKwargs):
     help: Optional[str] = None
     metavar: Optional[str] = None
     deprecated: bool = False
+    dest: Optional[str] = None
 
 
 @dataclass
@@ -143,6 +145,7 @@ class SubparserInfo(_FilterKwargs):
     required: bool = False
     help: Optional[str] = None
     metavar: Optional[str] = None
+    dest: Optional[str] = None
 
 
 @dataclass
@@ -168,6 +171,7 @@ class Command:
     """Contains kwargs for parser.add_subparsers() if the command has subcommands."""
     subcommand_info: Optional[SubcommandInfo] = None
     """Contains kwargs for subparsers.add_parser() if the command is a subcommand."""
+    subcommand_class: Optional[type] = None
 
     arguments: list[Argument] = field(default_factory=list)
     subcommands: list[Self] = field(default_factory=list)
@@ -297,7 +301,7 @@ def get_type(type_hint: str) -> ArgType.Base:
     raise TypeError
 
 
-def create_command(cls: type, level: int = 0) -> Command:
+def create_command(cls: type, prefix: str = "") -> Command:
     def bad_annotation(message: str = "") -> NoReturn:
         raise TypeError(
             f"bad type annotation '{field_name}: {type_hint}'"
@@ -306,6 +310,7 @@ def create_command(cls: type, level: int = 0) -> Command:
 
     def process_arg(option: bool = False):
         info = arg.argparse_info
+        info.dest = prefix + field_name
         if info.help is None:
             info.help = docstrings.get(field_name, None)
         match ty:
@@ -347,6 +352,11 @@ def create_command(cls: type, level: int = 0) -> Command:
 
     command = Command(ParserInfo(getattr(cls, COMMAND_KWARGS)))
     command.subcommand_info = getattr(cls, SUBCOMMAND_KWARGS, None)
+    if command.subcommand_info is not None:
+        assert(type(command.subcommand_info) is SubcommandInfo)
+        assert(command.subcommand_info.name is not None)
+        prefix += command.subcommand_info.name + "."
+        command.subcommand_class = cls
     docstrings: dict[str, str] = extract_docstrings(cls)
     type_hints = get_type_hints(cls)
     for field_name, type_hint in type_hints:
@@ -371,7 +381,7 @@ def create_command(cls: type, level: int = 0) -> Command:
                 else:
                     command.subparser_info = SubparserInfo()
                 for subcommand in subcommands:
-                    command.subcommands.append(create_command(subcommand, level=level + 1))
+                    command.subcommands.append(create_command(subcommand, prefix))
                     if command.subcommands[-1].parser_info != required:
                         bad_annotation("check 'required'")
                 continue
@@ -404,17 +414,21 @@ def deal_with_argparse(parser: argparse.ArgumentParser, command: Command):
     for argument in command.arguments:
         info = argument.argparse_info
         flags = []
-        if (s := info.short) is not None:
-            flags.append(s)
-        if (l := info.long) is not None:
-            flags.append(l)
-        parser.add_argument(*tuple(flags), **info.get_kwargs())
+        if info.short is not None:
+            flags.append(info.short)
+        if info.long is not None:
+            flags.append(info.long)
+        kwargs = info.get_kwargs()
+        kwargs.setdefault("default", None)
+        parser.add_argument(*tuple(flags), **kwargs)
 
     groups = {group_obj: parser.add_argument_group(**group_obj.get_kwargs())
               for group_obj in command.groups.keys()}
     for group, arguments in command.groups.items():
         for argument in arguments:
-            groups[group].add_argument(**argument.argparse_info.get_kwargs())
+            kwargs = argument.argparse_info.get_kwargs()
+            kwargs.setdefault("default", None)
+            groups[group].add_argument(**kwargs)
 
     for mutex, arguments in command.mutexes.items():
         if mutex.parent is None:
@@ -438,3 +452,24 @@ def create_parser(cls: type, **kwargs):
     parser = argparse.ArgumentParser(**command.parser_info.get_kwargs())
     deal_with_argparse(parser, command)
     return parser
+
+
+def populate_fields(args: dict[str, Any], obj: type, level: int = 0):
+    command = getattr(obj, COMMAND_DATA)
+    assert(isinstance(command, Command))
+    subcommand_args: dict[str, Any] = {}
+    for k, v in args.items():
+        if k.count('.') > level:
+            subcommand_args[k] = v
+        else:
+            setattr(obj, k, v)
+    if subcommand_args is None:
+        return
+    for subcommand in command.subcommands:
+        info = subcommand.subcommand_info
+        assert(info is not None)
+        if info.name == command.subcommand_dest:
+            cls = subcommand.subcommand_class
+            assert(cls is not None)
+            obj = cls()
+            populate_fields(subcommand_args, obj, level + 1)

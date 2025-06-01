@@ -18,6 +18,7 @@ from core import (
     _Nargs,
     _Short,
     create_parser,
+    populate_fields
 )
 
 T = TypeVar('T')
@@ -72,12 +73,13 @@ def arguments(
         setattr(cls, PARSER_ATTR, create_parser(cls, **kwargs))
 
         @classmethod
-        def parse_args(cls: type, args: Optional[list[str]] = None):
+        def parse_args(cls: type, args: Optional[list[str]] = None) -> T:
             """Parse command-line arguments and return an instance of the class."""
             parser = getattr(cls, PARSER_ATTR)
-            parsed = parser.parse_args(args)
-            print("TODO: setattr...")
-            return cls
+            parsed_args = parser.parse_args(args)
+            obj = cls()
+            populate_fields(parsed_args._get_kwargs(), obj)
+            return obj
 
         setattr(cls, "parse_args", parse_args)
         return cls
