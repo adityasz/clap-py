@@ -1,6 +1,6 @@
-import argparse
-from sys import prefix
-from typing import Callable, Optional, Self, Sequence, TypeVar, Union, cast, overload
+
+
+from typing import Callable, Optional, Self, Sequence, TypeVar, Union, cast
 
 from core import (
     COMMAND_ATTR,
@@ -8,7 +8,6 @@ from core import (
     PARSER_ATTR,
     SUBCOMMAND_ATTR,
     SUBCOMMAND_KWARGS,
-    SUBCOMMAND_TITLE,
     ArgparseArgInfo,
     Argument,
     Group,
@@ -131,7 +130,7 @@ def subcommand(
     """
     def wrap(cls: type[T]) -> type[T]:
         setattr(cls, SUBCOMMAND_ATTR, True)
-        kwargs.setdefault("title", SUBCOMMAND_TITLE)
+        kwargs["name"] = kwargs.get("name", cls.__name__.lower().replace("_", "-"))
         setattr(cls, SUBCOMMAND_KWARGS, kwargs)
         return cls
 

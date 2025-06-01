@@ -28,7 +28,6 @@ class ColorChoice(Enum):
 
 
 SUBCOMMAND_ATTR = "com.github.adityasz.clap_py.subcommand"
-SUBCOMMAND_TITLE = "Commands"
 SUBCOMMAND_KWARGS = "__subcommand_kwargs__"
 COMMAND_ATTR = "com.github.adityasz.clap_py.command"
 COMMAND_DATA = "__command_data__"
@@ -117,12 +116,12 @@ class ArgparseArgInfo[T, U](_FilterKwargs):
 @dataclass
 class Argument:
     argparse_info: ArgparseArgInfo = ArgparseArgInfo()
+    """The kwargs for `parser.add_argument()`."""
 
     group: Optional[Group] = None
     """The group for the argument."""
     mutex: Optional[MutexGroup] = None
     """The mutually exclusive group for the argument."""
-    choices: Optional[list[str]] = None
     choice_to_member: Optional[dict[str, type]] = None
 
 
@@ -381,7 +380,7 @@ def create_command(cls: type, level: int = 0) -> Command:
             process_arg()
         elif isinstance(value, Group):
             if field_name in command.groups:
-                raise RuntimeError(f"group '{value.name}' already exists")
+                raise RuntimeError(f"group '{value.title}' already exists")
             command.groups[value] = []
         elif isinstance(value, MutexGroup):
             continue
