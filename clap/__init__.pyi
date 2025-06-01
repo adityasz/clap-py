@@ -1,11 +1,9 @@
 import argparse
 from typing import Any, Callable, Optional, Sequence, TypeVar, Union, overload
 
-from api import Parser, arguments
+from api import Group, MutexGroup, Parser, arguments, group, mutex_group
 from core import (
     ColorChoice,
-    Group,
-    MutexGroup,
     _Action,
     _Long,
     _Nargs,
@@ -14,11 +12,11 @@ from core import (
 
 __all__ = [
     "ColorChoice",
-    "Group",
-    "MutexGroup",
     "Parser",
     "arg",
     "arguments",
+    "group",
+    "mutex_group",
     "subcommand",
 ]
 

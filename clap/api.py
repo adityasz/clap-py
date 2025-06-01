@@ -1,4 +1,5 @@
 import argparse
+from sys import prefix
 from typing import Callable, Optional, Self, Sequence, TypeVar, Union, cast, overload
 
 from core import (
@@ -8,7 +9,7 @@ from core import (
     SUBCOMMAND_ATTR,
     SUBCOMMAND_KWARGS,
     SUBCOMMAND_TITLE,
-    ArgparseArgumentInfo,
+    ArgparseArgInfo,
     Argument,
     Group,
     MutexGroup,
@@ -146,7 +147,7 @@ def arg[T, U](
                 long_name = _Long()
 
     return Argument(
-        ArgparseArgumentInfo(
+        ArgparseArgInfo(
             short=short_name,
             long=long_name,
             action=action,
@@ -185,3 +186,25 @@ def subparser(
         help=help,
         metavar=metavar
     )
+
+
+def group(
+    title: Optional[str] = None,
+    description: Optional[str] = None,
+    *,
+    prefix_chars: str = "-",
+    conflict_handler: str = "error"
+) -> Group:
+    return Group(
+        title=title,
+        description=description,
+        prefix_chars=prefix_chars,
+        conflict_handler=conflict_handler
+    )
+
+
+def mutex_group(
+    parent_group: Optional[Group] = None,
+    required: bool = False,
+) -> MutexGroup:
+    return MutexGroup(parent=parent_group, required=required)

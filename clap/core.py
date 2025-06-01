@@ -46,16 +46,6 @@ class _Long:
     ...
 
 
-@dataclass
-class Group:
-    name: str
-
-
-@dataclass
-class MutexGroup:
-    parent: Optional[Group] = None
-
-
 short = _Short()
 """Generate short from the first character in the case-converted field name."""
 
@@ -95,7 +85,21 @@ class _FilterKwargs:
 
 
 @dataclass
-class ArgparseArgumentInfo[T, U](_FilterKwargs):
+class Group(_FilterKwargs):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    prefix_chars: str = "-"
+    conflict_handler: str = "error"
+
+
+@dataclass
+class MutexGroup:
+    parent: Optional[Group] = None
+    required: bool = False
+
+
+@dataclass
+class ArgparseArgInfo[T, U](_FilterKwargs):
     short: Optional[Union[_Short, str]] = None
     """The short flag for the argument."""
     long: Optional[Union[_Long, str]] = None
@@ -124,7 +128,7 @@ class ArgparseArgumentInfo[T, U](_FilterKwargs):
 
 @dataclass
 class Argument:
-    argparse_info: ArgparseArgumentInfo = ArgparseArgumentInfo()
+    argparse_info: ArgparseArgInfo = ArgparseArgInfo()
 
     group: Optional[Group] = None
     """The group for the argument."""
@@ -415,9 +419,24 @@ def deal_with_argparse(parser: argparse.ArgumentParser, command: Command):
         flags = []
         if (s := info.short) is not None:
             flags.append(s)
-        if (l := info.long) is not None
+        if (l := info.long) is not None:
             flags.append(l)
         parser.add_argument(*tuple(flags), **info.get_kwargs())
+
+    groups = {group_obj: parser.add_argument_group(**group_obj.get_kwargs())
+              for group_obj in command.groups.keys()}
+    for group, arguments in command.groups.items():
+        for argument in arguments:
+            groups[group].add_argument(**argument.argparse_info.get_kwargs())
+
+    for mutex, arguments in command.mutexes.items():
+        if mutex.parent is None:
+            mutex_group = parser.add_mutually_exclusive_group(required=mutex.required)
+        else:
+            mutex_group = groups[mutex.parent].add_mutually_exclusive_group(required=mutex.required)
+        for argument in arguments:
+            mutex_group.add_argument(**argument.argparse_info.get_kwargs())
+
     if (subparser_info := command.subparser_info) is not None:
         subparsers = parser.add_subparsers(**subparser_info.get_kwargs())
         for subcommand in command.subcommands:
