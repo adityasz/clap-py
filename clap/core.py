@@ -101,29 +101,17 @@ class MutexGroup:
 @dataclass
 class ArgparseArgInfo[T, U](_FilterKwargs):
     short: Optional[Union[_Short, str]] = None
-    """The short flag for the argument."""
     long: Optional[Union[_Long, str]] = None
-    """The long flag for the argument."""
     action: Optional[_Action] = None
-    """The action to be taken when this argument is encountered."""
     nargs: Optional[_Nargs] = None
-    """The number of command-line arguments that should be consumed."""
     const: Optional[U] = None
-    """The constant value required by some action and nargs selections."""
     default: Optional[U] = None
-    """The default value for the argument if not provided."""
     type_: Optional[type[T]] = None
-    """The type to which the command-line argument should be converted."""
     choices: Optional[Sequence[str]] = None
-    """A sequence of valid choices for the argument."""
     required: bool = True
-    """Whether the argument is required or optional."""
     help: Optional[str] = None
-    """A brief description of what the argument does."""
     metavar: Optional[str] = None
-    """The name for the argument in usage messages."""
     deprecated: bool = False
-    """Whether this argument is deprecated and should not be used."""
 
 
 @dataclass
