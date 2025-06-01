@@ -31,28 +31,6 @@ class Parser:
         ...
 
 
-@overload
-def arguments(cls: type[T], /) -> type[T]: ...
-
-
-@overload
-def arguments(
-    *,
-    prog: Optional[str] = None,
-    usage: Optional[str] = None,
-    description: Optional[str] = None,
-    epilog: Optional[str] = None,
-    parents: Optional[list[type]] = None,
-    formatter_class = argparse.HelpFormatter,
-    prefix_chars: str = "-",
-    fromfile_prefix_chars: Optional[str] = None,
-    conflict_handler: str = "error",
-    add_help: bool = True,
-    allow_abbrev: bool = True,
-    exit_on_error: bool = True
-) -> Callable[[type[T]], type[T]]: ...
-
-
 def arguments(
     cls: Optional[type[T]] = None,
     /,

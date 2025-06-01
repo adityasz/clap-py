@@ -1,7 +1,7 @@
 import argparse
 from typing import Any, Callable, Optional, Sequence, TypeVar, Union, overload
 
-from api import Group, MutexGroup, Parser, arguments, group, mutex_group
+from api import Group, MutexGroup, Parser, group, mutex_group
 from core import (
     ColorChoice,
     _Action,
@@ -49,6 +49,28 @@ def arg(
 
 
 @overload
+def arguments(cls: type[T], /) -> type[T]: ...
+
+
+@overload
+def arguments(
+    *,
+    prog: Optional[str] = None,
+    usage: Optional[str] = None,
+    description: Optional[str] = None,
+    epilog: Optional[str] = None,
+    parents: Optional[list[type]] = None,
+    formatter_class = argparse.HelpFormatter,
+    prefix_chars: str = "-",
+    fromfile_prefix_chars: Optional[str] = None,
+    conflict_handler: str = "error",
+    add_help: bool = True,
+    allow_abbrev: bool = True,
+    exit_on_error: bool = True
+) -> Callable[[type[T]], type[T]]: ...
+
+
+@overload
 def subcommand(cls: type[T], /) -> type[T]: ...
 
 
@@ -67,7 +89,6 @@ def subcommand(
     formatter_class: argparse._FormatterClass = ...,
     prefix_chars: str = "-",
     fromfile_prefix_chars: Optional[str] = None,
-    argument_default: Any = ...,
     conflict_handler: str = ...,
     add_help: bool = ...,
     allow_abbrev: bool = ...,
