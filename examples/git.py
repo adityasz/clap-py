@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional, Union
 
 import clap
-from clap import arg, subcommand, ColorChoice
+from clap import arg, ColorChoice
 
 
 @clap.subcommand
@@ -57,11 +57,11 @@ class External:
 
 
 @clap.arguments(
-    name="git",
+    prog="git",
     description="A fictional versioning CLI"
 )
 class Cli(clap.Parser):
-    command: Union[Clone, Diff, Push, Add, Stash, External] = subcommand()
+    command: Union[Clone, Diff, Push, Add, Stash, External]
 
 
 def main():

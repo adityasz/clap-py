@@ -1,6 +1,6 @@
-from .decorator import Parser, arguments, subcommand
-from .help import ColorChoice
-from .stuff import Group, MutexGroup, arg
+from core import ColorChoice, Group, MutexGroup
+
+from api import Parser, arg, arguments, subcommand
 
 __all__ = [
     "ColorChoice",
