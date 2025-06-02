@@ -80,7 +80,6 @@ def main():
             base = base if base is not None else "stage"
             head = head if head is not None else "worktree"
             path = path if path is not None else ""
-
             print(f"Diffing {base}..{head} {path} (color={color})")
         case Push(remote=remote):
             print(f"Pushing to {remote}")

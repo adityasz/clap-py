@@ -1,6 +1,5 @@
 from typing import (
     Callable,
-    LiteralString,
     Optional,
     Self,
     Sequence,
@@ -11,10 +10,9 @@ from typing import (
 
 from .core import (
     COMMAND_ATTR,
-    COMMAND_KWARGS,
+    ARGPARSE_PARSER_KWARGS,
     PARSER_ATTR,
     SUBCOMMAND_ATTR,
-    SUBCOMMAND_KWARGS,
     ArgparseArgInfo,
     Argument,
     Group,
@@ -76,7 +74,7 @@ def arguments(
     """
     def wrap(cls: type[T]) -> type[T]:
         setattr(cls, COMMAND_ATTR, True)
-        setattr(cls, COMMAND_KWARGS, kwargs)
+        setattr(cls, ARGPARSE_PARSER_KWARGS, kwargs)
         setattr(cls, PARSER_ATTR, create_parser(cls, **kwargs))
 
         @classmethod
@@ -139,8 +137,8 @@ def subcommand(
     """
     def wrap(cls: type[T]) -> type[T]:
         setattr(cls, SUBCOMMAND_ATTR, True)
-        kwargs["name"] = kwargs.get("name", cls.__name__.lower().replace("_", "-"))
-        setattr(cls, SUBCOMMAND_KWARGS, kwargs)
+        kwargs.setdefault("name", cls.__name__.lower().replace("_", "-"))
+        setattr(cls, ARGPARSE_PARSER_KWARGS, kwargs)
         return cls
 
     if cls is None:
@@ -224,8 +222,6 @@ def arg[T, U](
 
     return Argument(
         ArgparseArgInfo(
-            short=short_name,
-            long=long_name,
             action=action,
             nargs=nargs,
             const=const,
@@ -237,6 +233,8 @@ def arg[T, U](
             metavar=metavar,
             deprecated=deprecated
         ),
+        short=short_name,
+        long=long_name,
         group=group,
         mutex=mutex
     )

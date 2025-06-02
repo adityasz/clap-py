@@ -20,20 +20,19 @@ from typing import (
 )
 
 
-# useful when help output is implemented
+COMMAND_ATTR = "__com.github.adityasz.clap_py.command__"
+SUBCOMMAND_ATTR = "__com.github.adityasz.clap_py.subcommand__"
+PARSER_ATTR = "__parser__"
+COMMAND_DATA = "__command_data__"
+SUBCOMMAND_DEST = "__subcommand_dest__"
+ARGPARSE_PARSER_KWARGS = "__argparse_parser_kwargs__"
+
+
+# will be useful when help output is implemented
 class ColorChoice(Enum):
     Auto = auto()
     Always = auto()
     Never = auto()
-
-
-SUBCOMMAND_ATTR = "__com.github.adityasz.clap_py.subcommand__"
-SUBCOMMAND_KWARGS = "__subcommand_kwargs__"
-SUBCOMMAND_DEST = "__subcommand_dest__"
-COMMAND_ATTR = "__com.github.adityasz.clap_py.command__"
-COMMAND_DATA = "__command_data__"
-COMMAND_KWARGS = "__command_kwargs__"
-PARSER_ATTR = "__parser__"
 
 
 class _Short:
@@ -95,8 +94,6 @@ class MutexGroup:
 
 @dataclass
 class ArgparseArgInfo(_FilterKwargs):
-    short: Optional[Union[_Short, str]] = None
-    long: Optional[Union[_Long, str]] = None
     action: Optional[_Action] = None
     nargs: Optional[_Nargs] = None
     const: Optional[Any] = None
@@ -115,19 +112,15 @@ class Argument:
     argparse_info: ArgparseArgInfo = field(default_factory=ArgparseArgInfo)
     """The kwargs for `parser.add_argument()`."""
 
+    short: Optional[Union[_Short, str]] = None
+    """The short flag."""
+    long: Optional[Union[_Long, str]] = None
+    """The long flag."""
     group: Optional[Group] = None
     """The group for the argument."""
     mutex: Optional[MutexGroup] = None
     """The mutually exclusive group for the argument."""
     choice_to_member: Optional[dict[str, type]] = None
-
-
-@dataclass
-class SubcommandInfo(_FilterKwargs):
-    name: Optional[str] = None
-    deprecated: Optional[bool] = None
-    help: Optional[str] = None
-    aliases: Optional[Sequence[str]] = None
 
 
 @dataclass
@@ -157,14 +150,20 @@ class ParserInfo(_FilterKwargs):
     add_help: Optional[bool] = None
     allow_abbrev: Optional[bool] = None
     exit_on_error: Optional[bool] = None
+    # The following are used by subcommands:
+    name: Optional[str] = None
+    deprecated: Optional[bool] = None
+    help: Optional[str] = None
+    aliases: Optional[Sequence[str]] = None
 
 
 @dataclass
 class Command:
     parser_info: ParserInfo
+    """Contains kwargs for argparse.ArgumentParser()."""
     subparser_info: Optional[SubparserInfo] = None
     """Contains kwargs for parser.add_subparsers() if the command has subcommands."""
-    subcommand_info: Optional[SubcommandInfo] = None
+    subcommand_info: Optional[Any] = None
     """Contains kwargs for subparsers.add_parser() if the command is a subcommand."""
     subcommand_class: Optional[type] = None
 
@@ -342,7 +341,7 @@ def create_command(cls: type, prefix: str = "") -> Command:
         if option is False:
             # positional argument
             info.required = None
-            info.long = info.dest
+            arg.long = info.dest
             info.dest = None
         if (group := arg.group) is not None:
             command.groups[group].append(arg)
@@ -351,12 +350,10 @@ def create_command(cls: type, prefix: str = "") -> Command:
         else:
             command.arguments.append(arg)
 
-    command = Command(ParserInfo(getattr(cls, COMMAND_KWARGS)))
-    command.subcommand_info = getattr(cls, SUBCOMMAND_KWARGS, None)
-    if command.subcommand_info is not None:
-        assert(type(command.subcommand_info) is SubcommandInfo)
-        assert(command.subcommand_info.name is not None)
-        prefix += command.subcommand_info.name + "."
+    command = Command(ParserInfo(**getattr(cls, ARGPARSE_PARSER_KWARGS)))
+    if getattr(cls, SUBCOMMAND_ATTR, False):
+        assert(command.parser_info.name is not None)
+        prefix += command.parser_info.name + "."
         command.subcommand_class = cls
     docstrings: dict[str, str] = extract_docstrings(cls)
     type_hints = get_type_hints(cls)
@@ -396,21 +393,20 @@ def create_command(cls: type, prefix: str = "") -> Command:
         elif isinstance(value, MutexGroup):
             continue
         elif isinstance(value, Argument):
-            info = value.argparse_info
-            option = False
-            if isinstance(info.short, str) and not info.short.startswith("-"):
-                info.short = "-" + info.short
-                option = True
-            elif isinstance(info.short, _Short):
-                info.short = "-" + field_name[0].lower()
-                option = True
-            if isinstance(info.long, str) and not info.long.startswith("-"):
-                info.long = "--" + info.long
-                option = True
-            elif isinstance(info.long, _Long):
-                info.long = "--" + field_name.lower().replace("_", "-")
-                option = True
             arg = value
+            option = False
+            if isinstance(arg.short, str) and not arg.short.startswith("-"):
+                arg.short = "-" + arg.short
+                option = True
+            elif isinstance(arg.short, _Short):
+                arg.short = "-" + field_name[0].lower()
+                option = True
+            if isinstance(arg.long, str) and not arg.long.startswith("-"):
+                arg.long = "--" + arg.long
+                option = True
+            elif isinstance(arg.long, _Long):
+                arg.long = "--" + field_name.lower().replace("_", "-")
+                option = True
             process_arg(option)
         else:
             print("panic: missed something")
@@ -419,26 +415,24 @@ def create_command(cls: type, prefix: str = "") -> Command:
 
 
 def deal_with_argparse(parser: argparse.ArgumentParser, command: Command):
-    for argument in command.arguments:
-        info = argument.argparse_info
+    for arg in command.arguments:
         flags = []
-        if info.short is not None:
-            flags.append(info.short)
-            info.short = None
-        if info.long is not None:
-            flags.append(info.long)
-            info.long = None
-        kwargs = info.get_kwargs()
+        if arg.short is not None:
+            flags.append(arg.short)
+        if arg.long is not None:
+            flags.append(arg.long)
+        kwargs = arg.argparse_info.get_kwargs()
         kwargs.setdefault("default", None)
         if True:
             print(f"parser.add_argument({", ".join(flags)}{", " if flags else ""}{", ".join(list(map(lambda k: f"{k}={kwargs[k]}", kwargs.keys())))})")
-        parser.add_argument(*tuple(flags), **kwargs)
+        parser.add_argument(*flags, **kwargs)
 
+    # groups have top persist because groups can have mutexes
     groups = {group_obj: parser.add_argument_group(**group_obj.get_kwargs())
               for group_obj in command.groups.keys()}
     for group, arguments in command.groups.items():
-        for argument in arguments:
-            kwargs = argument.argparse_info.get_kwargs()
+        for arg in arguments:
+            kwargs = arg.argparse_info.get_kwargs()
             kwargs.setdefault("default", None)
             groups[group].add_argument(**kwargs)
 
@@ -447,8 +441,8 @@ def deal_with_argparse(parser: argparse.ArgumentParser, command: Command):
             mutex_group = parser.add_mutually_exclusive_group(required=mutex.required)
         else:
             mutex_group = groups[mutex.parent].add_mutually_exclusive_group(required=mutex.required)
-        for argument in arguments:
-            mutex_group.add_argument(**argument.argparse_info.get_kwargs())
+        for arg in arguments:
+            mutex_group.add_argument(**arg.argparse_info.get_kwargs())
 
     if (subparser_info := command.subparser_info) is not None:
         subparsers = parser.add_subparsers(**subparser_info.get_kwargs())
@@ -466,22 +460,23 @@ def create_parser(cls: type, **kwargs):
     return parser
 
 
-def populate_fields(args: dict[str, Any], obj: type, level: int = 0):
+def populate_fields(args: list[tuple[str, Any]], obj: type, level: int = 0):
     command = getattr(obj, COMMAND_DATA)
     assert(isinstance(command, Command))
-    subcommand_args: dict[str, Any] = {}
-    for k, v in args:
-        if k.count('.') > level:
-            subcommand_args[k] = v
+    subcommand_args: list[tuple[str, Any]] = []
+    for attr_name, value in args:
+        if attr_name.count('.') > level:
+            subcommand_args.append((attr_name, value))
         else:
-            setattr(obj, k, v)
+            setattr(obj, attr_name, value)
     if subcommand_args is None:
         return
     for subcommand in command.subcommands:
-        info = subcommand.subcommand_info
-        assert(info is not None)
-        if info.name == command.subcommand_dest:
+        name = subcommand.parser_info.name
+        assert(name is not None)
+        if name == command.subcommand_dest:
             cls = subcommand.subcommand_class
             assert(cls is not None)
             obj = cls()
             populate_fields(subcommand_args, obj, level + 1)
+            break # since only one subcommand can be present
