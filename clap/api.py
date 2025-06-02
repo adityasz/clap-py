@@ -9,21 +9,21 @@ from typing import (
 )
 
 from .core import (
-    COMMAND_ATTR,
-    ARGPARSE_PARSER_KWARGS,
-    PARSER_ATTR,
-    SUBCOMMAND_ATTR,
+    _COMMAND_ATTR,
+    _PARSER_KWARGS,
+    _PARSER_ATTR,
+    _SUBCOMMAND_ATTR,
     ArgparseArgInfo,
     Argument,
     Group,
     MutexGroup,
     SubparserInfo,
-    _Action,
-    _Long,
-    _Nargs,
-    _Short,
+    ActionType,
+    _LongFlag,
+    NargsType,
+    _ShortFlag,
     create_parser,
-    populate_fields,
+    populate_instance_fields,
 )
 
 T = TypeVar('T')
@@ -73,18 +73,18 @@ def arguments(
         function if called without arguments.
     """
     def wrap(cls: type[T]) -> type[T]:
-        setattr(cls, COMMAND_ATTR, True)
+        setattr(cls, _COMMAND_ATTR, True)
         kwargs.setdefault("description", cls.__doc__)
-        setattr(cls, ARGPARSE_PARSER_KWARGS, kwargs)
-        setattr(cls, PARSER_ATTR, create_parser(cls, **kwargs))
+        setattr(cls, _PARSER_KWARGS, kwargs)
+        setattr(cls, _PARSER_ATTR, create_parser(cls, **kwargs))
 
         @classmethod
         def parse_args(cls: type, args: Optional[list[str]] = None) -> T:
             """Parse command-line arguments and return an instance of the class."""
-            parser = getattr(cls, PARSER_ATTR)
+            parser = getattr(cls, _PARSER_ATTR)
             parsed_args = parser.parse_args(args)
             obj = cls()
-            populate_fields(dict(parsed_args._get_kwargs()), obj)
+            populate_instance_fields(dict(parsed_args._get_kwargs()), obj)
             return obj
 
         setattr(cls, "parse_args", parse_args)
@@ -137,10 +137,10 @@ def subcommand(
         function if called without arguments.
     """
     def wrap(cls: type[T]) -> type[T]:
-        setattr(cls, SUBCOMMAND_ATTR, True)
+        setattr(cls, _SUBCOMMAND_ATTR, True)
         kwargs.setdefault("name", cls.__name__.lower().replace("_", "-"))
         kwargs.setdefault("help", cls.__doc__)
-        setattr(cls, ARGPARSE_PARSER_KWARGS, kwargs)
+        setattr(cls, _PARSER_KWARGS, kwargs)
         return cls
 
     if cls is None:
@@ -149,8 +149,8 @@ def subcommand(
 
 
 def arg[T, U](
-    short_or_long: Optional[Union[_Short, _Long, str]] = None,
-    long_: Optional[Union[_Long, str]] = None,
+    short_or_long: Optional[Union[_ShortFlag, _LongFlag, str]] = None,
+    long_: Optional[Union[_LongFlag, str]] = None,
     /,
     *,
     short: Optional[Union[str, bool]] = None,
@@ -158,8 +158,8 @@ def arg[T, U](
     group: Optional[Group] = None,
     mutex: Optional[MutexGroup] = None,
     type: Optional[type[T]] = None,
-    action: Optional[_Action] = "store",
-    nargs: Optional[_Nargs] = None,
+    action: Optional[ActionType] = "store",
+    nargs: Optional[NargsType] = None,
     const: Optional[U] = None,
     default: Optional[U] = None,
     choices: Optional[Sequence[str]] = None,
@@ -195,9 +195,9 @@ def arg[T, U](
     short_name = None
     long_name = None
 
-    if isinstance(short_or_long, _Long):
+    if isinstance(short_or_long, _LongFlag):
         short_name = None
-        long_name = cast(_Long, short_or_long)
+        long_name = cast(_LongFlag, short_or_long)
     elif (
         isinstance(short_or_long, str) and (
             short_or_long.startswith("--")
@@ -207,20 +207,20 @@ def arg[T, U](
         short_name = None
         long_name = cast(str, short_or_long)
     else:
-        short_name = cast(Optional[Union[_Short, str]], short_or_long)
+        short_name = cast(Optional[Union[_ShortFlag, str]], short_or_long)
         long_name = long_
 
     if short is not None:
         if isinstance(short, str):
             short_name = short
         elif short is True:
-                short_name = _Short()
+                short_name = _ShortFlag()
 
     if long is not None:
         if isinstance(long, str):
             long_name = long
         elif long is True:
-                long_name = _Long()
+                long_name = _LongFlag()
 
     return Argument(
         ArgparseArgInfo(
@@ -247,7 +247,7 @@ def subparser(
     description: Optional[str] = None,
     prog: Optional[str] = None,
     parser_class: Optional[type] = None,
-    action: Optional[_Action] = None,
+    action: Optional[ActionType] = None,
     required: bool = False,
     help: Optional[str] = None,
     metavar: Optional[str] = None

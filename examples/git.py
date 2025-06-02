@@ -30,6 +30,7 @@ class Push:
 
 @clap.subcommand
 class Add:
+    """Add file contents to the index."""
     path: list[Path] = arg(nargs='+')
 
 

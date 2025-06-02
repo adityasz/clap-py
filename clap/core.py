@@ -19,12 +19,12 @@ from typing import (
     get_type_hints,
 )
 
-COMMAND_ATTR = "__com.github.adityasz.clap_py.command__"
-SUBCOMMAND_ATTR = "__com.github.adityasz.clap_py.subcommand__"
-PARSER_ATTR = "__parser__"
-COMMAND_DATA = "__command_data__"
-SUBCOMMAND_DEST = "__subcommand_dest__"
-ARGPARSE_PARSER_KWARGS = "__argparse_parser_kwargs__"
+_COMMAND_ATTR = "__com.github.adityasz.clap_py.command__"
+_SUBCOMMAND_ATTR = "__com.github.adityasz.clap_py.subcommand__"
+_PARSER_ATTR = "__parser__"
+_COMMAND_DATA = "__command_data__"
+_SUBCOMMAND_DEST = "__subcommand_dest__"
+_PARSER_KWARGS = "__argparse_parser_kwargs__"
 
 
 # will be useful when help output is implemented
@@ -34,21 +34,21 @@ class ColorChoice(Enum):
     Never = auto()
 
 
-class _Short:
+class _ShortFlag:
     ...
 
 
-class _Long:
+class _LongFlag:
     ...
 
 
-short = _Short()
+short = _ShortFlag()
 """Generate short from the first character in the case-converted field name."""
 
-long = _Long()
+long = _LongFlag()
 """Generate long from the case-converted field name."""
 
-_Action = Union[
+ActionType = Union[
     argparse.Action,
     Literal[
         "store",
@@ -64,7 +64,7 @@ _Action = Union[
     ]
 ]
 
-_Nargs = Union[Literal['?', '*', '+'], int]
+NargsType = Union[Literal['?', '*', '+'], int]
 
 
 @dataclass
@@ -93,8 +93,8 @@ class MutexGroup:
 
 @dataclass
 class ArgparseArgInfo(_FilterKwargs):
-    action: Optional[_Action] = None
-    nargs: Optional[_Nargs] = None
+    action: Optional[ActionType] = None
+    nargs: Optional[NargsType] = None
     const: Optional[Any] = None
     default: Optional[Any] = None
     type: Optional[builtins.type] = None
@@ -111,15 +111,16 @@ class Argument:
     argparse_info: ArgparseArgInfo = field(default_factory=ArgparseArgInfo)
     """The kwargs for `parser.add_argument()`."""
 
-    short: Optional[Union[_Short, str]] = None
+    short: Optional[Union[_ShortFlag, str]] = None
     """The short flag."""
-    long: Optional[Union[_Long, str]] = None
+    long: Optional[Union[_LongFlag, str]] = None
     """The long flag."""
     group: Optional[Group] = None
     """The group for the argument."""
     mutex: Optional[MutexGroup] = None
     """The mutually exclusive group for the argument."""
-    choice_to_member: Optional[dict[str, type]] = None
+    choice_to_enum_member: Optional[dict[str, type]] = None
+    """A map from the (string) choice to the enum member."""
 
 
 @dataclass
@@ -128,8 +129,8 @@ class SubparserInfo(_FilterKwargs):
     description: Optional[str] = None
     prog: Optional[str] = None
     parser_class: Optional[type] = None
-    action: Optional[_Action] = None
-    required: bool = False
+    action: Optional[ActionType] = None
+    required: Optional[bool] = None
     help: Optional[str] = None
     metavar: Optional[str] = None
     dest: Optional[str] = None
@@ -163,6 +164,7 @@ class Command:
     subparser_info: Optional[SubparserInfo] = None
     """Contains kwargs for parser.add_subparsers() if the command has subcommands."""
     subcommand_class: Optional[type] = None
+    """Contains the class if the command is a subcommand."""
 
     arguments: list[Argument] = field(default_factory=list)
     subcommands: list[Self] = field(default_factory=list)
@@ -198,10 +200,10 @@ def extract_docstrings(cls: type) -> dict[str, str]:
 
 
 def is_subcommand(cls: type) -> bool:
-    return getattr(cls, SUBCOMMAND_ATTR, False)
+    return getattr(cls, _SUBCOMMAND_ATTR, False)
 
 
-def is_subcommand_dest(types: tuple[type]) -> bool:
+def contains_subcommand(types: tuple[type]) -> bool:
     flag = None
     for ty in types:
         if type(ty) is None:
@@ -221,7 +223,7 @@ class ArgType:
     class Base: ...
 
     @dataclass
-    class Type(Base):
+    class SimpleType(Base):
         ty: type
 
     class Enum(Base):
@@ -230,7 +232,7 @@ class ArgType:
             self.choices = list(map(lambda s: s.lower().replace("_", "-"), members.keys()))
             if len(set(self.choices)) != len(members):
                 raise TypeError
-            self.choice_to_member: dict[str, type] = {
+            self.choice_to_enum_member: dict[str, type] = {
                 c: m for c, m in zip(self.choices, members.values())
             }
 
@@ -253,7 +255,7 @@ class ArgType:
         required: bool
 
 
-def get_type(type_hint: str) -> ArgType.Base:
+def parse_type_hint(type_hint: str) -> ArgType.Base:
     """
     Supported type annotations:
 
@@ -272,7 +274,7 @@ def get_type(type_hint: str) -> ArgType.Base:
     if type(type_hint) is type:
         if is_subcommand(type):
             return ArgType.SubcommandDest([type_hint], False)
-        return ArgType.Type(type_hint)
+        return ArgType.SimpleType(type_hint)
     if type(type_hint) is EnumType:
         return ArgType.Enum(type_hint)
     origin = get_origin(type_hint)
@@ -282,7 +284,7 @@ def get_type(type_hint: str) -> ArgType.Base:
         for ty in types:
             if type(None) is ty:
                 required = False
-        if is_subcommand_dest(types):
+        if contains_subcommand(types):
             return ArgType.SubcommandDest(list(types), required)
         if len(types) != 2 or required:
             raise TypeError
@@ -297,126 +299,149 @@ def get_type(type_hint: str) -> ArgType.Base:
     raise TypeError
 
 
-def create_command(cls: type, prefix: str = "") -> Command:
-    def bad_annotation(message: str = "") -> NoReturn:
+def generate_flags(arg: Argument, field_name: str) -> bool:
+    """Sets short and long flags of the argument.
+
+    Returns:
+        True if the given argument is a positional argument (no flags found),
+        False otherwise.
+    """
+    is_positional: bool = True
+    if isinstance(arg.short, str) and not arg.short.startswith("-"):
+        arg.short = "-" + arg.short
+        is_positional = False
+    elif isinstance(arg.short, _ShortFlag):
+        arg.short = "-" + field_name[0].lower()
+        is_positional = False
+    if isinstance(arg.long, str) and not arg.long.startswith("-"):
+        arg.long = "--" + arg.long
+        is_positional = False
+    elif isinstance(arg.long, _LongFlag):
+        arg.long = "--" + field_name.lower().replace("_", "-")
+        is_positional = False
+    return is_positional
+
+
+def process_arg(
+    arg: Argument,
+    ty: ArgType.Base,
+    command: Command,
+    field_name: str,
+    prefix: str,
+    docstrings: dict[str, str],
+    is_positional: bool = True,
+):
+    info = arg.argparse_info
+    info.dest = prefix + field_name
+    if info.help is None:
+        info.help = docstrings.get(field_name, None)
+    match ty:
+        case ArgType.SimpleType(t):
+            if t is bool:
+                info.action = "store_true"
+                info.required = False
+            else:
+                info.type = t
+        case ArgType.Enum(choices=choices, choice_to_enum_member=choice_to_enum_member):
+            info.type = str
+            info.choices = choices
+            arg.choice_to_enum_member = choice_to_enum_member
+        case ArgType.List(t):
+            if info.nargs is None:
+                raise TypeError("'nargs' is missing")
+            info.type = t
+        case ArgType.Tuple(t, n):
+            info.type = t
+            if (nargs := info.nargs) is not None:
+                if nargs != n:
+                    raise TypeError(f"nargs = {nargs} != {n}")
+            else:
+                info.nargs = n
+        case ArgType.Optional(t):
+            info.type = t
+            if is_positional:
+                info.nargs = '?'
+            else:
+                info.required = False
+        case _:
+            print("panic: missed some case")
+            raise TypeError
+    if is_positional:
+        info.required = None
+        arg.long = info.dest
+        info.dest = None
+    if (group := arg.group) is not None:
+        command.groups[group].append(arg)
+    elif (mutex := arg.mutex) is not None:
+        command.mutexes[mutex].append(arg)
+    else:
+        command.arguments.append(arg)
+
+
+def process_subcommand_dest(
+    ty: ArgType.SubcommandDest,
+    command: Command,
+    value: Any,
+    field_name: str,
+    prefix: str,
+):
+    if command.subcommand_dest is not None:
         raise TypeError(
-            f"bad type annotation '{field_name}: {type_hint}'"
-            f"{": " if message else ""}{message}"
+            f"{command.subcommand_dest} is already the subcommand destination"
         )
-
-    def process_arg(option: bool = False):
-        info = arg.argparse_info
-        info.dest = prefix + field_name
-        if info.help is None:
-            info.help = docstrings.get(field_name, None)
-        match ty:
-            case ArgType.Type(t):
-                if t is bool:
-                    info.action = "store_true"
-                    info.required = False
-                else:
-                    info.type = t
-            case ArgType.Enum(choices=choices, choice_to_member=choice_to_member):
-                info.type = str
-                info.choices = choices
-                arg.choice_to_member = choice_to_member
-            case ArgType.List(t):
-                if info.nargs is None:
-                    bad_annotation("'nargs' is missing")
-                info.type = t
-            case ArgType.Tuple(t, n):
-                info.type = t
-                if (nargs := info.nargs) is not None:
-                    if nargs != n:
-                        bad_annotation(f"nargs = {nargs} != {n}")
-                else:
-                    info.nargs = n
-            case ArgType.Optional(t):
-                info.type = t
-                if option:
-                    info.required = False
-                else:
-                    info.nargs = '?'
-            case _:
-                print("panic: missed some case")
-                bad_annotation()
-        if option is False:
-            # positional argument
-            info.required = None
-            arg.long = info.dest
-            info.dest = None
-        if (group := arg.group) is not None:
-            command.groups[group].append(arg)
-        elif (mutex := arg.mutex) is not None:
-            command.mutexes[mutex].append(arg)
+    command.subcommand_dest = field_name
+    if value is not None:
+        if isinstance(value, SubparserInfo):
+            command.subparser_info = value
+            if command.subparser_info != ty.required:
+                raise TypeError("check 'required'")
         else:
-            command.arguments.append(arg)
+            raise TypeError(f"can't assign {type(value)} to subcommand destination")
+    else:
+        command.subparser_info = SubparserInfo()
+    for subcommand in ty.subcommands:
+        command.subcommands.append(create_command(subcommand, prefix))
 
-    command = Command(ParserInfo(**getattr(cls, ARGPARSE_PARSER_KWARGS)))
-    if getattr(cls, SUBCOMMAND_ATTR, False):
+
+def create_command(cls: type, prefix: str = "") -> Command:
+    command = Command(ParserInfo(**getattr(cls, _PARSER_KWARGS)))
+    if getattr(cls, _SUBCOMMAND_ATTR, False):
         assert(command.parser_info.name is not None)
         prefix += command.parser_info.name + "."
         command.subcommand_class = cls
+
     docstrings: dict[str, str] = extract_docstrings(cls)
+
     type_hints = get_type_hints(cls)
     for field_name, type_hint in type_hints.items():
         try:
-            ty = get_type(type_hint)
-        except TypeError as e:
-            bad_annotation(str(e))
-
-        value = getattr(cls, field_name, None)
-        match ty:
-            case ArgType.SubcommandDest(subcommands, required):
-                if command.subcommand_dest is not None:
-                    bad_annotation(
-                        f"{command.subcommand_dest} is already the subcommand destination"
-                    )
-                command.subcommand_dest = field_name
-                if value is not None:
-                    if isinstance(value, SubparserInfo):
-                        command.subparser_info = value
-                        if command.subparser_info != required:
-                            bad_annotation("check 'required'")
-                    else:
-                        bad_annotation(f"can't assign {type(value)} to subcommand destination")
-                else:
-                    command.subparser_info = SubparserInfo()
-                for subcommand in subcommands:
-                    command.subcommands.append(create_command(subcommand, prefix))
+            ty = parse_type_hint(type_hint)
+            value = getattr(cls, field_name, None)
+            if isinstance(ty, ArgType.SubcommandDest):
+                process_subcommand_dest(ty, command, value, field_name, prefix)
+            elif isinstance(value, Group):
+                if field_name in command.groups:
+                    raise RuntimeError(f"group '{value.title}' already exists")
+                command.groups[value] = []
+            elif isinstance(value, MutexGroup):
                 continue
-        if value is None:
-            arg = Argument()
-            process_arg()
-        elif isinstance(value, Group):
-            if field_name in command.groups:
-                raise RuntimeError(f"group '{value.title}' already exists")
-            command.groups[value] = []
-        elif isinstance(value, MutexGroup):
-            continue
-        elif isinstance(value, Argument):
-            arg = value
-            option = False
-            if isinstance(arg.short, str) and not arg.short.startswith("-"):
-                arg.short = "-" + arg.short
-                option = True
-            elif isinstance(arg.short, _Short):
-                arg.short = "-" + field_name[0].lower()
-                option = True
-            if isinstance(arg.long, str) and not arg.long.startswith("-"):
-                arg.long = "--" + arg.long
-                option = True
-            elif isinstance(arg.long, _Long):
-                arg.long = "--" + field_name.lower().replace("_", "-")
-                option = True
-            process_arg(option)
-        else:
-            print("panic: missed something")
-            bad_annotation()
+            elif isinstance(value, Argument):
+                is_positional = generate_flags(value, field_name)
+                process_arg(value, ty, command, field_name, prefix, docstrings, is_positional)
+            elif value is None:
+                process_arg(Argument(), ty, command, field_name, prefix, docstrings)
+            else:
+                print("panic: missed something")
+                raise TypeError
+        except TypeError as e:
+            raise TypeError(
+                f"bad type annotation '{field_name}: {type_hint}'"
+                f"{": " if str(e) else ""}{str(e)}"
+            )
     return command
 
 
-def deal_with_argparse(parser: argparse.ArgumentParser, command: Command):
+def setup_parser(parser: argparse.ArgumentParser, command: Command):
     for arg in command.arguments:
         flags = []
         if arg.short is not None:
@@ -452,38 +477,39 @@ def deal_with_argparse(parser: argparse.ArgumentParser, command: Command):
         subparsers = parser.add_subparsers(**subparser_info.get_kwargs())
         for subcommand in command.subcommands:
             parser = subparsers.add_parser(**subcommand.parser_info.get_kwargs())
-            deal_with_argparse(parser, subcommand)
+            setup_parser(parser, subcommand)
 
 
 def create_parser(cls: type, **kwargs):
     command = create_command(cls)
-    setattr(cls, COMMAND_DATA, command)
+    setattr(cls, _COMMAND_DATA, command)
     parser = argparse.ArgumentParser(**command.parser_info.get_kwargs())
-    deal_with_argparse(parser, command)
+    setup_parser(parser, command)
     return parser
 
 
-def populate_fields(args: dict[str, Any], obj: type, level: int = 0):
-    command = getattr(obj, COMMAND_DATA)
-    assert(isinstance(command, Command))
+def populate_instance_fields(args: dict[str, Any], instance: Any, depth: int = 0):
+    command: Command = getattr(instance, _COMMAND_DATA)
     subcommand_args: dict[str, Any] = {}
     for attr_name, value in args.items():
-        if attr_name.count('.') > level:
+        if attr_name.count('.') > depth:
             subcommand_args[attr_name] = value
         else:
-            setattr(obj, attr_name, value)
+            setattr(instance, attr_name, value)
     if command.subcommand_dest is None:
+        # no subcommands
         return
     if command.subcommand_dest not in args:
-        if not hasattr(obj, command.subcommand_dest):
-            setattr(obj, command.subcommand_dest, None)
+        # subcommand not provided
+        if not hasattr(instance, command.subcommand_dest):
+            setattr(instance, command.subcommand_dest, None)
         return
     for subcommand in command.subcommands:
-        name = subcommand.parser_info.name
-        if name == args[command.subcommand_dest]:
+        # find the subcommand using the name
+        if subcommand.parser_info.name == args[command.subcommand_dest]:
             cls = subcommand.subcommand_class
             assert(cls is not None)
             subcommand_obj = cls()
-            populate_fields(subcommand_args, subcommand_obj, level + 1)
-            setattr(obj, command.subcommand_dest, subcommand_obj)
-            break # since only one subcommand can be present
+            populate_instance_fields(subcommand_args, subcommand_obj, depth + 1)
+            setattr(instance, command.subcommand_dest, subcommand_obj)
+            break # since only one subcommand can be provided

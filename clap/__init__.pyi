@@ -2,7 +2,7 @@ import argparse
 from typing import Any, Callable, Optional, Sequence, TypeVar, Union, overload
 
 from .api import Group, MutexGroup, Parser, group, mutex_group
-from .core import ColorChoice, _Action, _Long, _Nargs, _Short, long, short
+from .core import ColorChoice, ActionType, _LongFlag, NargsType, _ShortFlag, long, short
 
 __all__ = [
     "ColorChoice",
@@ -23,8 +23,8 @@ U = TypeVar('U')
 
 # TODO: Add overloads based on `nargs` and `required` if `type` is not `None`.
 def arg(
-    short_or_long: Optional[Union[_Short, _Long, str]] = None,
-    long_: Optional[Union[_Long, str]] = None,
+    short_or_long: Optional[Union[_ShortFlag, _LongFlag, str]] = None,
+    long_: Optional[Union[_LongFlag, str]] = None,
     /,
     *,
     short: Optional[Union[str, bool]] = None,
@@ -32,8 +32,8 @@ def arg(
     group: Optional[Group] = None,
     mutex: Optional[MutexGroup] = None,
     type: Optional[type[T]] = None,
-    action: Optional[_Action] = "store",
-    nargs: Optional[_Nargs] = None,
+    action: Optional[ActionType] = "store",
+    nargs: Optional[NargsType] = None,
     const: Optional[U] = None,
     default: Optional[U] = None,
     choices: Optional[Sequence[str]] = None,
@@ -98,7 +98,7 @@ def subparser(
     description: Optional[str] = None,
     prog: Optional[str] = None,
     parser_class: Optional[type] = None,
-    action: Optional[_Action] = None,
+    action: Optional[ActionType] = None,
     required: bool = False,
     help: Optional[str] = None,
     metavar: Optional[str] = None
