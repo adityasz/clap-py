@@ -56,11 +56,9 @@ class External:
     args: list[str] = arg(nargs='*')
 
 
-@clap.arguments(
-    prog="git",
-    description="A fictional versioning CLI"
-)
+@clap.arguments(prog="git")
 class Cli(clap.Parser):
+    """A fictional versioning CLI."""
     command: Union[Clone, Diff, Push, Add, Stash, External]
 
 

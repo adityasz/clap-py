@@ -74,6 +74,7 @@ def arguments(
     """
     def wrap(cls: type[T]) -> type[T]:
         setattr(cls, COMMAND_ATTR, True)
+        kwargs.setdefault("description", cls.__doc__)
         setattr(cls, ARGPARSE_PARSER_KWARGS, kwargs)
         setattr(cls, PARSER_ATTR, create_parser(cls, **kwargs))
 
@@ -138,6 +139,7 @@ def subcommand(
     def wrap(cls: type[T]) -> type[T]:
         setattr(cls, SUBCOMMAND_ATTR, True)
         kwargs.setdefault("name", cls.__name__.lower().replace("_", "-"))
+        kwargs.setdefault("help", cls.__doc__)
         setattr(cls, ARGPARSE_PARSER_KWARGS, kwargs)
         return cls
 

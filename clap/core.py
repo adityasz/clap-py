@@ -178,10 +178,18 @@ class DocstringExtractor(ast.NodeVisitor):
         self.docstrings: dict[str, str] = {}
 
     def visit_ClassDef(self, node):
-        ...
+        for stmt_1, stmt_2 in zip(node.body[:-1], node.body[1:]):
+            if (
+                isinstance(stmt_1, ast.AnnAssign)
+                and isinstance(stmt_1.target, ast.Name)
+                and isinstance(stmt_2, ast.Expr)
+                and isinstance(stmt_2.value, ast.Constant)
+                and isinstance(stmt_2.value.value, str)
+            ):
+                self.docstrings[stmt_1.target.id] = stmt_2.value.value
 
 
-def extract_docstrings(cls: type):
+def extract_docstrings(cls: type) -> dict[str, str]:
     extractor = DocstringExtractor()
     source = dedent(getsource(cls))
     tree = ast.parse(source)
@@ -417,11 +425,10 @@ def deal_with_argparse(parser: argparse.ArgumentParser, command: Command):
             flags.append(arg.long)
         kwargs = arg.argparse_info.get_kwargs()
         kwargs.setdefault("default", None)
-        if False:
-            print(
-                f"parser.add_argument({', '.join(flags)}{', ' if flags else ''}"
-                f"{', '.join(list(map(lambda k: f'{k}={kwargs[k]}', kwargs.keys())))})"
-            )
+        # print(
+        #     f"parser.add_argument({', '.join(flags)}{', ' if flags else ''}"
+        #     f"{', '.join(list(map(lambda k: f'{k}={kwargs[k]}', kwargs.keys())))})"
+        # )
         parser.add_argument(*flags, **kwargs)
 
     # groups have to persist because groups can have mutexes
@@ -460,7 +467,7 @@ def populate_fields(args: dict[str, Any], obj: type, level: int = 0):
     command = getattr(obj, COMMAND_DATA)
     assert(isinstance(command, Command))
     subcommand_args: dict[str, Any] = {}
-    for attr_name, value in args:
+    for attr_name, value in args.items():
         if attr_name.count('.') > level:
             subcommand_args[attr_name] = value
         else:
