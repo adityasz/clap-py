@@ -19,7 +19,6 @@ from typing import (
     get_type_hints,
 )
 
-
 COMMAND_ATTR = "__com.github.adityasz.clap_py.command__"
 SUBCOMMAND_ATTR = "__com.github.adityasz.clap_py.subcommand__"
 PARSER_ATTR = "__parser__"
@@ -160,11 +159,9 @@ class ParserInfo(_FilterKwargs):
 @dataclass
 class Command:
     parser_info: ParserInfo
-    """Contains kwargs for argparse.ArgumentParser()."""
+    """Contains kwargs for argparse.ArgumentParser() and subparsers.add_parser()."""
     subparser_info: Optional[SubparserInfo] = None
     """Contains kwargs for parser.add_subparsers() if the command has subcommands."""
-    subcommand_info: Optional[Any] = None
-    """Contains kwargs for subparsers.add_parser() if the command is a subcommand."""
     subcommand_class: Optional[type] = None
 
     arguments: list[Argument] = field(default_factory=list)
@@ -269,10 +266,7 @@ def get_type(type_hint: str) -> ArgType.Base:
             return ArgType.SubcommandDest([type_hint], False)
         return ArgType.Type(type_hint)
     if type(type_hint) is EnumType:
-        choices = list(map(lambda s: s.lower().replace("_", "-"), type_hint.__members__.keys()))
-        if len(set(choices)) != len(choices):
-            TypeError(f"can't extract choices from '{type_hint}': bad members")
-        return ArgType.Enum(choices)
+        return ArgType.Enum(type_hint)
     origin = get_origin(type_hint)
     types = get_args(type_hint)
     if origin is Union:
@@ -374,14 +368,14 @@ def create_command(cls: type, prefix: str = "") -> Command:
                 if value is not None:
                     if isinstance(value, SubparserInfo):
                         command.subparser_info = value
+                        if command.subparser_info != required:
+                            bad_annotation("check 'required'")
                     else:
                         bad_annotation(f"can't assign {type(value)} to subcommand destination")
                 else:
                     command.subparser_info = SubparserInfo()
                 for subcommand in subcommands:
                     command.subcommands.append(create_command(subcommand, prefix))
-                    if command.subcommands[-1].parser_info != required:
-                        bad_annotation("check 'required'")
                 continue
         if value is None:
             arg = Argument()
@@ -423,8 +417,11 @@ def deal_with_argparse(parser: argparse.ArgumentParser, command: Command):
             flags.append(arg.long)
         kwargs = arg.argparse_info.get_kwargs()
         kwargs.setdefault("default", None)
-        if True:
-            print(f"parser.add_argument({", ".join(flags)}{", " if flags else ""}{", ".join(list(map(lambda k: f"{k}={kwargs[k]}", kwargs.keys())))})")
+        if False:
+            print(
+                f"parser.add_argument({', '.join(flags)}{', ' if flags else ''}"
+                f"{', '.join(list(map(lambda k: f'{k}={kwargs[k]}', kwargs.keys())))})"
+            )
         parser.add_argument(*flags, **kwargs)
 
     # groups have top persist because groups can have mutexes
@@ -447,8 +444,7 @@ def deal_with_argparse(parser: argparse.ArgumentParser, command: Command):
     if (subparser_info := command.subparser_info) is not None:
         subparsers = parser.add_subparsers(**subparser_info.get_kwargs())
         for subcommand in command.subcommands:
-            assert(subcommand.subparser_info is not None)
-            parser = subparsers.add_parser(**subcommand.subparser_info.get_kwargs())
+            parser = subparsers.add_parser(**subcommand.parser_info.get_kwargs())
             deal_with_argparse(parser, subcommand)
 
 
@@ -460,23 +456,27 @@ def create_parser(cls: type, **kwargs):
     return parser
 
 
-def populate_fields(args: list[tuple[str, Any]], obj: type, level: int = 0):
+def populate_fields(args: dict[str, Any], obj: type, level: int = 0):
     command = getattr(obj, COMMAND_DATA)
     assert(isinstance(command, Command))
-    subcommand_args: list[tuple[str, Any]] = []
+    subcommand_args: dict[str, Any] = {}
     for attr_name, value in args:
         if attr_name.count('.') > level:
-            subcommand_args.append((attr_name, value))
+            subcommand_args[attr_name] = value
         else:
             setattr(obj, attr_name, value)
-    if subcommand_args is None:
+    if command.subcommand_dest is None:
+        return
+    if command.subcommand_dest not in args:
+        if not hasattr(obj, command.subcommand_dest):
+            setattr(obj, command.subcommand_dest, None)
         return
     for subcommand in command.subcommands:
         name = subcommand.parser_info.name
-        assert(name is not None)
-        if name == command.subcommand_dest:
+        if name == args[command.subcommand_dest]:
             cls = subcommand.subcommand_class
             assert(cls is not None)
-            obj = cls()
-            populate_fields(subcommand_args, obj, level + 1)
+            subcommand_obj = cls()
+            populate_fields(subcommand_args, subcommand_obj, level + 1)
+            setattr(obj, command.subcommand_dest, subcommand_obj)
             break # since only one subcommand can be present

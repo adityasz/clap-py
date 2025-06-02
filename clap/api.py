@@ -83,7 +83,7 @@ def arguments(
             parser = getattr(cls, PARSER_ATTR)
             parsed_args = parser.parse_args(args)
             obj = cls()
-            populate_fields(parsed_args._get_kwargs(), obj)
+            populate_fields(dict(parsed_args._get_kwargs()), obj)
             return obj
 
         setattr(cls, "parse_args", parse_args)
