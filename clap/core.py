@@ -83,8 +83,8 @@ class _FilterKwargs:
 class Group(_FilterKwargs):
     title: Optional[str] = None
     description: Optional[str] = None
-    prefix_chars: str = "-"
-    conflict_handler: str = "error"
+    prefix_chars: Optional[str] = None
+    conflict_handler: Optional[str] = None
 
 
 @dataclass
@@ -106,7 +106,7 @@ class ArgparseArgInfo(_FilterKwargs):
     required: Optional[bool] = True
     help: Optional[str] = None
     metavar: Optional[str] = None
-    deprecated: bool = False
+    deprecated: Optional[bool] = None
     dest: Optional[str] = None
 
 
@@ -125,7 +125,7 @@ class Argument:
 @dataclass
 class SubcommandInfo(_FilterKwargs):
     name: Optional[str] = None
-    deprecated: bool = False
+    deprecated: Optional[bool] = None
     help: Optional[str] = None
     aliases: Optional[Sequence[str]] = None
 
@@ -150,13 +150,13 @@ class ParserInfo(_FilterKwargs):
     description: Optional[str] = None
     epilog: Optional[str] = None
     parents: Optional[Sequence[argparse.ArgumentParser]] = None
-    formatter_class = argparse.HelpFormatter
-    prefix_chars: str = "-"
+    formatter_class = None
+    prefix_chars: Optional[str] = None
     fromfile_prefix_chars: Optional[str] = None
-    conflict_handler: str = "error"
-    add_help: bool = True
-    allow_abbrev: bool = True
-    exit_on_error: bool = True
+    conflict_handler: Optional[str] = None
+    add_help: Optional[bool] = None
+    allow_abbrev: Optional[bool] = None
+    exit_on_error: Optional[bool] = None
 
 
 @dataclass
@@ -340,6 +340,7 @@ def create_command(cls: type, prefix: str = "") -> Command:
                 print("panic: missed some case")
                 bad_annotation()
         if option is False:
+            # positional argument
             info.required = None
             info.long = info.dest
             info.dest = None
