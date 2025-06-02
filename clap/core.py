@@ -1,5 +1,6 @@
 import argparse
 import ast
+import builtins
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from enum import Enum, EnumType, auto
@@ -12,7 +13,6 @@ from typing import (
     Optional,
     Self,
     Sequence,
-    TypeVar,
     Union,
     get_args,
     get_origin,
@@ -27,15 +27,13 @@ class ColorChoice(Enum):
     Never = auto()
 
 
-SUBCOMMAND_ATTR = "com.github.adityasz.clap_py.subcommand"
+SUBCOMMAND_ATTR = "__com.github.adityasz.clap_py.subcommand__"
 SUBCOMMAND_KWARGS = "__subcommand_kwargs__"
 SUBCOMMAND_DEST = "__subcommand_dest__"
-COMMAND_ATTR = "com.github.adityasz.clap_py.command"
+COMMAND_ATTR = "__com.github.adityasz.clap_py.command__"
 COMMAND_DATA = "__command_data__"
 COMMAND_KWARGS = "__command_kwargs__"
 PARSER_ATTR = "__parser__"
-
-T = TypeVar('T')
 
 
 class _Short:
@@ -70,15 +68,12 @@ _Action = Union[
 
 _Nargs = Union[Literal['?', '*', '+'], int]
 
-T = TypeVar('T')
-U = TypeVar('U')
-
 
 @dataclass
 class _FilterKwargs:
     def get_kwargs(self) -> dict[str, Any]:
         kwargs = asdict(self)
-        for k, v in kwargs.items():
+        for k, v in kwargs.copy().items():
             if v is None:
                 kwargs.pop(k)
         return kwargs
@@ -99,16 +94,16 @@ class MutexGroup:
 
 
 @dataclass
-class ArgparseArgInfo[T, U](_FilterKwargs):
+class ArgparseArgInfo(_FilterKwargs):
     short: Optional[Union[_Short, str]] = None
     long: Optional[Union[_Long, str]] = None
     action: Optional[_Action] = None
     nargs: Optional[_Nargs] = None
-    const: Optional[U] = None
-    default: Optional[U] = None
-    type_: Optional[type[T]] = None
+    const: Optional[Any] = None
+    default: Optional[Any] = None
+    type: Optional[builtins.type] = None
     choices: Optional[Sequence[str]] = None
-    required: bool = True
+    required: Optional[bool] = True
     help: Optional[str] = None
     metavar: Optional[str] = None
     deprecated: bool = False
@@ -117,7 +112,7 @@ class ArgparseArgInfo[T, U](_FilterKwargs):
 
 @dataclass
 class Argument:
-    argparse_info: ArgparseArgInfo = ArgparseArgInfo()
+    argparse_info: ArgparseArgInfo = field(default_factory=ArgparseArgInfo)
     """The kwargs for `parser.add_argument()`."""
 
     group: Optional[Group] = None
@@ -270,10 +265,10 @@ def get_type(type_hint: str) -> ArgType.Base:
     >>> x: Optional[Union[C1, C2, ...]]
     ```
     """
-    if (ty := type(type_hint)) is type:
+    if type(type_hint) is type:
         if is_subcommand(type):
-            return ArgType.SubcommandDest([ty], False)
-        return ArgType.Type(ty)
+            return ArgType.SubcommandDest([type_hint], False)
+        return ArgType.Type(type_hint)
     if type(type_hint) is EnumType:
         choices = list(map(lambda s: s.lower().replace("_", "-"), type_hint.__members__.keys()))
         if len(set(choices)) != len(choices):
@@ -284,7 +279,7 @@ def get_type(type_hint: str) -> ArgType.Base:
     if origin is Union:
         required = True
         for ty in types:
-            if type(ty) is None:
+            if type(None) is ty:
                 required = False
         if is_subcommand_dest(types):
             return ArgType.SubcommandDest(list(types), required)
@@ -315,27 +310,28 @@ def create_command(cls: type, prefix: str = "") -> Command:
             info.help = docstrings.get(field_name, None)
         match ty:
             case ArgType.Type(t):
-                info.type_ = t
                 if t is bool:
                     info.action = "store_true"
                     info.required = False
+                else:
+                    info.type = t
             case ArgType.Enum(choices=choices, choice_to_member=choice_to_member):
-                info.type_ = str
+                info.type = str
                 info.choices = choices
                 arg.choice_to_member = choice_to_member
             case ArgType.List(t):
                 if info.nargs is None:
                     bad_annotation("'nargs' is missing")
-                info.type_ = t
+                info.type = t
             case ArgType.Tuple(t, n):
-                info.type_ = t
+                info.type = t
                 if (nargs := info.nargs) is not None:
                     if nargs != n:
                         bad_annotation(f"nargs = {nargs} != {n}")
                 else:
                     info.nargs = n
             case ArgType.Optional(t):
-                info.type_ = t
+                info.type = t
                 if option:
                     info.required = False
                 else:
@@ -343,6 +339,10 @@ def create_command(cls: type, prefix: str = "") -> Command:
             case _:
                 print("panic: missed some case")
                 bad_annotation()
+        if option is False:
+            info.required = None
+            info.long = info.dest
+            info.dest = None
         if (group := arg.group) is not None:
             command.groups[group].append(arg)
         elif (mutex := arg.mutex) is not None:
@@ -359,7 +359,7 @@ def create_command(cls: type, prefix: str = "") -> Command:
         command.subcommand_class = cls
     docstrings: dict[str, str] = extract_docstrings(cls)
     type_hints = get_type_hints(cls)
-    for field_name, type_hint in type_hints:
+    for field_name, type_hint in type_hints.items():
         try:
             ty = get_type(type_hint)
         except TypeError as e:
@@ -397,12 +397,19 @@ def create_command(cls: type, prefix: str = "") -> Command:
         elif isinstance(value, Argument):
             info = value.argparse_info
             option = False
-            if info.short == short:
-                info.short = field_name[0]
+            if isinstance(info.short, str) and not info.short.startswith("-"):
+                info.short = "-" + info.short
                 option = True
-            if info.long == long:
-                info.long = field_name.lower().replace("_", "-")
+            elif isinstance(info.short, _Short):
+                info.short = "-" + field_name[0].lower()
                 option = True
+            if isinstance(info.long, str) and not info.long.startswith("-"):
+                info.long = "--" + info.long
+                option = True
+            elif isinstance(info.long, _Long):
+                info.long = "--" + field_name.lower().replace("_", "-")
+                option = True
+            arg = value
             process_arg(option)
         else:
             print("panic: missed something")
@@ -416,10 +423,14 @@ def deal_with_argparse(parser: argparse.ArgumentParser, command: Command):
         flags = []
         if info.short is not None:
             flags.append(info.short)
+            info.short = None
         if info.long is not None:
             flags.append(info.long)
+            info.long = None
         kwargs = info.get_kwargs()
         kwargs.setdefault("default", None)
+        if True:
+            print(f"parser.add_argument({", ".join(flags)}{", " if flags else ""}{", ".join(list(map(lambda k: f"{k}={kwargs[k]}", kwargs.keys())))})")
         parser.add_argument(*tuple(flags), **kwargs)
 
     groups = {group_obj: parser.add_argument_group(**group_obj.get_kwargs())
@@ -458,7 +469,7 @@ def populate_fields(args: dict[str, Any], obj: type, level: int = 0):
     command = getattr(obj, COMMAND_DATA)
     assert(isinstance(command, Command))
     subcommand_args: dict[str, Any] = {}
-    for k, v in args.items():
+    for k, v in args:
         if k.count('.') > level:
             subcommand_args[k] = v
         else:

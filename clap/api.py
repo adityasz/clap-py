@@ -1,8 +1,15 @@
+from typing import (
+    Callable,
+    LiteralString,
+    Optional,
+    Self,
+    Sequence,
+    TypeVar,
+    Union,
+    cast,
+)
 
-
-from typing import Callable, Optional, Self, Sequence, TypeVar, Union, cast
-
-from core import (
+from .core import (
     COMMAND_ATTR,
     COMMAND_KWARGS,
     PARSER_ATTR,
@@ -18,7 +25,7 @@ from core import (
     _Nargs,
     _Short,
     create_parser,
-    populate_fields
+    populate_fields,
 )
 
 T = TypeVar('T')
@@ -27,7 +34,7 @@ U = TypeVar('U')
 
 class Parser:
     @classmethod
-    def parse_args(cls: type[Self], args: Optional[list[str]] = None) -> Self:
+    def parse_args(cls: type[Self], args: Optional[Sequence[str]] = None) -> Self:
         ...
 
 
@@ -223,7 +230,7 @@ def arg[T, U](
             nargs=nargs,
             const=const,
             default=default,
-            type_=type,
+            type=type,
             choices=choices,
             required=required or False,
             help=help,
