@@ -424,7 +424,7 @@ def deal_with_argparse(parser: argparse.ArgumentParser, command: Command):
             )
         parser.add_argument(*flags, **kwargs)
 
-    # groups have top persist because groups can have mutexes
+    # groups have to persist because groups can have mutexes
     groups = {group_obj: parser.add_argument_group(**group_obj.get_kwargs())
               for group_obj in command.groups.keys()}
     for group, arguments in command.groups.items():
