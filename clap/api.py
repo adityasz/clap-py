@@ -18,7 +18,7 @@ from .core import (
     Group,
     MutexGroup,
     NargsType,
-    SubparserInfo,
+    SubparsersConfig,
     _LongFlag,
     _ShortFlag,
     apply_parsed_arguments,
@@ -224,7 +224,7 @@ def arg[T, U](
     )
 
 
-def subparser(
+def subparsers(
     title: Optional[str] = None,
     description: Optional[str] = None,
     prog: Optional[str] = None,
@@ -233,7 +233,7 @@ def subparser(
     required: bool = False,
     help: Optional[str] = None,
     metavar: Optional[str] = None
-) -> SubparserInfo:
+) -> SubparsersConfig:
     """Create subparser configuration for command-line sub-commands.
 
     Args:
@@ -253,7 +253,7 @@ def subparser(
         metavar: String presenting available subcommands in help. By default
             it presents subcommands in form `{cmd1, cmd2, ...}`.
     """
-    return SubparserInfo(
+    return SubparsersConfig(
         title=title,
         description=description,
         prog=prog,

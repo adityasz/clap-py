@@ -214,7 +214,7 @@ class Argument:
 
 
 @dataclass
-class SubparserInfo(ConfigBase):
+class SubparsersConfig(ConfigBase):
     title: Optional[str] = None
     description: Optional[str] = None
     prog: Optional[str] = None
@@ -227,7 +227,7 @@ class SubparserInfo(ConfigBase):
 
 
 @dataclass
-class ParserInfo(ConfigBase):
+class ParserConfig(ConfigBase):
     prog: Optional[str] = None
     usage: Optional[str] = None
     description: Optional[str] = None
@@ -249,9 +249,9 @@ class ParserInfo(ConfigBase):
 
 @dataclass
 class Command:
-    parser_info: ParserInfo
+    parser_config: ParserConfig
     """Contains kwargs for argparse.ArgumentParser() and subparsers.add_parser()."""
-    subparser_info: Optional[SubparserInfo] = None
+    subparsers_config: Optional[SubparsersConfig] = None
     """Contains kwargs for parser.add_subparsers() if the command has subcommands."""
     subcommand_class: Optional[type] = None
     """Contains the class if the command is a subcommand."""
@@ -322,7 +322,7 @@ def extract_docstrings(cls: type) -> dict[str, str]:
     try:
         source = dedent(getsource(cls))
     except OSError:
-        # can't get source in an ipykernel
+        # can't get source in an ipykernel for example
         return {}
     tree = ast.parse(source)
     extractor.visit(tree)
@@ -441,7 +441,7 @@ def configure_argument(
     ty: ArgType.Base,
     command: Command,
     field_name: str,
-    prefix: str,
+    command_path: str,
     docstrings: dict[str, str],
 ):
     configure_flags(arg, field_name)
@@ -450,9 +450,9 @@ def configure_argument(
     kwargs = arg.argparse_config
     if arg.short is None and arg.long is None:
         arg.is_positional = True
-        arg.long = prefix + field_name
+        arg.long = command_path + field_name
     else:
-        kwargs.dest = prefix + field_name
+        kwargs.dest = command_path + field_name
     if kwargs.help is None:
         kwargs.help = docstrings.get(field_name)
 
@@ -506,7 +506,7 @@ def configure_subcommands(
     command: Command,
     value: Any,
     field_name: str,
-    prefix: str,
+    command_path: str,
 ):
     if command.subcommand_dest is not None:
         raise TypeError(
@@ -521,25 +521,29 @@ def configure_subcommands(
         else:
             raise TypeError(f"can't assign {type(value)} to subcommand destination")
     else:
-        command.subparser_info = SubparserInfo()
-        command.subparser_info.required = not ty.optional
-    command.subparser_info.dest = prefix + command.subcommand_dest
+        command.subparsers_config = SubparsersConfig()
+        command.subparsers_config.required = not ty.optional
+    # if dest is not provided to add_subparsers(), argparse does not give the
+    # command name, and if a subcommand shares a flag name with the command and
+    # the flag is provided for both of them, argparse simply overwrites it in
+    # the output (argparse.Namespace)
+    command.subparsers_config.dest = command_path + command.subcommand_dest
     for cmd in ty.subcommands:
-        subcommand = create_command(cmd, prefix)
-        name = subcommand.parser_info.name
+        subcommand = create_command(cmd, command_path)
+        name = subcommand.parser_config.name
         assert name is not None
         command.subcommands[name] = subcommand
-        if subcommand.parser_info.aliases:
-            for alias in subcommand.parser_info.aliases:
+        if subcommand.parser_config.aliases:
+            for alias in subcommand.parser_config.aliases:
                 command.subcommand_aliases[alias] = name
 
 
-def create_command(cls: type, prefix: str = "") -> Command:
-    command = Command(ParserInfo(**getattr(cls, _PARSER_CONFIG)))
+def create_command(cls: type, command_path: str = "") -> Command:
+    command = Command(ParserConfig(**getattr(cls, _PARSER_CONFIG)))
 
     if getattr(cls, _SUBCOMMAND_MARKER, False):
-        assert command.parser_info.name is not None
-        prefix += command.parser_info.name + "."
+        assert command.parser_config.name is not None
+        command_path += command.parser_config.name + "."
         command.subcommand_class = cls
 
     for field_name in dir(cls):
@@ -556,17 +560,15 @@ def create_command(cls: type, prefix: str = "") -> Command:
         ty = parse_type_hint(type_hint)
         value = getattr(cls, field_name, None)
         if isinstance(ty, ArgType.SubcommandDest):
-            configure_subcommands(ty, command, value, field_name, prefix)
+            configure_subcommands(ty, command, value, field_name, command_path)
         elif isinstance(value, Group):
-            if value in command.groups:
-                raise RuntimeError(f"group '{value.title}' already exists")
-            command.groups[value] = []
+            continue  # already handled in the previous loop
         elif isinstance(value, MutexGroup):
-            continue
+            continue  # nothing to do
         elif isinstance(value, Argument):
-            configure_argument(value, ty, command, field_name, prefix, docstrings)
+            configure_argument(value, ty, command, field_name, command_path, docstrings)
         elif value is None:
-            configure_argument(Argument(), ty, command, field_name, prefix, docstrings)
+            configure_argument(Argument(), ty, command, field_name, command_path, docstrings)
         else:
             raise TypeError
 
@@ -604,16 +606,16 @@ def configure_parser(parser: argparse.ArgumentParser, command: Command):
         for arg in arguments:
             mutex_group.add_argument(*arg.get_flags(), **arg.get_kwargs())
 
-    if (subparser_info := command.subparser_info) is not None:
+    if (subparser_info := command.subparsers_config) is not None:
         subparsers = parser.add_subparsers(**subparser_info.get_kwargs())
         for subcommand in command.subcommands.values():
-            parser = subparsers.add_parser(**subcommand.parser_info.get_kwargs())
+            parser = subparsers.add_parser(**subcommand.parser_config.get_kwargs())
             configure_parser(parser, subcommand)
 
 
 def create_parser(cls: type, **kwargs):
     command = create_command(cls)
-    parser = argparse.ArgumentParser(**command.parser_info.get_kwargs())
+    parser = argparse.ArgumentParser(**command.parser_config.get_kwargs())
     configure_parser(parser, command)
     return parser
 
@@ -648,7 +650,10 @@ def apply_parsed_arguments(args: dict[str, Any], instance: Any):
             setattr(instance, command.subcommand_dest, None)
         return
 
-    # argparse gives the alias in subparser dest; head exploding emoji
+    # If an alias is used, argparse gives that instead of the subcommand name!
+    # head-exploding-emoji
+    # (If dest is not provided to add_subparsers(), it does not even tell
+    # which command was provided!)
     subcommand_name = cast(str, subcommand_name)
     subcommand_name = command.subcommand_aliases.get(subcommand_name, subcommand_name)
 
