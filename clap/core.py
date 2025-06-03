@@ -92,6 +92,44 @@ ActionType = Union[
 NargsType = Union[Literal['?', '*', '+'], int]
 
 
+class ArgType:
+    class Base: ...
+
+    @dataclass
+    class SimpleType(Base):
+        ty: type
+        optional: bool
+
+    class Enum(Base):
+        def __init__(self, enum: type, optional: bool):
+            members = enum.__members__
+            self.choices = list(
+                map(lambda s: s.lower().replace("_", "-"), members.keys())
+            )
+            if len(set(self.choices)) != len(members):
+                raise TypeError
+            self.choice_to_enum_member: dict[str, type] = {
+                c: m for c, m in zip(self.choices, members.values(), strict=False)
+            }
+            self.optional = optional
+
+    @dataclass
+    class List(Base):
+        ty: type
+        optional: bool
+
+    @dataclass
+    class Tuple(Base):
+        ty: type
+        n: int
+        optional: bool
+
+    @dataclass
+    class SubcommandDest(Base):
+        subcommands: list[type]
+        optional: bool
+
+
 @dataclass
 class _FilterKwargs:
     def get_kwargs(self) -> dict[str, Any]:
@@ -143,12 +181,12 @@ class Argument:
     """The long flag."""
     is_positional: bool = False
     """True if positional argument."""
+    ty: Optional[ArgType.Base] = None
+    """Stores type information for the argument."""
     group: Optional[Group] = None
     """The group for the argument."""
     mutex: Optional[MutexGroup] = None
     """The mutually exclusive group for the argument."""
-    choice_to_enum_member: Optional[dict[str, type]] = None
-    """A map from the (string) choice to the enum member."""
 
 
 @dataclass
@@ -194,8 +232,8 @@ class Command:
     subcommand_class: Optional[type] = None
     """Contains the class if the command is a subcommand."""
 
-    arguments: list[Argument] = field(default_factory=list)
-    subcommands: list[Self] = field(default_factory=list)
+    arguments: dict[str, Argument] = field(default_factory=dict)
+    subcommands: dict[str, Self] = field(default_factory=dict)
     subcommand_dest: Optional[str] = None
     groups: dict[Group, list[Argument]] = field(default_factory=dict)
     mutexes: defaultdict[MutexGroup, list[Argument]] = field(
@@ -232,44 +270,6 @@ def to_kebab_case(name: str) -> str:
     name = re.sub(r'-+', '-', name)
     name = name.strip('-')
     return name
-
-
-class ArgType:
-    class Base: ...
-
-    @dataclass
-    class SimpleType(Base):
-        ty: type
-        optional: bool
-
-    class Enum(Base):
-        def __init__(self, enum: type, optional: bool):
-            members = enum.__members__
-            self.choices = list(
-                map(lambda s: s.lower().replace("_", "-"), members.keys())
-            )
-            if len(set(self.choices)) != len(members):
-                raise TypeError
-            self.choice_to_enum_member: dict[str, type] = {
-                c: m for c, m in zip(self.choices, members.values(), strict=False)
-            }
-            self.optional = optional
-
-    @dataclass
-    class List(Base):
-        ty: type
-        optional: bool
-
-    @dataclass
-    class Tuple(Base):
-        ty: type
-        n: int
-        optional: bool
-
-    @dataclass
-    class SubcommandDest(Base):
-        subcommands: list[type]
-        optional: bool
 
 
 def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
@@ -383,6 +383,7 @@ def process_arg(
 ):
     setup_flags(arg, field_name)
 
+    arg.ty = ty
     kwargs = arg.arg_kwargs
     if arg.short is None and arg.long is None:
         arg.is_positional = True
@@ -397,16 +398,16 @@ def process_arg(
     match ty:
         case ArgType.SimpleType(t):
             if t is bool:
-                kwargs.action = "store_true"
+                if kwargs.action is None:
+                    kwargs.action = "store_true"
             else:
                 kwargs.type = t
-        case ArgType.Enum(choices=choices, choice_to_enum_member=choice_to_enum_member):
+        case ArgType.Enum(choices=choices):
             kwargs.type = str
             kwargs.choices = choices
-            arg.choice_to_enum_member = choice_to_enum_member
         case ArgType.List(t):
-            if kwargs.nargs is None:
-                raise TypeError("'nargs' is missing")
+            if kwargs.nargs is None and kwargs.action == "store":
+                kwargs.nargs = "*"
             kwargs.type = t
         case ArgType.Tuple(t, n):
             command.convert_to_tuple.add(field_name)
@@ -421,12 +422,15 @@ def process_arg(
 
     set_required(arg, ty.optional)
 
+    if kwargs.action in ("store_const", "append_const", "count"):
+        kwargs.type = None
+
     if (group := arg.group) is not None:
         command.groups[group].append(arg)
     elif (mutex := arg.mutex) is not None:
         command.mutexes[mutex].append(arg)
     else:
-        command.arguments.append(arg)
+        command.arguments[field_name] = arg
 
 
 def process_subcommand_dest(
@@ -450,8 +454,11 @@ def process_subcommand_dest(
             raise TypeError(f"can't assign {type(value)} to subcommand destination")
     else:
         command.subparser_info = SubparserInfo()
-    for subcommand in ty.subcommands:
-        command.subcommands.append(create_command(subcommand, prefix))
+    for cmd in ty.subcommands:
+        subcommand = create_command(cmd, prefix)
+        name = subcommand.parser_info.name
+        assert name is not None
+        command.subcommands[name] = subcommand
 
 
 def create_command(cls: type, prefix: str = "") -> Command:
@@ -485,7 +492,7 @@ def create_command(cls: type, prefix: str = "") -> Command:
 
 
 def setup_parser(parser: argparse.ArgumentParser, command: Command):
-    for arg in command.arguments:
+    for arg in command.arguments.values():
         flags = []
         if arg.short is not None:
             flags.append(arg.short)
@@ -518,7 +525,7 @@ def setup_parser(parser: argparse.ArgumentParser, command: Command):
 
     if (subparser_info := command.subparser_info) is not None:
         subparsers = parser.add_subparsers(**subparser_info.get_kwargs())
-        for subcommand in command.subcommands:
+        for subcommand in command.subcommands.values():
             parser = subparsers.add_parser(**subcommand.parser_info.get_kwargs())
             setup_parser(parser, subcommand)
 
@@ -539,10 +546,14 @@ def populate_instance_fields(args: dict[str, Any], instance: Any):
         if attr_name.find('.') != -1:
             subcommand_args[attr_name.split(".", maxsplit=1)[1]] = value
         else:
-            if attr_name in command.convert_to_tuple:
-                setattr(instance, attr_name, tuple(value))
-            else:
-                setattr(instance, attr_name, value)
+            match command.arguments[attr_name].ty:
+                case ArgType.Tuple():
+                    if value is not None:
+                        value = tuple(value)
+                case ArgType.Enum(enum=enum, choice_to_enum_member=choice_to_enum_member):
+                    if value is not None:
+                        value = enum[choice_to_enum_member[value]]
+            setattr(instance, attr_name, value)
 
     # no subcommands
     if command.subcommand_dest is None:
@@ -554,12 +565,9 @@ def populate_instance_fields(args: dict[str, Any], instance: Any):
             setattr(instance, command.subcommand_dest, None)
         return
 
-    # find the subcommand using the name
-    for subcommand in command.subcommands:
-        if subcommand.parser_info.name == args[command.subcommand_dest]:
-            cls = subcommand.subcommand_class
-            assert cls is not None
-            subcommand_obj = cls()
-            populate_instance_fields(subcommand_args, subcommand_obj)
-            setattr(instance, command.subcommand_dest, subcommand_obj)
-            break  # since only one subcommand can be provided
+    # only one subcommand can be provided
+    cls = command.subcommands[command.subcommand_dest].subcommand_class
+    assert cls is not None
+    subcommand_instance = cls()
+    populate_instance_fields(subcommand_args, subcommand_instance)
+    setattr(instance, command.subcommand_dest, subcommand_instance)
