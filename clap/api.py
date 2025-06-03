@@ -315,6 +315,7 @@ def group(
     Returns:
         A `Group` object that can be used to organize related arguments.
     """
+    assert isinstance(title, str)
     return Group(
         title=title,
         description=description,

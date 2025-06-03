@@ -4,7 +4,7 @@ import builtins
 import re
 from collections import defaultdict
 from collections.abc import Sequence
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from enum import Enum, EnumType, auto
 from inspect import getsource
 from textwrap import dedent
@@ -144,16 +144,22 @@ class _FilterKwargs:
 
 @dataclass
 class Group(_FilterKwargs):
-    title: Optional[str] = None
+    title: str
     description: Optional[str] = None
     prefix_chars: Optional[str] = None
     conflict_handler: Optional[str] = None
+
+    def __hash__(self):
+        return hash(self.title)
 
 
 @dataclass
 class MutexGroup:
     parent: Optional[Group] = None
     required: bool = False
+
+    def __hash__(self):
+        return hash(id(self))
 
 
 @dataclass
@@ -188,6 +194,39 @@ class Argument:
     """The group for the argument."""
     mutex: Optional[MutexGroup] = None
     """The mutually exclusive group for the argument."""
+
+    def __repr__(self):
+        attrs = []
+
+        if self.short is not None:
+            attrs.append(f'"{self.short}"' if isinstance(self.short, str) else "short")
+        if self.long is not None:
+            attrs.append(f'"{self.long}"' if isinstance(self.long, str) else "long")
+
+        for attr, val in self.arg_kwargs.get_kwargs().items():
+            attrs.append(f"{attr}={val}")
+
+        for f in fields(self):
+            if (
+                f.name not in ("arg_kwargs", "short", "long", "ty")
+                and (value := getattr(self, f.name)) is not None
+            ):
+                attrs.append(f"{f.name}={value}")
+
+        return f"{self.__class__.__name__}({", ".join(attrs)})"
+
+    def get_flags(self) -> list[str]:
+        flags = []
+        if self.short is not None:
+            flags.append(self.short)
+        if self.long is not None:
+            flags.append(self.long)
+        return flags
+
+    def get_kwargs(self) -> dict[str, Any]:
+        kwargs = self.arg_kwargs.get_kwargs()
+        kwargs.setdefault("default", None)  # to get all `dest`s in the Namespace
+        return kwargs
 
 
 @dataclass
@@ -236,8 +275,8 @@ class Command:
     arguments: dict[str, Argument] = field(default_factory=dict)
     subcommands: dict[str, Self] = field(default_factory=dict)
     subcommand_dest: Optional[str] = None
-    groups: dict[Group, list[Argument]] = field(default_factory=dict)
-    mutexes: defaultdict[MutexGroup, list[Argument]] = field(
+    groups: dict[Group, list[str]] = field(default_factory=dict)
+    mutexes: defaultdict[MutexGroup, list[str]] = field(
         default_factory=lambda: defaultdict(list)
     )
     convert_to_tuple: set[str] = field(default_factory=set)
@@ -393,8 +432,6 @@ def process_arg(
         kwargs.dest = prefix + field_name
     if kwargs.help is None:
         kwargs.help = docstrings.get(field_name)
-    if kwargs.action is None:
-        kwargs.action = "store"
 
     match ty:
         case ArgType.SimpleType(t):
@@ -402,15 +439,23 @@ def process_arg(
                 if kwargs.action is None:
                     kwargs.action = "store_true"
             else:
+                if kwargs.action is None:
+                    kwargs.action = "store"
                 kwargs.type = t
         case ArgType.Enum(choices=choices):
+            if kwargs.action is None:
+                kwargs.action = "store"
             kwargs.type = str
             kwargs.choices = choices
         case ArgType.List(t):
+            if kwargs.action is None:
+                kwargs.action = "store"
             if kwargs.nargs is None and kwargs.action == "store":
                 kwargs.nargs = "*"
             kwargs.type = t
         case ArgType.Tuple(t, n):
+            if kwargs.action is None:
+                kwargs.action = "store"
             command.convert_to_tuple.add(field_name)
             kwargs.type = t
             if (nargs := kwargs.nargs) is not None:
@@ -423,15 +468,16 @@ def process_arg(
 
     set_required(arg, ty.optional)
 
-    if kwargs.action in ("store_const", "append_const", "count"):
+    if kwargs.action in ("store_const", "append_const", "count", "store_true", "store_false"):
         kwargs.type = None
 
+    command.arguments[field_name] = arg
+
+    if (mutex := arg.mutex) is not None:
+        command.mutexes[mutex].append(field_name)
+        return
     if (group := arg.group) is not None:
-        command.groups[group].append(arg)
-    elif (mutex := arg.mutex) is not None:
-        command.mutexes[mutex].append(arg)
-    else:
-        command.arguments[field_name] = arg
+        command.groups[group].append(field_name)
 
 
 def process_subcommand_dest(
@@ -464,21 +510,29 @@ def process_subcommand_dest(
 
 def create_command(cls: type, prefix: str = "") -> Command:
     command = Command(ParserInfo(**getattr(cls, _PARSER_KWARGS)))
+
     if getattr(cls, _SUBCOMMAND_ATTR, False):
         assert command.parser_info.name is not None
         prefix += command.parser_info.name + "."
         command.subcommand_class = cls
 
-    docstrings: dict[str, str] = extract_docstrings(cls)
+    for field_name in dir(cls):
+        value = getattr(cls, field_name, None)
+        if isinstance(value, Group):
+            if value in command.groups:
+                raise ValueError
+            command.groups[value] = []
 
+    docstrings: dict[str, str] = extract_docstrings(cls)
     type_hints = get_type_hints(cls)
+
     for field_name, type_hint in type_hints.items():
         ty = parse_type_hint(type_hint)
         value = getattr(cls, field_name, None)
         if isinstance(ty, ArgType.SubcommandDest):
             process_subcommand_dest(ty, command, value, field_name, prefix)
         elif isinstance(value, Group):
-            if field_name in command.groups:
+            if value in command.groups:
                 raise RuntimeError(f"group '{value.title}' already exists")
             command.groups[value] = []
         elif isinstance(value, MutexGroup):
@@ -489,40 +543,38 @@ def create_command(cls: type, prefix: str = "") -> Command:
             process_arg(Argument(), ty, command, field_name, prefix, docstrings)
         else:
             raise TypeError
+
     return command
 
 
 def setup_parser(parser: argparse.ArgumentParser, command: Command):
     for arg in command.arguments.values():
-        flags = []
-        if arg.short is not None:
-            flags.append(arg.short)
-        if arg.long is not None:
-            flags.append(arg.long)
-        kwargs = arg.arg_kwargs.get_kwargs()
-        kwargs.setdefault("default", None)
-        parser.add_argument(*flags, **kwargs)
+        if arg.group is not None or arg.mutex is not None:
+            continue
+        parser.add_argument(*arg.get_flags(), **arg.get_kwargs())
 
     # groups have to persist because groups can have mutexes
     groups = {
         group_obj: parser.add_argument_group(**group_obj.get_kwargs())
         for group_obj in command.groups
     }
-    for group, arguments in command.groups.items():
-        for arg in arguments:
+    for group, arg_names in command.groups.items():
+        for arg_name in arg_names:
+            arg = command.arguments[arg_name]
             kwargs = arg.arg_kwargs.get_kwargs()
             kwargs.setdefault("default", None)
-            groups[group].add_argument(**kwargs)
+            groups[group].add_argument(*arg.get_flags(), **arg.get_kwargs())
 
-    for mutex, arguments in command.mutexes.items():
+    for mutex, arg_names in command.mutexes.items():
         if mutex.parent is None:
             mutex_group = parser.add_mutually_exclusive_group(required=mutex.required)
         else:
             mutex_group = groups[mutex.parent].add_mutually_exclusive_group(
                 required=mutex.required
             )
-        for arg in arguments:
-            mutex_group.add_argument(**arg.arg_kwargs.get_kwargs())
+        for arg_name in arg_names:
+            arg = command.arguments[arg_name]
+            mutex_group.add_argument(*arg.get_flags(), **arg.get_kwargs())
 
     if (subparser_info := command.subparser_info) is not None:
         subparsers = parser.add_subparsers(**subparser_info.get_kwargs())
