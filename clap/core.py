@@ -85,7 +85,7 @@ class ArgType:
                 map(to_kebab_case, members.keys())
             )
             if len(set(self.choices)) != len(members):
-                raise TypeError
+                raise TypeError("Cannot uniquely extract choices from this Enum.")
             self.choice_to_enum_member: dict[str, type] = {
                 c: m for c, m in zip(self.choices, members.values(), strict=False)
             }
@@ -272,15 +272,16 @@ def is_subcommand(cls: type) -> bool:
 
 
 def contains_subcommands(types: list[type]) -> bool:
+    error_msg = "Field contains a mixture of subcommands and other types."
     flag = None
     for ty in types:
         if is_subcommand(ty):
             if flag is False:
-                raise TypeError
+                raise TypeError(error_msg)
             flag = True
         else:
             if flag is True:
-                raise TypeError
+                raise TypeError(error_msg)
             flag = False
     return bool(flag)
 
@@ -348,7 +349,7 @@ def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
         if contains_subcommands(subcommands):
             return ArgType.SubcommandDest(subcommands, optional)
         if len(types) != 2 or not optional:
-            raise TypeError
+            raise TypeError(f"{type_hint}: Unions can only contain subcommands.")
         if type(None) is types[0]:
             return parse_type_hint(types[1], True)
         elif type(None) is types[1]:
@@ -358,11 +359,9 @@ def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
     if origin is tuple:
         for ty in types:
             if ty != (types[0]):
-                raise TypeError
-        if (n := len(types)) == 1:
-            raise TypeError
-        return ArgType.Tuple(types[0], n, optional)
-    raise TypeError
+                raise TypeError("Heterogenous tuples are not supported.")
+        return ArgType.Tuple(types[0], len(types), optional)
+    raise TypeError(f"Could not parse {type_hint}.")
 
 
 def configure_flags(arg: Argument, field_name: str):
@@ -393,33 +392,35 @@ def configure_action_behavior(arg: Argument, optional_type_hint: bool):
             if kwargs.required is None:
                 kwargs.required = False
             if optional_type_hint:
-                raise TypeError
+                raise TypeError(
+                    "An argument with the 'count' action cannot be None. If no default is provided, it is set to 0."
+                )
         case "store":
             if kwargs.required is not None:
                 if kwargs.required and optional_type_hint:
-                    raise TypeError
+                    raise TypeError("An argument with 'required=True' can never be None.")
                 return
             if kwargs.default is not None and optional_type_hint:
-                raise TypeError
+                raise TypeError("An argument with a default value can never be None.")
             if kwargs.default is None:
                 kwargs.required = not optional_type_hint
         case "store_const":
             if kwargs.default is not None:
                 if optional_type_hint:
-                    raise TypeError
+                    raise TypeError("An argument with a default value can never be None.")
                 kwargs.required = False
             if kwargs.required is None:
                 kwargs.required = not optional_type_hint
         case "store_false":
             if optional_type_hint:
-                raise TypeError
+                raise TypeError("An argument with the 'store_false' action can never be None.")
             if kwargs.default is None:
                 kwargs.default = True
             if kwargs.required is None:
                 kwargs.required = False
         case "store_true":
             if optional_type_hint:
-                raise TypeError
+                raise TypeError("An argument with the 'store_true' action can never be None.")
             if kwargs.default is None:
                 kwargs.default = False
             if kwargs.required is None:
@@ -428,7 +429,9 @@ def configure_action_behavior(arg: Argument, optional_type_hint: bool):
     if arg.is_positional:
         if optional_type_hint:
             if (nargs := kwargs.nargs) is not None and nargs != '?':
-                raise TypeError
+                raise TypeError(
+                    "A positional argument with 'nargs != ?' can never be None; an empty list is returned when no argument is provided with 'nargs != ?'."
+                )
             kwargs.nargs = '?'
         kwargs.required = None
 
@@ -483,11 +486,11 @@ def configure_argument(
             kwargs.type = t
             if (nargs := kwargs.nargs) is not None:
                 if nargs != n:
-                    raise TypeError(f"nargs = {nargs} != {n}")
+                    raise TypeError(f"The tuple has {n} values but 'nargs' is set to {nargs}.")
             else:
                 kwargs.nargs = n
         case _:
-            raise TypeError
+            raise TypeError("An unknown error occurred.")
 
     configure_action_behavior(arg, ty.optional)
 
@@ -495,7 +498,12 @@ def configure_argument(
 
     if (mutex := arg.mutex) is not None:
         if (group := arg.group) is not None and mutex.parent != group:
-            raise ValueError
+            raise ValueError(
+                "The mutex group's parent group ('{}') is different from this "
+                "argument's group ('{}'). It is not necessary to provide the "
+                "group when the mutex group is already provided because the "
+                "mutex group must have the same parent as the given group."
+            )
         command.mutexes[mutex].append(arg)
     elif (group := arg.group) is not None:
         command.groups[group].append(arg)
@@ -510,16 +518,22 @@ def configure_subcommands(
 ):
     if command.subcommand_dest is not None:
         raise TypeError(
-            f"{command.subcommand_dest} is already the subcommand destination"
+            f"'{command.subcommand_dest}' is already the subcommand destination."
         )
     command.subcommand_dest = field_name
     if value is not None:
-        if isinstance(value, SubparserInfo):
-            command.subparser_info = value
-            if command.subparser_info.required == ty.optional:
-                raise TypeError("check 'required'")
+        if isinstance(value, SubparsersConfig):
+            command.subparsers_config = value
+            if command.subparsers_config.required == ty.optional:
+                raise TypeError(
+                    f"'required' is set to {ty.optional} but the annotation says that "
+                    f"the subcommand is {"" if ty.optional else "not "}optional."
+                )
         else:
-            raise TypeError(f"can't assign {type(value)} to subcommand destination")
+            raise TypeError(
+                f"{field_name} is a subcommand destination based on the annotation; "
+                f"cannot assign {type(value)} to it."
+            )
     else:
         command.subparsers_config = SubparsersConfig()
         command.subparsers_config.required = not ty.optional
@@ -550,7 +564,7 @@ def create_command(cls: type, command_path: str = "") -> Command:
         value = getattr(cls, field_name, None)
         if isinstance(value, Group):
             if value in command.groups:
-                raise ValueError
+                raise ValueError(f"A group with title '{value.title}' already exists.")
             command.groups[value] = []
 
     docstrings: dict[str, str] = extract_docstrings(cls)
@@ -570,7 +584,9 @@ def create_command(cls: type, command_path: str = "") -> Command:
         elif value is None:
             configure_argument(Argument(), ty, command, field_name, command_path, docstrings)
         else:
-            raise TypeError
+            raise TypeError(
+                "Can only assign 'arg(...)', 'group(...)', 'mutex(...)', or 'subparsers(...)' to a field of an arguments class."
+            )
 
     setattr(cls, _COMMAND_DATA, command)
     return command
