@@ -9,8 +9,6 @@ from clap import arg, long, short
 
 
 class TestBasicArgumentParsing(unittest.TestCase):
-    """Test basic argument parsing functionality."""
-
     def test_positional_path_argument(self):
         @clap.arguments
         class Cli(clap.Parser):
@@ -18,6 +16,9 @@ class TestBasicArgumentParsing(unittest.TestCase):
 
         args = Cli.parse_args(['/tmp/test.txt'])
         self.assertEqual(args.file, Path('/tmp/test.txt'))
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args([])
 
     def test_optional_positional_argument(self):
         @clap.arguments
@@ -98,25 +99,27 @@ class TestBasicArgumentParsing(unittest.TestCase):
     def test_argument_with_default_value(self):
         @clap.arguments
         class Cli(clap.Parser):
-            count: int = arg(long, default=42)
+            asdf: int = arg(long, default=42)
 
         args = Cli.parse_args([])
-        self.assertEqual(args.count, 42)
+        self.assertEqual(args.asdf, 42)
 
-        args = Cli.parse_args(['--count', '100'])
-        self.assertEqual(args.count, 100)
+        args = Cli.parse_args(['--asdf', '100'])
+        self.assertEqual(args.asdf, 100)
 
-
-class TestArgumentErrors(unittest.TestCase):
-    """Test error handling for invalid arguments."""
-
-    def test_missing_required_positional(self):
+    def test_const_default(self):
         @clap.arguments
         class Cli(clap.Parser):
-            name: str
+            output: str = arg(long, nargs="?", const="stdout", default="file.txt")
 
-        with self.assertRaises(SystemExit):
-            Cli.parse_args([])
+        args = Cli.parse_args([])
+        self.assertEqual(args.output, "file.txt")
+
+        args = Cli.parse_args(["--output"])
+        self.assertEqual(args.output, "stdout")
+
+        args = Cli.parse_args(["--output", "custom.txt"])
+        self.assertEqual(args.output, "custom.txt")
 
 
 if __name__ == '__main__':

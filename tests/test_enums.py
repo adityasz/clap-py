@@ -1,5 +1,3 @@
-"""Tests for enum argument parsing."""
-
 import unittest
 from enum import Enum, auto
 from typing import Optional
@@ -31,9 +29,7 @@ class PascalEnum(Enum):
     HAtom = auto()
 
 
-class TestBuiltinEnums(unittest.TestCase):
-    """Test built-in enum types."""
-
+class TestEnums(unittest.TestCase):
     def test_color_choice_enum(self):
         @clap.arguments
         class Cli(clap.Parser):
@@ -58,10 +54,6 @@ class TestBuiltinEnums(unittest.TestCase):
 
         args = Cli.parse_args(["--color", "always"])
         self.assertEqual(args.color, ColorChoice.Always)
-
-
-class TestCustomEnums(unittest.TestCase):
-    """Test custom enum types."""
 
     def test_enum_kebab_conversion(self):
         @clap.arguments
@@ -113,8 +105,6 @@ class TestCustomEnums(unittest.TestCase):
 
 
 class TestEnumErrors(unittest.TestCase):
-    """Test error handling for enum arguments."""
-
     def test_invalid_enum_value(self):
         @clap.arguments
         class Cli(clap.Parser):
@@ -125,8 +115,6 @@ class TestEnumErrors(unittest.TestCase):
 
 
 class TestKebabCaseConversion(unittest.TestCase):
-    """Test the to_kebab_case function directly."""
-
     def test_pascal_case(self):
         self.assertEqual(to_kebab_case("PascalCase"), "pascal-case")
         self.assertEqual(to_kebab_case("HTTPSConnection"), "https-connection")
