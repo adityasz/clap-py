@@ -109,7 +109,7 @@ class TestBasicArgumentParsing(unittest.TestCase):
     def test_argument_with_default_value(self):
         @clap.arguments
         class Cli(clap.Parser):
-            count: Optional[int] = arg(long, default=42)
+            count: int = arg(long, default=42)
 
         args = Cli.parse_args([])
         self.assertEqual(args.count, 42)

@@ -1,7 +1,9 @@
 import argparse
 import ast
 import builtins
+import re
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from enum import Enum, EnumType, auto
 from inspect import getsource
@@ -9,10 +11,8 @@ from textwrap import dedent
 from typing import (
     Any,
     Literal,
-    NoReturn,
     Optional,
     Self,
-    Sequence,
     Union,
     get_args,
     get_origin,
@@ -32,6 +32,30 @@ class ColorChoice(Enum):
     Auto = auto()
     Always = auto()
     Never = auto()
+
+
+class DocstringExtractor(ast.NodeVisitor):
+    def __init__(self):
+        self.docstrings: dict[str, str] = {}
+
+    def visit_ClassDef(self, node):
+        for stmt_1, stmt_2 in zip(node.body[:-1], node.body[1:], strict=False):
+            if (
+                isinstance(stmt_1, ast.AnnAssign)
+                and isinstance(stmt_1.target, ast.Name)
+                and isinstance(stmt_2, ast.Expr)
+                and isinstance(stmt_2.value, ast.Constant)
+                and isinstance(stmt_2.value.value, str)
+            ):
+                self.docstrings[stmt_1.target.id] = stmt_2.value.value
+
+
+def extract_docstrings(cls: type) -> dict[str, str]:
+    extractor = DocstringExtractor()
+    source = dedent(getsource(cls))
+    tree = ast.parse(source)
+    extractor.visit(tree)
+    return extractor.docstrings
 
 
 class _ShortFlag:
@@ -64,6 +88,7 @@ ActionType = Union[
     ]
 ]
 
+
 NargsType = Union[Literal['?', '*', '+'], int]
 
 
@@ -71,10 +96,11 @@ NargsType = Union[Literal['?', '*', '+'], int]
 class _FilterKwargs:
     def get_kwargs(self) -> dict[str, Any]:
         kwargs = asdict(self)
-        for k, v in kwargs.copy().items():
-            if v is None:
-                kwargs.pop(k)
-        return kwargs
+        res = {}
+        for k, v in kwargs.items():
+            if v is not None:
+                res[k] = v
+        return res
 
 
 @dataclass
@@ -92,14 +118,14 @@ class MutexGroup:
 
 
 @dataclass
-class ArgparseArgInfo(_FilterKwargs):
+class ArgKwargs(_FilterKwargs):
     action: Optional[ActionType] = None
     nargs: Optional[NargsType] = None
     const: Optional[Any] = None
     default: Optional[Any] = None
     type: Optional[builtins.type] = None
     choices: Optional[Sequence[str]] = None
-    required: Optional[bool] = True
+    required: Optional[bool] = None
     help: Optional[str] = None
     metavar: Optional[str] = None
     deprecated: Optional[bool] = None
@@ -108,13 +134,15 @@ class ArgparseArgInfo(_FilterKwargs):
 
 @dataclass
 class Argument:
-    argparse_info: ArgparseArgInfo = field(default_factory=ArgparseArgInfo)
+    arg_kwargs: ArgKwargs = field(default_factory=ArgKwargs)
     """The kwargs for `parser.add_argument()`."""
 
     short: Optional[Union[_ShortFlag, str]] = None
     """The short flag."""
     long: Optional[Union[_LongFlag, str]] = None
     """The long flag."""
+    is_positional: bool = False
+    """True if positional argument."""
     group: Optional[Group] = None
     """The group for the argument."""
     mutex: Optional[MutexGroup] = None
@@ -150,7 +178,7 @@ class ParserInfo(_FilterKwargs):
     add_help: Optional[bool] = None
     allow_abbrev: Optional[bool] = None
     exit_on_error: Optional[bool] = None
-    # The following are used by subcommands:
+    # The following are used by subcommands (subparsers.add_parser()):
     name: Optional[str] = None
     deprecated: Optional[bool] = None
     help: Optional[str] = None
@@ -173,30 +201,7 @@ class Command:
     mutexes: defaultdict[MutexGroup, list[Argument]] = field(
         default_factory=lambda: defaultdict(list)
     )
-
-
-class DocstringExtractor(ast.NodeVisitor):
-    def __init__(self):
-        self.docstrings: dict[str, str] = {}
-
-    def visit_ClassDef(self, node):
-        for stmt_1, stmt_2 in zip(node.body[:-1], node.body[1:]):
-            if (
-                isinstance(stmt_1, ast.AnnAssign)
-                and isinstance(stmt_1.target, ast.Name)
-                and isinstance(stmt_2, ast.Expr)
-                and isinstance(stmt_2.value, ast.Constant)
-                and isinstance(stmt_2.value.value, str)
-            ):
-                self.docstrings[stmt_1.target.id] = stmt_2.value.value
-
-
-def extract_docstrings(cls: type) -> dict[str, str]:
-    extractor = DocstringExtractor()
-    source = dedent(getsource(cls))
-    tree = ast.parse(source)
-    extractor.visit(tree)
-    return extractor.docstrings
+    convert_to_tuple: set[str] = field(default_factory=set)
 
 
 def is_subcommand(cls: type) -> bool:
@@ -219,107 +224,153 @@ def contains_subcommand(types: tuple[type]) -> bool:
     return bool(flag)
 
 
+def to_kebab_case(name: str) -> str:
+    name = name.replace('_', '-')  # snake_case, SCREAMING_SNAKE_CASE
+    name = re.sub(r'([a-z0-9])([A-Z])', r'\1-\2', name)  # camelCase, PascalCase
+    name = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1-\2', name)  # HTTPSConnection -> HTTPS-Connection
+    name = name.lower()
+    name = re.sub(r'-+', '-', name)
+    name = name.strip('-')
+    return name
+
+
 class ArgType:
     class Base: ...
 
     @dataclass
     class SimpleType(Base):
         ty: type
+        optional: bool
 
     class Enum(Base):
-        def __init__(self, enum: type):
+        def __init__(self, enum: type, optional: bool):
             members = enum.__members__
-            self.choices = list(map(lambda s: s.lower().replace("_", "-"), members.keys()))
+            self.choices = list(
+                map(lambda s: s.lower().replace("_", "-"), members.keys())
+            )
             if len(set(self.choices)) != len(members):
                 raise TypeError
             self.choice_to_enum_member: dict[str, type] = {
-                c: m for c, m in zip(self.choices, members.values())
+                c: m for c, m in zip(self.choices, members.values(), strict=False)
             }
-
-    @dataclass
-    class Optional(Base):
-        ty: type
+            self.optional = optional
 
     @dataclass
     class List(Base):
         ty: type
+        optional: bool
 
     @dataclass
     class Tuple(Base):
         ty: type
         n: int
+        optional: bool
 
     @dataclass
     class SubcommandDest(Base):
         subcommands: list[type]
-        required: bool
+        optional: bool
 
 
-def parse_type_hint(type_hint: str) -> ArgType.Base:
-    """
-    Supported type annotations:
-
-    ```python
-    >>> x: T
-    >>> x: Optional[T]
-    >>> x: list[T]
-    >>> x: tuple[T, ...]
-    >>> # Subcommands:
-    >>> x: C1
-    >>> x: Optional[C1]
-    >>> x: Union[C1, C2, ...]
-    >>> x: Optional[Union[C1, C2, ...]]
-    ```
-    """
+def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
     if type(type_hint) is type:
         if is_subcommand(type):
-            return ArgType.SubcommandDest([type_hint], False)
-        return ArgType.SimpleType(type_hint)
+            return ArgType.SubcommandDest([type_hint], optional)
+        return ArgType.SimpleType(type_hint, optional)
     if type(type_hint) is EnumType:
-        return ArgType.Enum(type_hint)
+        return ArgType.Enum(type_hint, optional)
     origin = get_origin(type_hint)
     types = get_args(type_hint)
     if origin is Union:
-        required = True
         for ty in types:
             if type(None) is ty:
-                required = False
+                optional = True
         if contains_subcommand(types):
-            return ArgType.SubcommandDest(list(types), required)
-        if len(types) != 2 or required:
+            return ArgType.SubcommandDest(list(types), optional)
+        if len(types) != 2 or not optional:
             raise TypeError
-        return ArgType.Optional(types[0])
+        if type(None) is types[0]:
+            return parse_type_hint(types[1], True)
+        elif type(None) is types[1]:
+            return parse_type_hint(types[0], True)
     if origin is list:
-        return ArgType.List(types[0])
+        return ArgType.List(types[0], optional)
     if origin is tuple:
         for ty in types:
-            if ty != types[0]:
+            if ty != (types[0]):
                 raise TypeError
-        return ArgType.Tuple(types[0], len(types))
+        if (n := len(types)) == 1:
+            raise TypeError
+        return ArgType.Tuple(types[0], n, optional)
     raise TypeError
 
 
-def generate_flags(arg: Argument, field_name: str) -> bool:
-    """Sets short and long flags of the argument.
-
-    Returns:
-        True if the given argument is a positional argument (no flags found),
-        False otherwise.
-    """
-    is_positional: bool = True
-    if isinstance(arg.short, str) and not arg.short.startswith("-"):
-        arg.short = "-" + arg.short
-        is_positional = False
-    elif isinstance(arg.short, _ShortFlag):
+def setup_flags(arg: Argument, field_name: str):
+    """Sets short and long flags of the argument."""
+    if isinstance(arg.short, _ShortFlag):
         arg.short = "-" + field_name[0].lower()
-        is_positional = False
-    if isinstance(arg.long, str) and not arg.long.startswith("-"):
-        arg.long = "--" + arg.long
-        is_positional = False
-    elif isinstance(arg.long, _LongFlag):
+    elif isinstance(arg.short, str) and not arg.short.startswith("-"):
+        arg.short = "-" + arg.short
+
+    if isinstance(arg.long, _LongFlag):
         arg.long = "--" + field_name.lower().replace("_", "-")
-        is_positional = False
-    return is_positional
+    elif isinstance(arg.long, str) and not arg.long.startswith("-"):
+        arg.long = "--" + arg.long
+
+
+def set_required(arg: Argument, optional_type_hint: bool):
+    kwargs = arg.arg_kwargs
+
+    match kwargs.action:
+        case "append" | "append_const" | "extend":
+            if not optional_type_hint and not kwargs.default:
+                kwargs.default = []
+            if kwargs.required is None:
+                kwargs.required = False
+        case "count":
+            if kwargs.default is None:
+                kwargs.default = 0
+            if kwargs.required is None:
+                kwargs.required = False
+            if optional_type_hint:
+                raise TypeError
+        case "store":
+            if kwargs.required is not None:
+                if kwargs.required and optional_type_hint:
+                    raise TypeError
+                return
+            if kwargs.default is not None and optional_type_hint:
+                raise TypeError
+            if kwargs.default is None:
+                kwargs.required = not optional_type_hint
+        case "store_const":
+            if kwargs.default is not None:
+                if optional_type_hint:
+                    raise TypeError
+                kwargs.required = False
+            if kwargs.required is None:
+                kwargs.required = not optional_type_hint
+        case "store_false":
+            if optional_type_hint:
+                raise TypeError
+            if kwargs.default is None:
+                kwargs.default = True
+            if kwargs.required is None:
+                kwargs.required = False
+        case "store_true":
+            if optional_type_hint:
+                raise TypeError
+            if kwargs.default is None:
+                kwargs.default = False
+            if kwargs.required is None:
+                kwargs.required = False
+
+    if arg.is_positional:
+        if optional_type_hint:
+            if (nargs := kwargs.nargs) is not None and nargs != '?':
+                raise TypeError
+            kwargs.nargs = '?'
+        kwargs.required = None
 
 
 def process_arg(
@@ -329,47 +380,47 @@ def process_arg(
     field_name: str,
     prefix: str,
     docstrings: dict[str, str],
-    is_positional: bool = True,
 ):
-    info = arg.argparse_info
-    info.dest = prefix + field_name
-    if info.help is None:
-        info.help = docstrings.get(field_name, None)
+    setup_flags(arg, field_name)
+
+    kwargs = arg.arg_kwargs
+    if arg.short is None and arg.long is None:
+        arg.is_positional = True
+        arg.long = prefix + field_name
+    else:
+        kwargs.dest = prefix + field_name
+    if kwargs.help is None:
+        kwargs.help = docstrings.get(field_name)
+    if kwargs.action is None:
+        kwargs.action = "store"
+
     match ty:
         case ArgType.SimpleType(t):
             if t is bool:
-                info.action = "store_true"
-                info.required = False
+                kwargs.action = "store_true"
             else:
-                info.type = t
+                kwargs.type = t
         case ArgType.Enum(choices=choices, choice_to_enum_member=choice_to_enum_member):
-            info.type = str
-            info.choices = choices
+            kwargs.type = str
+            kwargs.choices = choices
             arg.choice_to_enum_member = choice_to_enum_member
         case ArgType.List(t):
-            if info.nargs is None:
+            if kwargs.nargs is None:
                 raise TypeError("'nargs' is missing")
-            info.type = t
+            kwargs.type = t
         case ArgType.Tuple(t, n):
-            info.type = t
-            if (nargs := info.nargs) is not None:
+            command.convert_to_tuple.add(field_name)
+            kwargs.type = t
+            if (nargs := kwargs.nargs) is not None:
                 if nargs != n:
                     raise TypeError(f"nargs = {nargs} != {n}")
             else:
-                info.nargs = n
-        case ArgType.Optional(t):
-            info.type = t
-            if is_positional:
-                info.nargs = '?'
-            else:
-                info.required = False
+                kwargs.nargs = n
         case _:
-            print("panic: missed some case")
             raise TypeError
-    if is_positional:
-        info.required = None
-        arg.long = info.dest
-        info.dest = None
+
+    set_required(arg, ty.optional)
+
     if (group := arg.group) is not None:
         command.groups[group].append(arg)
     elif (mutex := arg.mutex) is not None:
@@ -393,7 +444,7 @@ def process_subcommand_dest(
     if value is not None:
         if isinstance(value, SubparserInfo):
             command.subparser_info = value
-            if command.subparser_info != ty.required:
+            if command.subparser_info != ty.optional:
                 raise TypeError("check 'required'")
         else:
             raise TypeError(f"can't assign {type(value)} to subcommand destination")
@@ -406,7 +457,7 @@ def process_subcommand_dest(
 def create_command(cls: type, prefix: str = "") -> Command:
     command = Command(ParserInfo(**getattr(cls, _PARSER_KWARGS)))
     if getattr(cls, _SUBCOMMAND_ATTR, False):
-        assert(command.parser_info.name is not None)
+        assert command.parser_info.name is not None
         prefix += command.parser_info.name + "."
         command.subcommand_class = cls
 
@@ -414,30 +465,22 @@ def create_command(cls: type, prefix: str = "") -> Command:
 
     type_hints = get_type_hints(cls)
     for field_name, type_hint in type_hints.items():
-        try:
-            ty = parse_type_hint(type_hint)
-            value = getattr(cls, field_name, None)
-            if isinstance(ty, ArgType.SubcommandDest):
-                process_subcommand_dest(ty, command, value, field_name, prefix)
-            elif isinstance(value, Group):
-                if field_name in command.groups:
-                    raise RuntimeError(f"group '{value.title}' already exists")
-                command.groups[value] = []
-            elif isinstance(value, MutexGroup):
-                continue
-            elif isinstance(value, Argument):
-                is_positional = generate_flags(value, field_name)
-                process_arg(value, ty, command, field_name, prefix, docstrings, is_positional)
-            elif value is None:
-                process_arg(Argument(), ty, command, field_name, prefix, docstrings)
-            else:
-                print("panic: missed something")
-                raise TypeError
-        except TypeError as e:
-            raise TypeError(
-                f"bad type annotation '{field_name}: {type_hint}'"
-                f"{": " if str(e) else ""}{str(e)}"
-            )
+        ty = parse_type_hint(type_hint)
+        value = getattr(cls, field_name, None)
+        if isinstance(ty, ArgType.SubcommandDest):
+            process_subcommand_dest(ty, command, value, field_name, prefix)
+        elif isinstance(value, Group):
+            if field_name in command.groups:
+                raise RuntimeError(f"group '{value.title}' already exists")
+            command.groups[value] = []
+        elif isinstance(value, MutexGroup):
+            continue
+        elif isinstance(value, Argument):
+            process_arg(value, ty, command, field_name, prefix, docstrings)
+        elif value is None:
+            process_arg(Argument(), ty, command, field_name, prefix, docstrings)
+        else:
+            raise TypeError
     return command
 
 
@@ -448,20 +491,18 @@ def setup_parser(parser: argparse.ArgumentParser, command: Command):
             flags.append(arg.short)
         if arg.long is not None:
             flags.append(arg.long)
-        kwargs = arg.argparse_info.get_kwargs()
+        kwargs = arg.arg_kwargs.get_kwargs()
         kwargs.setdefault("default", None)
-        # print(
-        #     f"parser.add_argument({', '.join(flags)}{', ' if flags else ''}"
-        #     f"{', '.join(list(map(lambda k: f'{k}={kwargs[k]}', kwargs.keys())))})"
-        # )
         parser.add_argument(*flags, **kwargs)
 
     # groups have to persist because groups can have mutexes
-    groups = {group_obj: parser.add_argument_group(**group_obj.get_kwargs())
-              for group_obj in command.groups.keys()}
+    groups = {
+        group_obj: parser.add_argument_group(**group_obj.get_kwargs())
+        for group_obj in command.groups
+    }
     for group, arguments in command.groups.items():
         for arg in arguments:
-            kwargs = arg.argparse_info.get_kwargs()
+            kwargs = arg.arg_kwargs.get_kwargs()
             kwargs.setdefault("default", None)
             groups[group].add_argument(**kwargs)
 
@@ -469,9 +510,11 @@ def setup_parser(parser: argparse.ArgumentParser, command: Command):
         if mutex.parent is None:
             mutex_group = parser.add_mutually_exclusive_group(required=mutex.required)
         else:
-            mutex_group = groups[mutex.parent].add_mutually_exclusive_group(required=mutex.required)
+            mutex_group = groups[mutex.parent].add_mutually_exclusive_group(
+                required=mutex.required
+            )
         for arg in arguments:
-            mutex_group.add_argument(**arg.argparse_info.get_kwargs())
+            mutex_group.add_argument(**arg.arg_kwargs.get_kwargs())
 
     if (subparser_info := command.subparser_info) is not None:
         subparsers = parser.add_subparsers(**subparser_info.get_kwargs())
@@ -488,16 +531,21 @@ def create_parser(cls: type, **kwargs):
     return parser
 
 
-def populate_instance_fields(args: dict[str, Any], instance: Any, depth: int = 0):
+def populate_instance_fields(args: dict[str, Any], instance: Any):
     command: Command = getattr(instance, _COMMAND_DATA)
     subcommand_args: dict[str, Any] = {}
+
     for attr_name, value in args.items():
-        if attr_name.count('.') > depth:
-            subcommand_args[attr_name] = value
+        if attr_name.find('.') != -1:
+            subcommand_args[attr_name.split(".", maxsplit=1)[1]] = value
         else:
-            setattr(instance, attr_name, value)
+            if attr_name in command.convert_to_tuple:
+                setattr(instance, attr_name, tuple(value))
+            else:
+                setattr(instance, attr_name, value)
+
+    # no subcommands
     if command.subcommand_dest is None:
-        # no subcommands
         return
 
     # subcommand not provided
@@ -510,8 +558,8 @@ def populate_instance_fields(args: dict[str, Any], instance: Any, depth: int = 0
     for subcommand in command.subcommands:
         if subcommand.parser_info.name == args[command.subcommand_dest]:
             cls = subcommand.subcommand_class
-            assert(cls is not None)
+            assert cls is not None
             subcommand_obj = cls()
-            populate_instance_fields(subcommand_args, subcommand_obj, depth + 1)
+            populate_instance_fields(subcommand_args, subcommand_obj)
             setattr(instance, command.subcommand_dest, subcommand_obj)
             break  # since only one subcommand can be provided
