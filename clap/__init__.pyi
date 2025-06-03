@@ -2,7 +2,7 @@ import argparse
 from collections.abc import Callable, Sequence
 from typing import Any, Optional, TypeVar, Union, overload
 
-from .api import Group, MutexGroup, Parser, group, mutex_group
+from .api import Group, MutexGroup, Parser, group, mutex_group, subparsers
 from .core import ActionType, ColorChoice, NargsType, _LongFlag, _ShortFlag, long, short
 
 __all__ = [
@@ -13,6 +13,7 @@ __all__ = [
     "group",
     "mutex_group",
     "subcommand",
+    "subparsers",
     "short",
     "long"
 ]
