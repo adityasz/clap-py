@@ -44,6 +44,15 @@ class TestEnums(unittest.TestCase):
         args = Cli.parse_args(["never"])
         self.assertEqual(args.color, ColorChoice.Never)
 
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["invalid"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args([])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["Auto"])
+
     def test_optional_color_choice(self):
         @clap.arguments
         class Cli(clap.Parser):
@@ -54,6 +63,12 @@ class TestEnums(unittest.TestCase):
 
         args = Cli.parse_args(["--color", "always"])
         self.assertEqual(args.color, ColorChoice.Always)
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--color"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--color", "invalid"])
 
     def test_enum_kebab_conversion(self):
         @clap.arguments
@@ -78,6 +93,15 @@ class TestEnums(unittest.TestCase):
         args = Cli.parse_args(["h-atom"])
         self.assertEqual(args.option, PascalEnum.HAtom)
 
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["OptionOne"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["option_one"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["non-existent"])
+
     def test_optional_enum(self):
         @clap.arguments
         class Cli(clap.Parser):
@@ -92,6 +116,15 @@ class TestEnums(unittest.TestCase):
         args = Cli.parse_args(["--priority", "high"])
         self.assertEqual(args.priority, Priority.High)
 
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["-p", "urgent"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["-p"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--priority", "High"])
+
     def test_enum_with_default(self):
         @clap.arguments
         class Cli(clap.Parser):
@@ -103,6 +136,12 @@ class TestEnums(unittest.TestCase):
         args = Cli.parse_args(["--level", "error"])
         self.assertEqual(args.level, LogLevel.Error)
 
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--level", "fatal"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--level"])
+
 
 class TestEnumErrors(unittest.TestCase):
     def test_invalid_enum_value(self):
@@ -112,6 +151,12 @@ class TestEnumErrors(unittest.TestCase):
 
         with self.assertRaises(SystemExit):
             Cli.parse_args(["invalid"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args([""])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["low", "medium"])
 
 
 class TestKebabCaseConversion(unittest.TestCase):
@@ -146,10 +191,15 @@ class TestKebabCaseConversion(unittest.TestCase):
         self.assertEqual(to_kebab_case("AbC"), "ab-c")
         self.assertEqual(to_kebab_case("a"), "a")
         self.assertEqual(to_kebab_case("aB"), "a-b")
+        self.assertEqual(to_kebab_case(""), "")
+        self.assertEqual(to_kebab_case("option1"), "option1")
+        self.assertEqual(to_kebab_case("Option1Two"), "option1-two")
 
     def test_already_kebab_case(self):
         self.assertEqual(to_kebab_case("kebab-case"), "kebab-case")
         self.assertEqual(to_kebab_case("HAtom"), "h-atom")
+        self.assertEqual(to_kebab_case("test--case"), "test-case")
+        self.assertEqual(to_kebab_case("---test---"), "test")
 
 
 if __name__ == "__main__":

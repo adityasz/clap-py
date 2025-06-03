@@ -16,8 +16,8 @@ class TestArgumentGroups(unittest.TestCase):
             verbose: bool = arg(short, long, group=debug_group)
             debug: bool = arg(short, long, group=debug_group)
 
-        args = Cli.parse_args(['input.txt', '--verbose', '--debug'])
-        self.assertEqual(args.input_file, 'input.txt')
+        args = Cli.parse_args(["input.txt", "--verbose", "--debug"])
+        self.assertEqual(args.input_file, "input.txt")
         self.assertTrue(args.verbose)
         self.assertTrue(args.debug)
 
@@ -33,11 +33,17 @@ class TestArgumentGroups(unittest.TestCase):
             output_file: Optional[str] = arg(long, group=output_group)
             output_dir: Optional[str] = arg(long, group=output_group)
 
-        args = Cli.parse_args(['--input-file', 'input.txt', '--output-dir', 'out/'])
-        self.assertEqual(args.input_file, 'input.txt')
+        args = Cli.parse_args(["--input-file", "input.txt", "--output-dir", "out/"])
+        self.assertEqual(args.input_file, "input.txt")
         self.assertIsNone(args.input_dir)
         self.assertIsNone(args.output_file)
-        self.assertEqual(args.output_dir, 'out/')
+        self.assertEqual(args.output_dir, "out/")
+
+        args = Cli.parse_args([])
+        self.assertIsNone(args.input_file)
+        self.assertIsNone(args.input_dir)
+        self.assertIsNone(args.output_file)
+        self.assertIsNone(args.output_dir)
 
 
 class TestMutuallyExclusiveGroups(unittest.TestCase):
@@ -50,21 +56,24 @@ class TestMutuallyExclusiveGroups(unittest.TestCase):
             update: bool = arg(long, mutex=mode_mutex)
             delete: bool = arg(long, mutex=mode_mutex)
 
-        args = Cli.parse_args(['--create'])
+        args = Cli.parse_args(["--create"])
         self.assertTrue(args.create)
         self.assertFalse(args.update)
         self.assertFalse(args.delete)
 
-        args = Cli.parse_args(['--update'])
+        args = Cli.parse_args(["--update"])
         self.assertFalse(args.create)
         self.assertTrue(args.update)
         self.assertFalse(args.delete)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(['--create', '--update'])
+            Cli.parse_args(["--create", "--update"])
 
         with self.assertRaises(SystemExit):
             Cli.parse_args([])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--create", "--update", "--delete"])
 
     def test_optional_mutex_group(self):
         @clap.arguments
@@ -78,6 +87,9 @@ class TestMutuallyExclusiveGroups(unittest.TestCase):
         self.assertFalse(args.create)
         self.assertFalse(args.update)
 
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--create", "--update"])
+
     def test_mutex_with_values(self):
         @clap.arguments
         class Cli(clap.Parser):
@@ -87,15 +99,24 @@ class TestMutuallyExclusiveGroups(unittest.TestCase):
             url: Optional[str] = arg(long, mutex=source_mutex)
             stdin: bool = arg(long, mutex=source_mutex)
 
-        args = Cli.parse_args(['--file', 'input.txt'])
-        self.assertEqual(args.file, 'input.txt')
+        args = Cli.parse_args(["--file", "input.txt"])
+        self.assertEqual(args.file, "input.txt")
         self.assertIsNone(args.url)
         self.assertFalse(args.stdin)
 
-        args = Cli.parse_args(['--url', 'http://example.com'])
+        args = Cli.parse_args(["--url", "http://example.com"])
         self.assertIsNone(args.file)
-        self.assertEqual(args.url, 'http://example.com')
+        self.assertEqual(args.url, "http://example.com")
         self.assertFalse(args.stdin)
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--file", "input.txt", "--stdin"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--file"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args([])
 
 
 class TestGroupsWithMutexes(unittest.TestCase):
@@ -111,14 +132,20 @@ class TestGroupsWithMutexes(unittest.TestCase):
             yaml_format: bool = arg(long, mutex=format_mutex)
             xml_format: bool = arg(long, mutex=format_mutex)
 
-        args = Cli.parse_args(['--config-file', 'config.txt', '--json-format'])
-        self.assertEqual(args.config_file, 'config.txt')
+        args = Cli.parse_args(["--config-file", "config.txt", "--json-format"])
+        self.assertEqual(args.config_file, "config.txt")
         self.assertTrue(args.json_format)
         self.assertFalse(args.yaml_format)
         self.assertFalse(args.xml_format)
 
         with self.assertRaises(SystemExit):
             Cli.parse_args([])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--json-format", "--yaml-format"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--config-file", "config.txt"])
 
     def test_multiple_mutexes_in_group(self):
         @clap.arguments
@@ -137,7 +164,7 @@ class TestGroupsWithMutexes(unittest.TestCase):
 
             timeout: Optional[int] = arg(long, group=network_group)
 
-        args = Cli.parse_args(['--https', '--basic-auth', '--timeout', '30'])
+        args = Cli.parse_args(["--https", "--basic-auth", "--timeout", "30"])
         self.assertFalse(args.http)
         self.assertTrue(args.https)
         self.assertFalse(args.ftp)
@@ -145,7 +172,7 @@ class TestGroupsWithMutexes(unittest.TestCase):
         self.assertFalse(args.token_auth)
         self.assertEqual(args.timeout, 30)
 
-        args = Cli.parse_args(['--https'])
+        args = Cli.parse_args(["--https"])
         self.assertTrue(args.https)
         self.assertFalse(args.http)
         self.assertFalse(args.ftp)
@@ -155,6 +182,15 @@ class TestGroupsWithMutexes(unittest.TestCase):
 
         with self.assertRaises(SystemExit):
             Cli.parse_args([])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--http", "--https"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--https", "--basic-auth", "--token-auth"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--https", "--timeout", "invalid"])
 
     def test_group_and_mutex_conflict_within_parent(self):
         @clap.arguments
@@ -166,7 +202,15 @@ class TestGroupsWithMutexes(unittest.TestCase):
             option_b: bool = arg(long, mutex=child_mutex)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(['--option-a', '--option-b'])
+            Cli.parse_args(["--option-a", "--option-b"])
+
+        args = Cli.parse_args(["--option-a"])
+        self.assertTrue(args.option_a)
+        self.assertFalse(args.option_b)
+
+        args = Cli.parse_args([])
+        self.assertFalse(args.option_a)
+        self.assertFalse(args.option_b)
 
 
 class TestComplexGroupScenarios(unittest.TestCase):
@@ -189,17 +233,30 @@ class TestComplexGroupScenarios(unittest.TestCase):
             csv_out: bool = arg(long, mutex=format_mutex)
 
         args = Cli.parse_args([
-            'input.txt', '--verbose', '--output-file', 'out.txt',
-            '--process', '--json-out'
+            "input.txt",
+            "--verbose",
+            "--output-file",
+            "out.txt",
+            "--process",
+            "--json-out",
         ])
 
-        self.assertEqual(args.input_file, 'input.txt')
+        self.assertEqual(args.input_file, "input.txt")
         self.assertTrue(args.verbose)
-        self.assertEqual(args.output_file, 'out.txt')
+        self.assertEqual(args.output_file, "out.txt")
         self.assertTrue(args.process)
         self.assertFalse(args.analyze)
         self.assertTrue(args.json_out)
         self.assertFalse(args.csv_out)
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["input.txt", "--verbose"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["input.txt", "--process", "--analyze"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["input.txt", "--process", "--json-out", "--csv-out"])
 
     def test_nested_group_structure(self):
         @clap.arguments
@@ -218,17 +275,33 @@ class TestComplexGroupScenarios(unittest.TestCase):
             accurate: bool = arg(long, mutex=algorithm_mutex)
 
         args = Cli.parse_args([
-            '--input-file', 'data.txt', '--auto-detect',
-            '--threads', '4', '--fast'
+            "--input-file",
+            "data.txt",
+            "--auto-detect",
+            "--threads",
+            "4",
+            "--fast",
         ])
 
-        self.assertEqual(args.input_file, 'data.txt')
+        self.assertEqual(args.input_file, "data.txt")
         self.assertTrue(args.auto_detect)
         self.assertFalse(args.force_json)
         self.assertEqual(args.threads, 4)
         self.assertTrue(args.fast)
         self.assertFalse(args.accurate)
 
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--input-file", "data.txt"])
 
-if __name__ == '__main__':
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--fast", "--accurate"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--auto-detect", "--force-json", "--fast"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--threads", "many", "--fast"])
+
+
+if __name__ == "__main__":
     unittest.main()

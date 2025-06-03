@@ -19,6 +19,9 @@ class TestActions(unittest.TestCase):
         args = Cli.parse_args(["--mode"])
         self.assertEqual(args.mode, "debug")
 
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--mode", "extra_arg"])
+
     def test_append_action_optional_type(self):
         @clap.arguments
         class Cli(clap.Parser):
@@ -29,6 +32,9 @@ class TestActions(unittest.TestCase):
 
         args = Cli.parse_args([])
         self.assertIsNone(args.include)
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["-I"])
 
     def test_count_action(self):
         @clap.arguments
@@ -44,6 +50,9 @@ class TestActions(unittest.TestCase):
         args = Cli.parse_args(["-vvv"])
         self.assertEqual(args.verbose, 3)
 
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["-x"])
+
     def test_store_false_action(self):
         @clap.arguments
         class Cli(clap.Parser):
@@ -54,6 +63,9 @@ class TestActions(unittest.TestCase):
 
         args = Cli.parse_args(["--no-cache"])
         self.assertFalse(args.no_cache)
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--no-cache", "false"])
 
     def test_append_action(self):
         @clap.arguments
@@ -66,6 +78,9 @@ class TestActions(unittest.TestCase):
         args = Cli.parse_args(["-l", "lib1", "-l", "lib2"])
         self.assertEqual(args.libs, ["lib1", "lib2"])
 
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["-l"])
+
     def test_append_action_with_explicit_default(self):
         @clap.arguments
         class Cli(clap.Parser):
@@ -76,6 +91,9 @@ class TestActions(unittest.TestCase):
 
         args = Cli.parse_args(["--flags", "custom"])
         self.assertEqual(args.flags, ["default", "custom"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--invalid-flag", "value"])
 
     def test_append_const_action(self):
         @clap.arguments
@@ -90,6 +108,9 @@ class TestActions(unittest.TestCase):
         args = Cli.parse_args(["--enable-feature", "--enable-feature"])
         self.assertEqual(args.features, ["feature1", "feature1"])
 
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--enable-feature", "value"])
+
     def test_extend_action(self):
         @clap.arguments
         class Cli(clap.Parser):
@@ -101,6 +122,9 @@ class TestActions(unittest.TestCase):
         args = Cli.parse_args(["--items", "a", "b", "--items", "c", "d"])
         self.assertEqual(args.items, ["a", "b", "c", "d"])
 
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--items"])
+
     def test_store_const_with_required(self):
         @clap.arguments
         class Cli(clap.Parser):
@@ -111,6 +135,9 @@ class TestActions(unittest.TestCase):
 
         with self.assertRaises(SystemExit):
             Cli.parse_args([])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--unknown"])
 
     def test_store_true_false_defaults(self):
         @clap.arguments
@@ -126,6 +153,9 @@ class TestActions(unittest.TestCase):
         self.assertTrue(args.enable)
         self.assertFalse(args.disable)
 
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--enable", "true"])
+
     def test_count_action_with_default(self):
         @clap.arguments
         class Cli(clap.Parser):
@@ -136,6 +166,9 @@ class TestActions(unittest.TestCase):
 
         args = Cli.parse_args(["-ll"])
         self.assertEqual(args.level, 7)
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["-lx"])
 
     def test_multiple_action_combinations(self):
         @clap.arguments
@@ -150,6 +183,15 @@ class TestActions(unittest.TestCase):
         self.assertTrue(args.debug)
         self.assertEqual(args.includes, ["lib1", "lib2"])
         self.assertEqual(args.features, ["enabled"])
+
+        args = Cli.parse_args([])
+        self.assertEqual(args.verbose, 0)
+        self.assertFalse(args.debug)
+        self.assertEqual(args.includes, [])
+        self.assertEqual(args.features, [])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["-I"])
 
 
 class TestActionTypeErrors(unittest.TestCase):
@@ -206,6 +248,12 @@ class TestActionsWithComplexTypes(unittest.TestCase):
         args = Cli.parse_args(["--colors", "red", "--colors", "blue"])
         self.assertEqual(args.colors, [Color.RED, Color.BLUE])
 
+        args = Cli.parse_args([])
+        self.assertEqual(args.colors, [])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--colors", "purple"])
+
     def test_extend_with_path_type(self):
         @clap.arguments
         class Cli(clap.Parser):
@@ -213,6 +261,12 @@ class TestActionsWithComplexTypes(unittest.TestCase):
 
         args = Cli.parse_args(["--files", "a.txt", "b.txt", "--files", "c.txt"])
         self.assertEqual(args.files, [Path("a.txt"), Path("b.txt"), Path("c.txt")])
+
+        args = Cli.parse_args([])
+        self.assertEqual(args.files, [])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--files"])
 
 
 if __name__ == "__main__":
