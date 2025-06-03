@@ -102,9 +102,10 @@ class ArgType:
 
     class Enum(Base):
         def __init__(self, enum: type, optional: bool):
+            self.enum = enum
             members = enum.__members__
             self.choices = list(
-                map(lambda s: s.lower().replace("_", "-"), members.keys())
+                map(to_kebab_case, members.keys())
             )
             if len(set(self.choices)) != len(members):
                 raise TypeError
@@ -550,9 +551,9 @@ def populate_instance_fields(args: dict[str, Any], instance: Any):
                 case ArgType.Tuple():
                     if value is not None:
                         value = tuple(value)
-                case ArgType.Enum(enum=enum, choice_to_enum_member=choice_to_enum_member):
-                    if value is not None:
-                        value = enum[choice_to_enum_member[value]]
+                case ArgType.Enum(choice_to_enum_member=choice_to_enum_member):
+                    if isinstance(value, str):
+                        value = choice_to_enum_member[value]
             setattr(instance, attr_name, value)
 
     # no subcommands
