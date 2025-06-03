@@ -1,6 +1,75 @@
 # clap-py
 
-A declarative, clap-rs like argument parser for Python.
+A declarative, type-safe argument parser for Python inspired by [clap-rs](https://github.com/clap-rs/clap).
+
+## Installation
+
+```python
+pip install clap
+```
+
+## Example
+
+```python
+import clap
+from clap import arg, long, short
+from pathlib import Path
+
+
+@clap.arguments
+class Cli(clap.Parser):
+    """A tiny script."""
+
+    input: Path = arg(metavar="<PATH>")
+    """Path to the input file"""
+    verbose: bool = arg(short, long)
+    """Enable verbose output"""
+
+
+args = Cli.parse_args()
+if args.verbose:
+    print(f"Reading {args.input}...")
+```
+
+Docstrings are automatically added to help.
+
+`clap` also supports subcommands:
+
+```python
+import clap
+from clap import arg, long, short
+from pathlib import Path
+from typing import Union
+
+
+@clap.subcommand
+class Add:
+    file: Path
+
+
+@clap.subcommand
+class List:
+    directory: Path
+
+
+@clap.arguments
+class Cli(clap.Parser):
+    command: Union[Add, Remove]
+
+
+args = Cli.parse_args()
+match args.command:
+    case Add(file=file):
+        print(f"Adding {file}...")
+    case List(directory=directory):
+        print(f"Listing {directory}...")
+```
+
+See more examples in [/examples](https://github.com/adityasz/clap-py/tree/master/examples).
+
+## Docs
+
+See [/docs](https://github.com/adityasz/clap-py/tree/master/docs).
 
 ## Motivation
 
@@ -19,62 +88,6 @@ print(args.typo)
 #     ~~~~~^^^^
 # no static analysis
 ```
-
-## Example
-
-```python
-from pathlib import Path
-from typing import Optional, Union
-
-import clap
-from clap import ColorChoice
-
-
-HELP_TEMPLATE = """\
-{name} {version}
-
-{usage-heading} {usage}
-
-{all-args}{after-help}
-"""
-
-AFTER_HELP=""
-
-@clap.arguments
-class Cli:
-    """A CLI that does stuff."""
-
-    @clap.subcommand
-    class Compile:
-        """Compiles an input file into a supported output format."""
-
-        input: Path
-        """<INPUT>: Path to input file. Use `-` to read input from stdin."""
-        output: Path
-        """[OUTPUT]: Path to output file. Use `-` to write output to stdout."""
-        format: Optional[OutputFormat] = None
-        """short, long, <FORMAT>: The format of the output file, inferred from
-        the extension by default."""
-
-    @clap.subcommand
-    class Init:
-        """Initializes a new project from a template."""
-
-        template: Path
-        """<TEMPLATE>: The template to use."""
-        package_cache_path: Path = Path(os.getenv("XDG_CACHE_HOME", f"{os.getenv("HOME")}/.cache"))
-        """-c, long <DIR>: Custom path to package cache."""
-
-    color: ColorChoice = ColorChoice.Auto
-    """long: Whether to use color."""
-    cert: Optional[Path]
-    """Path to a custom CA certificate to use when making network requests."""
-    command: Optional[Union[Compile, Watch, Init]]
-```
-
-## Limitations
-
-Same as `argparse`.
 
 ## TODO
 
