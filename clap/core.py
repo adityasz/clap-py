@@ -286,11 +286,9 @@ def is_subcommand(cls: type) -> bool:
     return getattr(cls, _SUBCOMMAND_ATTR, False)
 
 
-def contains_subcommand(types: tuple[type]) -> bool:
+def contains_subcommands(types: list[type]) -> bool:
     flag = None
     for ty in types:
-        if type(ty) is None:
-            continue
         if is_subcommand(ty):
             if flag is False:
                 raise TypeError
@@ -314,7 +312,7 @@ def to_kebab_case(name: str) -> str:
 
 def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
     if type(type_hint) is type:
-        if is_subcommand(type):
+        if is_subcommand(type_hint):
             return ArgType.SubcommandDest([type_hint], optional)
         return ArgType.SimpleType(type_hint, optional)
     if type(type_hint) is EnumType:
@@ -322,11 +320,14 @@ def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
     origin = get_origin(type_hint)
     types = get_args(type_hint)
     if origin is Union:
+        subcommands = []
         for ty in types:
-            if type(None) is ty:
+            if ty is type(None):
                 optional = True
-        if contains_subcommand(types):
-            return ArgType.SubcommandDest(list(types), optional)
+            else:
+                subcommands.append(ty)
+        if contains_subcommands(subcommands):
+            return ArgType.SubcommandDest(subcommands, optional)
         if len(types) != 2 or not optional:
             raise TypeError
         if type(None) is types[0]:
@@ -495,12 +496,13 @@ def process_subcommand_dest(
     if value is not None:
         if isinstance(value, SubparserInfo):
             command.subparser_info = value
-            if command.subparser_info != ty.optional:
+            if command.subparser_info.required != ty.optional:
                 raise TypeError("check 'required'")
         else:
             raise TypeError(f"can't assign {type(value)} to subcommand destination")
     else:
         command.subparser_info = SubparserInfo()
+    command.subparser_info.dest = command.subcommand_dest
     for cmd in ty.subcommands:
         subcommand = create_command(cmd, prefix)
         name = subcommand.parser_info.name
@@ -544,6 +546,7 @@ def create_command(cls: type, prefix: str = "") -> Command:
         else:
             raise TypeError
 
+    setattr(cls, _COMMAND_DATA, command)
     return command
 
 
@@ -585,7 +588,6 @@ def setup_parser(parser: argparse.ArgumentParser, command: Command):
 
 def create_parser(cls: type, **kwargs):
     command = create_command(cls)
-    setattr(cls, _COMMAND_DATA, command)
     parser = argparse.ArgumentParser(**command.parser_info.get_kwargs())
     setup_parser(parser, command)
     return parser
@@ -599,6 +601,8 @@ def populate_instance_fields(args: dict[str, Any], instance: Any):
         if attr_name.find('.') != -1:
             subcommand_args[attr_name.split(".", maxsplit=1)[1]] = value
         else:
+            if attr_name == command.subcommand_dest:
+                continue
             match command.arguments[attr_name].ty:
                 case ArgType.Tuple():
                     if value is not None:
@@ -613,13 +617,13 @@ def populate_instance_fields(args: dict[str, Any], instance: Any):
         return
 
     # subcommand not provided
-    if command.subcommand_dest not in args:
+    if args[command.subcommand_dest] is None:
         if not hasattr(instance, command.subcommand_dest):
             setattr(instance, command.subcommand_dest, None)
         return
 
     # only one subcommand can be provided
-    cls = command.subcommands[command.subcommand_dest].subcommand_class
+    cls = command.subcommands[args[command.subcommand_dest]].subcommand_class
     assert cls is not None
     subcommand_instance = cls()
     populate_instance_fields(subcommand_args, subcommand_instance)

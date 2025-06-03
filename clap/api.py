@@ -23,6 +23,7 @@ from .core import (
     _ShortFlag,
     create_parser,
     populate_instance_fields,
+    to_kebab_case,
 )
 
 T = TypeVar('T')
@@ -137,7 +138,7 @@ def subcommand[T](
     """
     def wrap(cls: type[T]) -> type[T]:
         setattr(cls, _SUBCOMMAND_ATTR, True)
-        kwargs.setdefault("name", cls.__name__.lower().replace("_", "-"))
+        kwargs.setdefault("name", to_kebab_case(cls.__name__))
         kwargs.setdefault("help", cls.__doc__)
         setattr(cls, _PARSER_KWARGS, kwargs)
         return cls

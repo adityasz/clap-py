@@ -26,17 +26,16 @@ def arg(
     long_: Optional[Union[_LongFlag, str]] = None,
     /,
     *,
-    short: Optional[Union[str, bool]] = None,
-    long: Optional[Union[str, bool]] = None,
+    short: Optional[Union[str, bool]] = ...,
+    long: Optional[Union[str, bool]] = ...,
     group: Optional[Group] = None,
     mutex: Optional[MutexGroup] = None,
-    type: Optional[type[T]] = None,
-    action: Optional[ActionType] = "store",
-    nargs: Optional[NargsType] = None,
+    action: Optional[ActionType] = ...,
+    nargs: Optional[NargsType] = ...,
     const: Optional[U] = None,
     default: Optional[U] = None,
     choices: Optional[Sequence[str]] = None,
-    required: Optional[bool] = True,
+    required: Optional[bool] = ...,
     help: Optional[str] = None,
     metavar: Optional[str] = None,
     deprecated: bool = False
@@ -66,9 +65,9 @@ def arguments(
 def subcommand[T](cls: type[T], /) -> type[T]: ...
 
 @overload
-def subcommand(
+def subcommand[T](
     *,
-    name: Optional[str],
+    name: Optional[str] = ...,
     deprecated: bool = False,
     help: Optional[str] = ...,
     aliases: Sequence[str] = [],
