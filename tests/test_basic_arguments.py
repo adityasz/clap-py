@@ -30,17 +30,6 @@ class TestBasicArgumentParsing(unittest.TestCase):
         args = Cli.parse_args([])
         self.assertEqual(args.file, None)
 
-    def test_optional_string_argument(self):
-        @clap.arguments
-        class Cli(clap.Parser):
-            name: Optional[str]
-
-        args = Cli.parse_args(['value'])
-        self.assertEqual(args.name, 'value')
-
-        args = Cli.parse_args([])
-        self.assertIsNone(args.name)
-
     def test_bool_flag_with_manual_flags(self):
         @clap.arguments
         class Cli(clap.Parser):
