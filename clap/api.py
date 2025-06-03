@@ -8,12 +8,12 @@ from typing import (
 )
 
 from .core import (
-    _COMMAND_ATTR,
-    _PARSER_ATTR,
-    _PARSER_KWARGS,
-    _SUBCOMMAND_ATTR,
+    _COMMAND_MARKER,
+    _PARSER,
+    _PARSER_CONFIG,
+    _SUBCOMMAND_MARKER,
     ActionType,
-    ArgKwargs,
+    ArgparseConfig,
     Argument,
     Group,
     MutexGroup,
@@ -21,8 +21,8 @@ from .core import (
     SubparserInfo,
     _LongFlag,
     _ShortFlag,
+    apply_parsed_arguments,
     create_parser,
-    populate_instance_fields,
     to_kebab_case,
 )
 
@@ -66,18 +66,18 @@ def arguments[T](
             an error occurs.
     """
     def wrap(cls: type[T]) -> type[T]:
-        setattr(cls, _COMMAND_ATTR, True)
+        setattr(cls, _COMMAND_MARKER, True)
         kwargs.setdefault("description", cls.__doc__)
-        setattr(cls, _PARSER_KWARGS, kwargs)
-        setattr(cls, _PARSER_ATTR, create_parser(cls, **kwargs))
+        setattr(cls, _PARSER_CONFIG, kwargs)
+        setattr(cls, _PARSER, create_parser(cls, **kwargs))
 
         @classmethod
         def parse_args(cls: type, args: Optional[list[str]] = None) -> T:
             """Parse command-line arguments and return an instance of the class."""
-            parser = getattr(cls, _PARSER_ATTR)
+            parser = getattr(cls, _PARSER)
             parsed_args = parser.parse_args(args)
             obj = cls()
-            populate_instance_fields(dict(parsed_args._get_kwargs()), obj)
+            apply_parsed_arguments(dict(parsed_args._get_kwargs()), obj)
             return obj
 
         cls.parse_args = parse_args
@@ -122,10 +122,10 @@ def subcommand[T](
             an error occurs.
     """
     def wrap(cls: type[T]) -> type[T]:
-        setattr(cls, _SUBCOMMAND_ATTR, True)
+        setattr(cls, _SUBCOMMAND_MARKER, True)
         kwargs.setdefault("name", to_kebab_case(cls.__name__))
         kwargs.setdefault("help", cls.__doc__)
-        setattr(cls, _PARSER_KWARGS, kwargs)
+        setattr(cls, _PARSER_CONFIG, kwargs)
         return cls
 
     if cls is None:
@@ -206,7 +206,7 @@ def arg[T, U](
             long_name = _LongFlag()
 
     return Argument(
-        ArgKwargs(
+        ArgparseConfig(
             action=action,
             nargs=nargs,
             const=const,
@@ -310,9 +310,8 @@ def mutex_group(
     Args:
         parent_group: The parent argument group to add this mutually exclusive
             group to. If `None`, the group will be added directly to the parser.
-        required: Whether at least one of the mutually exclusive arguments
-            is required. If `True`, an error will be generated if none of the
-            mutually exclusive arguments are present on the command line.
+        required: Whether at least one of the mutually exclusive arguments is
+            required.
 
     Returns:
         A `MutexGroup` object for creating mutually exclusive arguments.

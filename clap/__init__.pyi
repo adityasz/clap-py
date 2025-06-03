@@ -20,7 +20,7 @@ __all__ = [
 T = TypeVar('T')
 U = TypeVar('U')
 
-# TODO: Add overloads based on `nargs` and `required` if `type` is not `None`.
+# TODO: Add overloads that return `Optional[Any]` based on the `required` and `default` parameters.
 def arg(
     short_or_long: Optional[Union[_ShortFlag, _LongFlag, str]] = None,
     long_: Optional[Union[_LongFlag, str]] = None,
@@ -85,7 +85,7 @@ def subcommand[T](
     exit_on_error: bool = ...,
 ) -> Callable[[type[T]], type[T]]: ...
 
-# TODO: Add overloads for `required` being `True` or `False`
+# TODO: Add overloads that return `Optional[Any]` based on the `required` and `default` parameters.
 def subparser(
     title: Optional[str] = None,
     description: Optional[str] = None,

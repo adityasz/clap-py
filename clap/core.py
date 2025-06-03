@@ -20,12 +20,12 @@ from typing import (
     get_type_hints,
 )
 
-_COMMAND_ATTR = "__com.github.adityasz.clap_py.command__"
-_SUBCOMMAND_ATTR = "__com.github.adityasz.clap_py.subcommand__"
-_PARSER_ATTR = "__parser__"
+_COMMAND_MARKER = "__com.github.adityasz.clap_py.command_marker__"
+_SUBCOMMAND_MARKER = "__com.github.adityasz.clap_py.subcommand_marker__"
+_PARSER = "__parser__"
 _COMMAND_DATA = "__command_data__"
 _SUBCOMMAND_DEST = "__subcommand_dest__"
-_PARSER_KWARGS = "__argparse_parser_kwargs__"
+_PARSER_CONFIG = "__argparse_parser_config__"
 
 
 # will be useful when help output is implemented
@@ -33,30 +33,6 @@ class ColorChoice(Enum):
     Auto = auto()
     Always = auto()
     Never = auto()
-
-
-class DocstringExtractor(ast.NodeVisitor):
-    def __init__(self):
-        self.docstrings: dict[str, str] = {}
-
-    def visit_ClassDef(self, node):
-        for stmt_1, stmt_2 in zip(node.body[:-1], node.body[1:], strict=False):
-            if (
-                isinstance(stmt_1, ast.AnnAssign)
-                and isinstance(stmt_1.target, ast.Name)
-                and isinstance(stmt_2, ast.Expr)
-                and isinstance(stmt_2.value, ast.Constant)
-                and isinstance(stmt_2.value.value, str)
-            ):
-                self.docstrings[stmt_1.target.id] = stmt_2.value.value
-
-
-def extract_docstrings(cls: type) -> dict[str, str]:
-    extractor = DocstringExtractor()
-    source = dedent(getsource(cls))
-    tree = ast.parse(source)
-    extractor.visit(tree)
-    return extractor.docstrings
 
 
 class _ShortFlag:
@@ -133,18 +109,22 @@ class ArgType:
 
 
 @dataclass
-class _FilterKwargs:
+class ConfigBase:
     def get_kwargs(self) -> dict[str, Any]:
-        kwargs = asdict(self)
-        res = {}
-        for k, v in kwargs.items():
+        """Only returns non-None fields.
+
+        Let argparse handle default configuration.
+        """
+        fields = asdict(self)
+        kwargs = {}
+        for k, v in fields.items():
             if v is not None:
-                res[k] = v
-        return res
+                kwargs[k] = v
+        return kwargs
 
 
 @dataclass
-class Group(_FilterKwargs):
+class Group(ConfigBase):
     title: str
     description: Optional[str] = None
     prefix_chars: Optional[str] = None
@@ -164,7 +144,7 @@ class MutexGroup:
 
 
 @dataclass
-class ArgKwargs(_FilterKwargs):
+class ArgparseConfig(ConfigBase):
     action: Optional[ActionType] = None
     nargs: Optional[NargsType] = None
     const: Optional[Any] = None
@@ -180,7 +160,7 @@ class ArgKwargs(_FilterKwargs):
 
 @dataclass
 class Argument:
-    arg_kwargs: ArgKwargs = field(default_factory=ArgKwargs)
+    argparse_config: ArgparseConfig = field(default_factory=ArgparseConfig)
     """The kwargs for `parser.add_argument()`."""
 
     short: Optional[Union[_ShortFlag, str]] = None
@@ -204,7 +184,7 @@ class Argument:
         if self.long is not None:
             attrs.append(f'"{self.long}"' if isinstance(self.long, str) else "long")
 
-        for attr, val in self.arg_kwargs.get_kwargs().items():
+        for attr, val in self.argparse_config.get_kwargs().items():
             attrs.append(f"{attr}={val}")
 
         for f in fields(self):
@@ -225,13 +205,16 @@ class Argument:
         return flags
 
     def get_kwargs(self) -> dict[str, Any]:
-        kwargs = self.arg_kwargs.get_kwargs()
-        kwargs.setdefault("default", None)  # to get all `dest`s in the Namespace
+        kwargs = self.argparse_config.get_kwargs()
+        # argparse does not add an argument to the `argparse.Namespace` that
+        # `argparse.ArgumentParser.parser_args()` returns unless it has a value.
+        # So, to get everything, set default value to None if not already set.
+        kwargs.setdefault("default", None)
         return kwargs
 
 
 @dataclass
-class SubparserInfo(_FilterKwargs):
+class SubparserInfo(ConfigBase):
     title: Optional[str] = None
     description: Optional[str] = None
     prog: Optional[str] = None
@@ -244,7 +227,7 @@ class SubparserInfo(_FilterKwargs):
 
 
 @dataclass
-class ParserInfo(_FilterKwargs):
+class ParserInfo(ConfigBase):
     prog: Optional[str] = None
     usage: Optional[str] = None
     description: Optional[str] = None
@@ -285,7 +268,7 @@ class Command:
 
 
 def is_subcommand(cls: type) -> bool:
-    return getattr(cls, _SUBCOMMAND_ATTR, False)
+    return getattr(cls, _SUBCOMMAND_MARKER, False)
 
 
 def contains_subcommands(types: list[type]) -> bool:
@@ -310,6 +293,40 @@ def to_kebab_case(name: str) -> str:
     name = re.sub(r'-+', '-', name)
     name = name.strip('-')
     return name
+
+
+class DocstringExtractor(ast.NodeVisitor):
+    def __init__(self):
+        self.docstrings: dict[str, str] = {}
+
+    def visit_ClassDef(self, node):
+        for stmt_1, stmt_2 in zip(node.body[:-1], node.body[1:], strict=False):
+            if (
+                isinstance(stmt_1, ast.AnnAssign)
+                and isinstance(stmt_1.target, ast.Name)
+                and isinstance(stmt_2, ast.Expr)
+                and isinstance(stmt_2.value, ast.Constant)
+                and isinstance(stmt_2.value.value, str)
+            ):
+                self.docstrings[stmt_1.target.id] = stmt_2.value.value
+                # Class attributes do not have __doc__, but the interpreter does
+                # not strip away the docstrings either. So we can get them from
+                # the AST.
+                #
+                # >>> file: Path
+                # >>> """Path to the input file"""
+
+
+def extract_docstrings(cls: type) -> dict[str, str]:
+    extractor = DocstringExtractor()
+    try:
+        source = dedent(getsource(cls))
+    except OSError:
+        # can't get source in an ipykernel
+        return {}
+    tree = ast.parse(source)
+    extractor.visit(tree)
+    return extractor.docstrings
 
 
 def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
@@ -348,7 +365,7 @@ def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
     raise TypeError
 
 
-def setup_flags(arg: Argument, field_name: str):
+def configure_flags(arg: Argument, field_name: str):
     """Sets short and long flags of the argument."""
     if isinstance(arg.short, _ShortFlag):
         arg.short = "-" + field_name[0].lower()
@@ -356,13 +373,13 @@ def setup_flags(arg: Argument, field_name: str):
         arg.short = "-" + arg.short
 
     if isinstance(arg.long, _LongFlag):
-        arg.long = "--" + field_name.lower().replace("_", "-")
+        arg.long = "--" + to_kebab_case(field_name)
     elif isinstance(arg.long, str) and not arg.long.startswith("-"):
         arg.long = "--" + arg.long
 
 
-def set_required(arg: Argument, optional_type_hint: bool):
-    kwargs = arg.arg_kwargs
+def configure_action_behavior(arg: Argument, optional_type_hint: bool):
+    kwargs = arg.argparse_config
 
     match kwargs.action:
         case "append" | "append_const" | "extend":
@@ -415,8 +432,11 @@ def set_required(arg: Argument, optional_type_hint: bool):
             kwargs.nargs = '?'
         kwargs.required = None
 
+    if kwargs.action in ("store_const", "append_const", "count", "store_true", "store_false"):
+        kwargs.type = None
 
-def process_arg(
+
+def configure_argument(
     arg: Argument,
     ty: ArgType.Base,
     command: Command,
@@ -424,10 +444,10 @@ def process_arg(
     prefix: str,
     docstrings: dict[str, str],
 ):
-    setup_flags(arg, field_name)
+    configure_flags(arg, field_name)
 
     arg.ty = ty
-    kwargs = arg.arg_kwargs
+    kwargs = arg.argparse_config
     if arg.short is None and arg.long is None:
         arg.is_positional = True
         arg.long = prefix + field_name
@@ -469,10 +489,7 @@ def process_arg(
         case _:
             raise TypeError
 
-    set_required(arg, ty.optional)
-
-    if kwargs.action in ("store_const", "append_const", "count", "store_true", "store_false"):
-        kwargs.type = None
+    configure_action_behavior(arg, ty.optional)
 
     command.arguments[field_name] = arg
 
@@ -484,7 +501,7 @@ def process_arg(
         command.groups[group].append(arg)
 
 
-def process_subcommand_dest(
+def configure_subcommands(
     ty: ArgType.SubcommandDest,
     command: Command,
     value: Any,
@@ -518,9 +535,9 @@ def process_subcommand_dest(
 
 
 def create_command(cls: type, prefix: str = "") -> Command:
-    command = Command(ParserInfo(**getattr(cls, _PARSER_KWARGS)))
+    command = Command(ParserInfo(**getattr(cls, _PARSER_CONFIG)))
 
-    if getattr(cls, _SUBCOMMAND_ATTR, False):
+    if getattr(cls, _SUBCOMMAND_MARKER, False):
         assert command.parser_info.name is not None
         prefix += command.parser_info.name + "."
         command.subcommand_class = cls
@@ -539,7 +556,7 @@ def create_command(cls: type, prefix: str = "") -> Command:
         ty = parse_type_hint(type_hint)
         value = getattr(cls, field_name, None)
         if isinstance(ty, ArgType.SubcommandDest):
-            process_subcommand_dest(ty, command, value, field_name, prefix)
+            configure_subcommands(ty, command, value, field_name, prefix)
         elif isinstance(value, Group):
             if value in command.groups:
                 raise RuntimeError(f"group '{value.title}' already exists")
@@ -547,9 +564,9 @@ def create_command(cls: type, prefix: str = "") -> Command:
         elif isinstance(value, MutexGroup):
             continue
         elif isinstance(value, Argument):
-            process_arg(value, ty, command, field_name, prefix, docstrings)
+            configure_argument(value, ty, command, field_name, prefix, docstrings)
         elif value is None:
-            process_arg(Argument(), ty, command, field_name, prefix, docstrings)
+            configure_argument(Argument(), ty, command, field_name, prefix, docstrings)
         else:
             raise TypeError
 
@@ -557,20 +574,23 @@ def create_command(cls: type, prefix: str = "") -> Command:
     return command
 
 
-def setup_parser(parser: argparse.ArgumentParser, command: Command):
+def configure_parser(parser: argparse.ArgumentParser, command: Command):
     for arg in command.arguments.values():
         if arg.group is not None or arg.mutex is not None:
             continue
         parser.add_argument(*arg.get_flags(), **arg.get_kwargs())
 
-    # groups have to persist because groups can have mutexes
+    # groups can have mutexes in them, so storing them temporarily in a dict
     groups = {
         group_obj: parser.add_argument_group(**group_obj.get_kwargs())
         for group_obj in command.groups
     }
+
+    # when both group and mutex are provided for an argument, the argument is
+    # only added to the mutex when the command is created
     for group, arguments in command.groups.items():
         for arg in arguments:
-            kwargs = arg.arg_kwargs.get_kwargs()
+            kwargs = arg.argparse_config.get_kwargs()
             kwargs.setdefault("default", None)
             groups[group].add_argument(*arg.get_flags(), **arg.get_kwargs())
 
@@ -588,17 +608,17 @@ def setup_parser(parser: argparse.ArgumentParser, command: Command):
         subparsers = parser.add_subparsers(**subparser_info.get_kwargs())
         for subcommand in command.subcommands.values():
             parser = subparsers.add_parser(**subcommand.parser_info.get_kwargs())
-            setup_parser(parser, subcommand)
+            configure_parser(parser, subcommand)
 
 
 def create_parser(cls: type, **kwargs):
     command = create_command(cls)
     parser = argparse.ArgumentParser(**command.parser_info.get_kwargs())
-    setup_parser(parser, command)
+    configure_parser(parser, command)
     return parser
 
 
-def populate_instance_fields(args: dict[str, Any], instance: Any):
+def apply_parsed_arguments(args: dict[str, Any], instance: Any):
     command: Command = getattr(instance, _COMMAND_DATA)
     subcommand_args: dict[str, Any] = {}
 
@@ -636,5 +656,5 @@ def populate_instance_fields(args: dict[str, Any], instance: Any):
     cls = command.subcommands[subcommand_name].subcommand_class
     assert cls is not None
     subcommand_instance = cls()
-    populate_instance_fields(subcommand_args, subcommand_instance)
+    apply_parsed_arguments(subcommand_args, subcommand_instance)
     setattr(instance, command.subcommand_dest, subcommand_instance)
