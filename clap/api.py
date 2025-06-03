@@ -1,8 +1,7 @@
+from collections.abc import Callable, Sequence
 from typing import (
-    Callable,
     Optional,
     Self,
-    Sequence,
     TypeVar,
     Union,
     cast,
@@ -10,17 +9,17 @@ from typing import (
 
 from .core import (
     _COMMAND_ATTR,
-    _PARSER_KWARGS,
     _PARSER_ATTR,
+    _PARSER_KWARGS,
     _SUBCOMMAND_ATTR,
-    ArgparseArgInfo,
+    ActionType,
+    ArgKwargs,
     Argument,
     Group,
     MutexGroup,
-    SubparserInfo,
-    ActionType,
-    _LongFlag,
     NargsType,
+    SubparserInfo,
+    _LongFlag,
     _ShortFlag,
     create_parser,
     populate_instance_fields,
@@ -36,7 +35,7 @@ class Parser:
         ...
 
 
-def arguments(
+def arguments[T](
     cls: Optional[type[T]] = None,
     /,
     **kwargs
@@ -87,7 +86,7 @@ def arguments(
             populate_instance_fields(dict(parsed_args._get_kwargs()), obj)
             return obj
 
-        setattr(cls, "parse_args", parse_args)
+        cls.parse_args = parse_args
         return cls
 
     if cls is None:
@@ -95,7 +94,7 @@ def arguments(
     return wrap(cls)
 
 
-def subcommand(
+def subcommand[T](
     cls: Optional[type[T]] = None,
     /,
     **kwargs
@@ -157,13 +156,12 @@ def arg[T, U](
     long: Optional[Union[str, bool]] = None,
     group: Optional[Group] = None,
     mutex: Optional[MutexGroup] = None,
-    type: Optional[type[T]] = None,
-    action: Optional[ActionType] = "store",
+    action: Optional[ActionType] = None,
     nargs: Optional[NargsType] = None,
     const: Optional[U] = None,
     default: Optional[U] = None,
     choices: Optional[Sequence[str]] = None,
-    required: Optional[bool] = True,
+    required: Optional[bool] = None,
     help: Optional[str] = None,
     metavar: Optional[str] = None,
     deprecated: bool = False
@@ -181,7 +179,6 @@ def arg[T, U](
         long: The long flag for the argument.
         group: The group for the argument.
         mutex: The mutually exclusive group for the argument.
-        type: The type to which the command-line argument should be converted.
         action: The action to be taken when this argument is encountered.
         nargs: The number of command-line arguments that should be consumed.
         const: The constant value required by some action and nargs selections.
@@ -214,23 +211,22 @@ def arg[T, U](
         if isinstance(short, str):
             short_name = short
         elif short is True:
-                short_name = _ShortFlag()
+            short_name = _ShortFlag()
 
     if long is not None:
         if isinstance(long, str):
             long_name = long
         elif long is True:
-                long_name = _LongFlag()
+            long_name = _LongFlag()
 
     return Argument(
-        ArgparseArgInfo(
+        ArgKwargs(
             action=action,
             nargs=nargs,
             const=const,
             default=default,
-            type=type,
             choices=choices,
-            required=required or False,
+            required=required,
             help=help,
             metavar=metavar,
             deprecated=deprecated

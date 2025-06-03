@@ -1,8 +1,9 @@
 import argparse
-from typing import Any, Callable, Optional, Sequence, TypeVar, Union, overload
+from collections.abc import Callable, Sequence
+from typing import Any, Optional, TypeVar, Union, overload
 
 from .api import Group, MutexGroup, Parser, group, mutex_group
-from .core import ColorChoice, ActionType, _LongFlag, NargsType, _ShortFlag, long, short
+from .core import ActionType, ColorChoice, NargsType, _LongFlag, _ShortFlag, long, short
 
 __all__ = [
     "ColorChoice",
@@ -16,10 +17,8 @@ __all__ = [
     "long"
 ]
 
-
 T = TypeVar('T')
 U = TypeVar('U')
-
 
 # TODO: Add overloads based on `nargs` and `required` if `type` is not `None`.
 def arg(
@@ -43,10 +42,8 @@ def arg(
     deprecated: bool = False
 ) -> Any: ...
 
-
 @overload
-def arguments(cls: type[T], /) -> type[T]: ...
-
+def arguments[T](cls: type[T], /) -> type[T]: ...
 
 @overload
 def arguments(
@@ -56,7 +53,7 @@ def arguments(
     description: Optional[str] = None,
     epilog: Optional[str] = None,
     parents: Optional[list[type]] = None,
-    formatter_class = argparse.HelpFormatter,
+    formatter_class=argparse.HelpFormatter,
     prefix_chars: str = "-",
     fromfile_prefix_chars: Optional[str] = None,
     conflict_handler: str = "error",
@@ -65,10 +62,8 @@ def arguments(
     exit_on_error: bool = True
 ) -> Callable[[type[T]], type[T]]: ...
 
-
 @overload
-def subcommand(cls: type[T], /) -> type[T]: ...
-
+def subcommand[T](cls: type[T], /) -> type[T]: ...
 
 @overload
 def subcommand(
@@ -90,7 +85,6 @@ def subcommand(
     allow_abbrev: bool = ...,
     exit_on_error: bool = ...,
 ) -> Callable[[type[T]], type[T]]: ...
-
 
 # TODO: Add overloads for `required` being `True` or `False`
 def subparser(

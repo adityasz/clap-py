@@ -499,17 +499,19 @@ def populate_instance_fields(args: dict[str, Any], instance: Any, depth: int = 0
     if command.subcommand_dest is None:
         # no subcommands
         return
+
+    # subcommand not provided
     if command.subcommand_dest not in args:
-        # subcommand not provided
         if not hasattr(instance, command.subcommand_dest):
             setattr(instance, command.subcommand_dest, None)
         return
+
+    # find the subcommand using the name
     for subcommand in command.subcommands:
-        # find the subcommand using the name
         if subcommand.parser_info.name == args[command.subcommand_dest]:
             cls = subcommand.subcommand_class
             assert(cls is not None)
             subcommand_obj = cls()
             populate_instance_fields(subcommand_args, subcommand_obj, depth + 1)
             setattr(instance, command.subcommand_dest, subcommand_obj)
-            break # since only one subcommand can be provided
+            break  # since only one subcommand can be provided
