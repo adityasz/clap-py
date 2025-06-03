@@ -43,9 +43,6 @@ def arguments[T](
 ) -> Union[type[T], Callable[[type[T]], type[T]]]:
     """Configure a class to parse command-line arguments.
 
-    This decorator transforms a class into an argument parser by setting up
-    `ArgumentParser` configuration. Can be used with or without arguments.
-
     Args:
         cls: The class to decorate. When used without parentheses, this is
             the class being decorated.
@@ -67,10 +64,6 @@ def arguments[T](
             abbreviation is unambiguous.
         exit_on_error: Whether `ArgumentParser` exits with error info when
             an error occurs.
-
-    Returns:
-        The decorated class with argument parsing capabilities, or a decorator
-        function if called without arguments.
     """
     def wrap(cls: type[T]) -> type[T]:
         setattr(cls, _COMMAND_ATTR, True)
@@ -102,10 +95,6 @@ def subcommand[T](
 ) -> Union[type[T], Callable[[type[T]], type[T]]]:
     """Configure a class as a subcommand parser.
 
-    This decorator marks a class as a subcommand, allowing it to be used
-    with the subcommand system. Subcommands split functionality into
-    different command-line interfaces, like `git commit` or `git push`.
-
     Args:
         cls: The class to decorate. When used without parentheses, this is
             the class being decorated.
@@ -131,10 +120,6 @@ def subcommand[T](
             abbreviation is unambiguous.
         exit_on_error: Whether `ArgumentParser` exits with error info when
             an error occurs.
-
-    Returns:
-        The decorated class configured as a subcommand, or a decorator
-        function if called without arguments.
     """
     def wrap(cls: type[T]) -> type[T]:
         setattr(cls, _SUBCOMMAND_ATTR, True)
@@ -251,10 +236,6 @@ def subparser(
 ) -> SubparserInfo:
     """Create subparser configuration for command-line sub-commands.
 
-    Many programs split functionality into sub-commands, like `git commit`,
-    `git push`, and `git pull`. This function creates the configuration
-    for such sub-command systems by setting up the subparser parameters.
-
     Args:
         title: Title for the sub-parser group in help output. By default
             "subcommands" if description is provided, otherwise uses title
@@ -271,9 +252,6 @@ def subparser(
         help: Help for sub-parser group in help output.
         metavar: String presenting available subcommands in help. By default
             it presents subcommands in form `{cmd1, cmd2, ...}`.
-
-    Returns:
-        A `SubparserInfo` object containing the subparser configuration.
     """
     return SubparserInfo(
         title=title,
@@ -295,12 +273,6 @@ def group(
     conflict_handler: str = "error"
 ) -> Group:
     """Create an argument group for organizing related arguments.
-
-    By default, `ArgumentParser` groups command-line arguments into "positional
-    arguments" and "options" when displaying help messages. When there is a
-    better conceptual grouping of arguments, appropriate groups can be created
-    using this function. Arguments in the same group will be displayed together
-    in help messages.
 
     Args:
         title: Title for the argument group in help output. If provided without
