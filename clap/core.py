@@ -14,6 +14,7 @@ from typing import (
     Optional,
     Self,
     Union,
+    cast,
     get_args,
     get_origin,
     get_type_hints,
@@ -274,9 +275,10 @@ class Command:
 
     arguments: dict[str, Argument] = field(default_factory=dict)
     subcommands: dict[str, Self] = field(default_factory=dict)
+    subcommand_aliases: dict[str, str] = field(default_factory=dict)
     subcommand_dest: Optional[str] = None
-    groups: dict[Group, list[str]] = field(default_factory=dict)
-    mutexes: defaultdict[MutexGroup, list[str]] = field(
+    groups: dict[Group, list[Argument]] = field(default_factory=dict)
+    mutexes: defaultdict[MutexGroup, list[Argument]] = field(
         default_factory=lambda: defaultdict(list)
     )
     convert_to_tuple: set[str] = field(default_factory=set)
@@ -475,10 +477,11 @@ def process_arg(
     command.arguments[field_name] = arg
 
     if (mutex := arg.mutex) is not None:
-        command.mutexes[mutex].append(field_name)
-        return
-    if (group := arg.group) is not None:
-        command.groups[group].append(field_name)
+        if (group := arg.group) is not None and mutex.parent != group:
+            raise ValueError
+        command.mutexes[mutex].append(arg)
+    elif (group := arg.group) is not None:
+        command.groups[group].append(arg)
 
 
 def process_subcommand_dest(
@@ -496,18 +499,22 @@ def process_subcommand_dest(
     if value is not None:
         if isinstance(value, SubparserInfo):
             command.subparser_info = value
-            if command.subparser_info.required != ty.optional:
+            if command.subparser_info.required == ty.optional:
                 raise TypeError("check 'required'")
         else:
             raise TypeError(f"can't assign {type(value)} to subcommand destination")
     else:
         command.subparser_info = SubparserInfo()
-    command.subparser_info.dest = command.subcommand_dest
+        command.subparser_info.required = not ty.optional
+    command.subparser_info.dest = prefix + command.subcommand_dest
     for cmd in ty.subcommands:
         subcommand = create_command(cmd, prefix)
         name = subcommand.parser_info.name
         assert name is not None
         command.subcommands[name] = subcommand
+        if subcommand.parser_info.aliases:
+            for alias in subcommand.parser_info.aliases:
+                command.subcommand_aliases[alias] = name
 
 
 def create_command(cls: type, prefix: str = "") -> Command:
@@ -561,22 +568,20 @@ def setup_parser(parser: argparse.ArgumentParser, command: Command):
         group_obj: parser.add_argument_group(**group_obj.get_kwargs())
         for group_obj in command.groups
     }
-    for group, arg_names in command.groups.items():
-        for arg_name in arg_names:
-            arg = command.arguments[arg_name]
+    for group, arguments in command.groups.items():
+        for arg in arguments:
             kwargs = arg.arg_kwargs.get_kwargs()
             kwargs.setdefault("default", None)
             groups[group].add_argument(*arg.get_flags(), **arg.get_kwargs())
 
-    for mutex, arg_names in command.mutexes.items():
+    for mutex, arguments in command.mutexes.items():
         if mutex.parent is None:
             mutex_group = parser.add_mutually_exclusive_group(required=mutex.required)
         else:
             mutex_group = groups[mutex.parent].add_mutually_exclusive_group(
                 required=mutex.required
             )
-        for arg_name in arg_names:
-            arg = command.arguments[arg_name]
+        for arg in arguments:
             mutex_group.add_argument(*arg.get_flags(), **arg.get_kwargs())
 
     if (subparser_info := command.subparser_info) is not None:
@@ -617,13 +622,18 @@ def populate_instance_fields(args: dict[str, Any], instance: Any):
         return
 
     # subcommand not provided
-    if args[command.subcommand_dest] is None:
+    subcommand_name = args[command.subcommand_dest]
+    if subcommand_name is None:
         if not hasattr(instance, command.subcommand_dest):
             setattr(instance, command.subcommand_dest, None)
         return
 
+    # argparse gives the alias in subparser dest; head exploding emoji
+    subcommand_name = cast(str, subcommand_name)
+    subcommand_name = command.subcommand_aliases.get(subcommand_name, subcommand_name)
+
     # only one subcommand can be provided
-    cls = command.subcommands[args[command.subcommand_dest]].subcommand_class
+    cls = command.subcommands[subcommand_name].subcommand_class
     assert cls is not None
     subcommand_instance = cls()
     populate_instance_fields(subcommand_args, subcommand_instance)

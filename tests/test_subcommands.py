@@ -210,7 +210,7 @@ class TestSubcommandNamingAndAliases(unittest.TestCase):
     def test_subcommand_with_custom_name(self):
         @clap.subcommand(name="ls")
         class ListFiles:
-            directory: Optional[str] = arg(nargs="?", default=".")
+            directory: str = arg(nargs="?", default=".")
 
         @clap.arguments
         class Cli(clap.Parser):
