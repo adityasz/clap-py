@@ -2,11 +2,12 @@
 Adapted from https://github.com/clap-rs/clap/blob/master/examples/git-derive.rs
 """
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Union
 
 import clap
-from clap import arg, ColorChoice
+from clap import ColorChoice, arg, long, short
 
 
 @clap.subcommand
@@ -19,8 +20,9 @@ class Diff:
     base: Optional[str] = arg(metavar="COMMIT")
     head: Optional[str] = arg(metavar="COMMIT")
     path: Optional[str]  # what's `argparse`'s equivalent of last=true?
-    color: ColorChoice = arg(long=True, metavar="WHEN", nargs='?',
-                             default=ColorChoice.Auto, const="always")
+    color: ColorChoice = arg(
+        long, metavar="WHEN", nargs="?", default=ColorChoice.Auto, const="always"
+    )
 
 
 @clap.subcommand
@@ -30,13 +32,13 @@ class Push:
 
 @clap.subcommand
 class Add:
-    """Add file contents to the index."""
-    path: list[Path] = arg(nargs='+')
+    paths: list[Path] = arg(nargs="+")
 
 
 @clap.subcommand
 class Stash:
     @clap.subcommand
+    @dataclass
     class Push:
         message: Optional[str]
 
@@ -48,18 +50,18 @@ class Stash:
     class Apply:
         stash: Optional[str]
 
-    command: Union[Push, Pop, Apply]
-    push: Optional[str]
+    command: Optional[Union[Push, Pop, Apply]]
+    # is there something like args_conflict_with_subcommands in argparse?
+    message: Optional[str] = arg(short, long)
 
 
 @clap.subcommand
 class External:
-    args: list[str] = arg(nargs='*')
+    args: list[str] = arg(nargs="*")
 
 
 @clap.arguments(prog="git")
 class Cli(clap.Parser):
-    """A fictional versioning CLI."""
     command: Union[Clone, Diff, Push, Add, Stash, External]
 
 
@@ -82,11 +84,10 @@ def main():
             print(f"Diffing {base}..{head} {path} (color={color})")
         case Push(remote=remote):
             print(f"Pushing to {remote}")
-        case Add(path=path):
-            print(f"Adding {path}")
-        case Stash(command=command, push=push):
-            if command is None:
-                command = push
+        case Add(paths=paths):
+            print(f"Adding {" ".join(str(path) for path in paths)}")
+        case Stash(command=command, message=message):
+            command = command or Stash.Push(message)
             match command:
                 case Stash.Push(message=msg):
                     print(f"Pushing {msg}")
