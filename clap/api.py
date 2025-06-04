@@ -76,7 +76,7 @@ def arguments[T](
             """Parse command-line arguments and return an instance of the class."""
             parser = getattr(cls, _PARSER)
             parsed_args = parser.parse_args(args)
-            obj = cls()
+            obj = object.__new__(cls)
             apply_parsed_arguments(dict(parsed_args._get_kwargs()), obj)
             return obj
 

@@ -676,6 +676,6 @@ def apply_parsed_arguments(args: dict[str, Any], instance: Any):
     # only one subcommand can be provided
     cls = command.subcommands[subcommand_name].subcommand_class
     assert cls is not None
-    subcommand_instance = cls()
+    subcommand_instance = object.__new__(cls)
     apply_parsed_arguments(subcommand_args, subcommand_instance)
     setattr(instance, command.subcommand_dest, subcommand_instance)
