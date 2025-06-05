@@ -393,7 +393,8 @@ def configure_action_behavior(arg: Argument, optional_type_hint: bool):
                 kwargs.required = False
             if optional_type_hint:
                 raise TypeError(
-                    "An argument with the 'count' action cannot be None. If no default is provided, it is set to 0."
+                    "An argument with the 'count' action cannot be None. If no default is "
+                    "provided, it is set to 0."
                 )
         case "store":
             if kwargs.required is not None:
@@ -430,7 +431,8 @@ def configure_action_behavior(arg: Argument, optional_type_hint: bool):
         if optional_type_hint:
             if (nargs := kwargs.nargs) is not None and nargs != '?':
                 raise TypeError(
-                    "A positional argument with 'nargs != ?' can never be None; an empty list is returned when no argument is provided with 'nargs != ?'."
+                    "A positional argument with 'nargs != ?' can never be None; an empty list is "
+                    "returned when no argument is provided with 'nargs' is 0 or *."
                 )
             kwargs.nargs = '?'
         kwargs.required = None
@@ -502,7 +504,7 @@ def configure_argument(
                 "The mutex group's parent group ('{}') is different from this "
                 "argument's group ('{}'). It is not necessary to provide the "
                 "group when the mutex group is already provided because the "
-                "mutex group must have the same parent as the given group."
+                "mutex group's parent must be the given group."
             )
         command.mutexes[mutex].append(arg)
     elif (group := arg.group) is not None:
@@ -585,7 +587,8 @@ def create_command(cls: type, command_path: str = "") -> Command:
             configure_argument(Argument(), ty, command, field_name, command_path, docstrings)
         else:
             raise TypeError(
-                "Can only assign 'arg(...)', 'group(...)', 'mutex(...)', or 'subparsers(...)' to a field of an arguments class."
+                "Can only assign 'arg(...)', 'group(...)', 'mutex(...)', or 'subparsers(...)' to "
+                "a field of an arguments class."
             )
 
     setattr(cls, _COMMAND_DATA, command)
