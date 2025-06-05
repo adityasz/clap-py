@@ -396,6 +396,7 @@ def configure_action_behavior(arg: Argument, optional_type_hint: bool):
                     "An argument with the 'count' action cannot be None. If no default is "
                     "provided, it is set to 0."
                 )
+            kwargs.metavar = None
         case "store":
             if kwargs.required is not None:
                 if kwargs.required and optional_type_hint:
@@ -419,6 +420,7 @@ def configure_action_behavior(arg: Argument, optional_type_hint: bool):
                 kwargs.default = True
             if kwargs.required is None:
                 kwargs.required = False
+            kwargs.metavar = None
         case "store_true":
             if optional_type_hint:
                 raise TypeError("An argument with the 'store_true' action can never be None.")
@@ -426,6 +428,7 @@ def configure_action_behavior(arg: Argument, optional_type_hint: bool):
                 kwargs.default = False
             if kwargs.required is None:
                 kwargs.required = False
+            kwargs.metavar = None
 
     if arg.is_positional:
         if optional_type_hint:
@@ -441,7 +444,7 @@ def configure_action_behavior(arg: Argument, optional_type_hint: bool):
         kwargs.type = None
 
 
-def configure_argument(
+def add_argument(
     arg: Argument,
     ty: ArgType.Base,
     command: Command,
@@ -460,6 +463,8 @@ def configure_argument(
         kwargs.dest = command_path + field_name
     if kwargs.help is None:
         kwargs.help = docstrings.get(field_name)
+    if kwargs.metavar is None:
+        kwargs.metavar = field_name.upper()
 
     match ty:
         case ArgType.SimpleType(t):
@@ -537,13 +542,17 @@ def configure_subcommands(
                 f"cannot assign {type(value)} to it."
             )
     else:
-        command.subparsers_config = SubparsersConfig()
-        command.subparsers_config.required = not ty.optional
+        command.subparsers_config = SubparsersConfig(required=not ty.optional)
+
+    subparsers_config = command.subparsers_config
+    if subparsers_config.title is None:
+        subparsers_config.title = "Commands"
+        subparsers_config.metavar = "COMMAND"
     # if dest is not provided to add_subparsers(), argparse does not give the
     # command name, and if a subcommand shares a flag name with the command and
     # the flag is provided for both of them, argparse simply overwrites it in
     # the output (argparse.Namespace)
-    command.subparsers_config.dest = command_path + command.subcommand_dest
+    subparsers_config.dest = command_path + command.subcommand_dest
     for cmd in ty.subcommands:
         subcommand = create_command(cmd, command_path)
         name = subcommand.parser_config.name
@@ -582,9 +591,9 @@ def create_command(cls: type, command_path: str = "") -> Command:
         elif isinstance(value, MutexGroup):
             continue  # nothing to do
         elif isinstance(value, Argument):
-            configure_argument(value, ty, command, field_name, command_path, docstrings)
+            add_argument(value, ty, command, field_name, command_path, docstrings)
         elif value is None:
-            configure_argument(Argument(), ty, command, field_name, command_path, docstrings)
+            add_argument(Argument(), ty, command, field_name, command_path, docstrings)
         else:
             raise TypeError(
                 "Can only assign 'arg(...)', 'group(...)', 'mutex(...)', or 'subparsers(...)' to "
