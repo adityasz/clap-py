@@ -176,7 +176,9 @@ class TestActions(unittest.TestCase):
             verbose: int = arg(short="-v", action="count")
             debug: bool = arg(long, action="store_true")
             includes: list[str] = arg(short="-I", action="append")
-            features: list[str] = arg(long="--feature", action="append_const", default_missing_value="enabled")
+            features: list[str] = arg(
+                long="--feature", action="append_const", default_missing_value="enabled"
+            )
 
         args = Cli.parse_args(["-vv", "--debug", "-I", "lib1", "-I", "lib2", "--feature"])
         self.assertEqual(args.verbose, 2)
@@ -218,7 +220,10 @@ class TestActionTypeErrors(unittest.TestCase):
             @clap.command
             class Cli(clap.Parser):
                 mode: Optional[str] = arg(
-                    long, action="store_const", default_missing_value="test", default_value="default"
+                    long,
+                    action="store_const",
+                    default_missing_value="test",
+                    default_value="default",
                 )
 
     def test_store_with_required_and_optional_error(self):

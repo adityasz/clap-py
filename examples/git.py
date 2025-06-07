@@ -21,7 +21,7 @@ class Diff:
     head: Optional[str] = arg(value_name="COMMIT")
     path: Optional[str]  # what's `argparse`'s equivalent of last=true?
     color: ColorChoice = arg(
-        long, value_name="WHEN", nargs="?", default_value=ColorChoice.Auto, const="always"
+        long, value_name="WHEN", num_args="?", default_value=ColorChoice.Auto, default_missing_value="always"
     )
 
 
@@ -32,7 +32,7 @@ class Push:
 
 @clap.subcommand
 class Add:
-    paths: list[Path] = arg(nargs="+")
+    paths: list[Path] = arg(num_args="+")
 
 
 @clap.subcommand
@@ -57,7 +57,7 @@ class Stash:
 
 @clap.subcommand
 class External:
-    args: list[str] = arg(nargs="*")
+    args: list[str] = arg(num_args="*")
 
 
 @clap.command(name="git")

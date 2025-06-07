@@ -25,8 +25,8 @@ _SUBCOMMAND_MARKER = "__com.github.adityasz.clap_py.subcommand_marker__"
 _PARSER = "__parser__"
 _COMMAND_DATA = "__command_data__"
 _SUBCOMMAND_DEST = "__subcommand_dest__"
-_SHORT_HELP_DEST = "0__"
-_LONG_HELP_DEST = "00__"
+_SHORT_HELP_DEST = "0"
+_LONG_HELP_DEST = "00"
 
 
 class ColorChoice(Enum):
@@ -83,7 +83,8 @@ NargsType = Union[Literal['?', '*', '+'], int]
 
 
 class ArgType:
-    class Base: ...
+    class Base:
+        optional: bool
 
     @dataclass
     class SimpleType(Base):
@@ -384,7 +385,7 @@ def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
     raise TypeError(f"Could not parse {type_hint}.")
 
 
-def configure_flags(arg: Arg, field_name: str):
+def set_flags(arg: Arg, field_name: str):
     """Sets short and long flags of the argument."""
     if isinstance(arg.short, _ShortFlag):
         arg.short = "-" + field_name[0].lower()
@@ -397,8 +398,50 @@ def configure_flags(arg: Arg, field_name: str):
         arg.long = "--" + arg.long
 
 
-def configure_action_behavior(arg: Arg, optional_type_hint: bool):
+def set_type_dependent_kwargs(arg: Arg):
     kwargs = arg.arg_config
+
+    match arg.ty:
+        case ArgType.SimpleType(t):
+            if t is bool:
+                if kwargs.action is None:
+                    kwargs.action = ArgAction.SetTrue
+            else:
+                if kwargs.action is None:
+                    kwargs.action = ArgAction.Set
+                kwargs.type = t
+        case ArgType.Enum(enum=enum, choice_to_enum_member=choice_to_enum_member):
+            if kwargs.action is None:
+                kwargs.action = ArgAction.Set
+            kwargs.type = str
+            kwargs.choices = list(choice_to_enum_member.keys())
+            if isinstance(kwargs.default, enum):
+                for choice, member in choice_to_enum_member.items():
+                    if member == kwargs.default:
+                        kwargs.default = choice  # set default to a string for help message
+        case ArgType.List(t):
+            if kwargs.action is None:
+                kwargs.action = ArgAction.Set
+            if kwargs.nargs is None and kwargs.action in (ArgAction.Set, ArgAction.Extend):
+                kwargs.nargs = "*"
+            kwargs.type = t
+        case ArgType.Tuple(t, n):
+            if kwargs.action is None:
+                kwargs.action = ArgAction.Set
+            kwargs.type = t
+            if (nargs := kwargs.nargs) is not None:
+                if nargs != n:
+                    raise TypeError(f"The tuple has {n} values but 'num_args' is set to {nargs}.")
+            else:
+                kwargs.nargs = n
+        case _:
+            raise TypeError("An unknown error occurred.")
+
+
+def set_action_dependent_kwargs(arg: Arg):
+    kwargs = arg.arg_config
+    assert arg.ty is not None
+    optional_type_hint = arg.ty.optional
 
     match kwargs.action:
         case ArgAction.Append | "append_const" | ArgAction.Extend:
@@ -454,8 +497,8 @@ def configure_action_behavior(arg: Arg, optional_type_hint: bool):
         if optional_type_hint:
             if (nargs := kwargs.nargs) is not None and nargs != '?':
                 raise TypeError(
-                    "A positional argument with 'nargs != ?' can never be None; an empty list is "
-                    "returned when no argument is provided with 'nargs' is 0 or *."
+                    "A positional argument with 'num_args != ?' can never be None; an empty list "
+                    "is returned when no argument is provided with 'num_args' is 0 or *."
                 )
             kwargs.nargs = '?'
         kwargs.required = None
@@ -468,67 +511,6 @@ def configure_action_behavior(arg: Arg, optional_type_hint: bool):
         ArgAction.SetFalse,
     ):
         kwargs.type = None
-    if isinstance(kwargs.action, ArgAction):
-        kwargs.action = cast(ActionType, str(kwargs.action))
-
-
-def add_argument(
-    arg: Arg,
-    ty: ArgType.Base,
-    command: Command,
-    field_name: str,
-    command_path: str,
-    docstrings: dict[str, str],
-):
-    configure_flags(arg, field_name)
-
-    arg.ty = ty
-    kwargs = arg.arg_config
-    kwargs.dest = command_path + field_name
-    docstring = docstrings.get(field_name)
-    if docstring is not None:
-        if arg.about is None:
-            arg.about = get_about_from_docstring(docstring)
-        if arg.long_about is None:
-            arg.long_about = docstring
-    if arg.value_name is None:
-        arg.value_name = field_name.upper()
-
-    match ty:
-        case ArgType.SimpleType(t):
-            if t is bool:
-                if kwargs.action is None:
-                    kwargs.action = ArgAction.SetTrue
-            else:
-                if kwargs.action is None:
-                    kwargs.action = ArgAction.Set
-                kwargs.type = t
-        case ArgType.Enum(enum=enum, choice_to_enum_member=choice_to_enum_member):
-            if kwargs.action is None:
-                kwargs.action = ArgAction.Set
-            kwargs.type = str
-            kwargs.choices = list(choice_to_enum_member.keys())
-            if isinstance(kwargs.default, enum):
-                for choice, member in choice_to_enum_member.items():
-                    if member == kwargs.default:
-                        kwargs.default = choice  # set default to a string for help message
-        case ArgType.List(t):
-            if kwargs.action is None:
-                kwargs.action = ArgAction.Set
-            if kwargs.nargs is None and kwargs.action == ArgAction.Set:
-                kwargs.nargs = "*"
-            kwargs.type = t
-        case ArgType.Tuple(t, n):
-            if kwargs.action is None:
-                kwargs.action = ArgAction.Set
-            kwargs.type = t
-            if (nargs := kwargs.nargs) is not None:
-                if nargs != n:
-                    raise TypeError(f"The tuple has {n} values but 'nargs' is set to {nargs}.")
-            else:
-                kwargs.nargs = n
-        case _:
-            raise TypeError("An unknown error occurred.")
 
     if kwargs.const is not None:
         if kwargs.action == ArgAction.SetTrue:
@@ -540,10 +522,58 @@ def add_argument(
                 kwargs.nargs = "?"
             if kwargs.nargs not in ("?", "*", 0):
                 raise TypeError(
-                    "'nargs' must be '?', '*', or 0 if 'default_missing_value' is not None"
+                    "'num_args' must be '?', '*', or 0 if 'default_missing_value' is not None"
                 )
 
-    configure_action_behavior(arg, ty.optional)
+
+def set_value_name(arg: Arg, field_name: str):
+    kwargs = arg.arg_config
+    arg.value_name = field_name.upper()
+
+    match kwargs.nargs:
+        case '?':
+            arg.value_name = f"[{arg.value_name}]"
+        case '*':
+            arg.value_name = f"[<{arg.value_name}>...]"
+        case '+':
+            arg.value_name = f"<{arg.value_name}>..."
+        case int(n):
+            arg.value_name = " ".join(f"<{arg.value_name}>" for _ in range(n))
+        case None:
+            match kwargs.action:
+                case ArgAction.Set | ArgAction.Append | ArgAction.Extend:
+                    arg.value_name = f"<{arg.value_name}>"
+                case _:
+                    arg.value_name = None
+
+
+def add_argument(
+    arg: Arg,
+    ty: ArgType.Base,
+    command: Command,
+    field_name: str,
+    command_path: str,
+    docstrings: dict[str, str],
+):
+    arg.ty = ty
+    arg.arg_config.dest = command_path + field_name
+    docstring = docstrings.get(field_name)
+    if docstring is not None:
+        if arg.about is None:
+            arg.about = get_about_from_docstring(docstring)
+        if arg.long_about is None:
+            arg.long_about = docstring
+
+    set_flags(arg, field_name)
+
+    set_type_dependent_kwargs(arg)
+
+    set_action_dependent_kwargs(arg)
+
+    set_value_name(arg, field_name)
+
+    if isinstance(arg.arg_config.action, ArgAction):
+        arg.arg_config.action = cast(ActionType, str(arg.arg_config.action))
 
     command.arguments[field_name] = arg
 
@@ -644,6 +674,12 @@ def configure_parser(parser: argparse.ArgumentParser, command: Command):
         if arg.group is not None or arg.mutex is not None:
             continue
         parser.add_argument(*arg.get_flags(), **arg.get_kwargs())
+
+    # if not command.disable_help_flag:
+    #     parser.add_argument("-h", "--help")
+
+    # if not command.disable_version_flag:
+    #     parser.add_argument("-V", "--version")
 
     # groups can have mutexes in them, so storing them temporarily in a dict
     groups = {

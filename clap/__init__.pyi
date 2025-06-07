@@ -31,12 +31,13 @@ def arg(
     group: Optional[Group] = None,
     mutex: Optional[MutexGroup] = None,
     action: Optional[ActionType] = None,
-    nargs: Optional[NargsType] = None,
-    const: Optional[U] = None,
+    num_args: Optional[NargsType] = None,
+    default_missing_value: Optional[U] = None,
     default_value: Optional[U] = None,
     choices: Optional[Sequence[str]] = None,
     required: Optional[bool] = None,
-    help: Optional[str] = None,
+    about: Optional[str] = None,
+    long_about: Optional[str] = None,
     value_name: Optional[str] = None,
     deprecated: bool = False
 ) -> Any: ...
