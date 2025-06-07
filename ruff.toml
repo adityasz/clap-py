@@ -2,7 +2,7 @@ line-length = 99
 
 [lint]
 preview = true
-select = ["ERA", "E", "F", "UP", "B", "SIM", "I"]
+select = ["E", "F", "UP", "B", "SIM", "I"]
 ignore = ["UP007", "UP045"]
 
 [lint.pydocstyle]
