@@ -563,6 +563,8 @@ def add_argument(
             arg.about = get_about_from_docstring(docstring)
         if arg.long_about is None:
             arg.long_about = docstring
+    if arg.long_about is None:
+        arg.long_about = arg.about
 
     set_flags(arg, field_name)
 
@@ -675,11 +677,11 @@ def configure_parser(parser: argparse.ArgumentParser, command: Command):
             continue
         parser.add_argument(*arg.get_flags(), **arg.get_kwargs())
 
-    # if not command.disable_help_flag:
-    #     parser.add_argument("-h", "--help")
+    if not command.disable_help_flag:
+        parser.add_argument("-h", "--help")
 
-    # if not command.disable_version_flag:
-    #     parser.add_argument("-V", "--version")
+    if not command.disable_version_flag:
+        parser.add_argument("-V", "--version")
 
     # groups can have mutexes in them, so storing them temporarily in a dict
     groups = {
