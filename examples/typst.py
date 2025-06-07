@@ -1,25 +1,9 @@
-import sys
-from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 from typing import Optional, Union
 
 import clap
-from clap import ColorChoice, arg, long, short
-
-GREEN = "\033[32m"
-RESET = "\033[0m"
-
-
-def set_color(choice: ColorChoice):
-    global GREEN, RESET
-    if choice == ColorChoice.Never:
-        GREEN = ""
-        RESET = ""
-    elif choice == ColorChoice.Auto:
-        if not (hasattr(sys.stdout, "isatty") and sys.stdout.isatty()):
-            GREEN = ""
-            RESET = ""
+from clap import arg, long, short
 
 
 class OutputFormat(Enum):
@@ -55,34 +39,32 @@ class Init:
     dir: Optional[Path]
     """The project directory, defaults to the template's name"""
 
-    package_path: Optional[Path] = arg(metavar="DIR")
+    package_path: Optional[Path] = arg(value_name="DIR")
     """Custom path to local packages, defaults to system-dependent location"""
 
 
-@clap.arguments(prog="typst")
+@clap.command(name="typst")
 class Cli(clap.Parser):
+    input: Path
+    """Input."""
+
     command: Union[Watch, Init]
 
-    color: ColorChoice = arg(long, metavar="COLOR", default=ColorChoice.Auto)
-    """Whether to use color. When set to `auto` if the terminal supports it"""
-    cert: Optional[str] = arg(long, metavar="CERT")
+    cert: Optional[str] = arg(long)
     """Path to a custom CA certificate to use when making network requests"""
 
 
 def main():
     args = Cli.parse_args()
 
-    if args.color:
-        set_color(args.color)
-
     if (cert := args.cert):
         print(f"Using {cert} as the CA certificate")
 
     match args.command:
         case Watch(input=input):
-            print(f"{GREEN}Watching{RESET} {input}...")
+            print(f"Watching {input}...")
         case Init(template=template):
-            print(f"{template} is a {GREEN}cool{RESET} template!")
+            print(f"{template} is a cool template!")
 
 
 if __name__ == "__main__":

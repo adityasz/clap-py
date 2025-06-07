@@ -1,15 +1,14 @@
-from .api import Parser, arg, arguments, group, mutex_group, subcommand, subparsers
+from .api import Parser, arg, command, group, mutex_group, subcommand
 from .core import ColorChoice, long, short
 
 __all__ = [
     "ColorChoice",
     "Parser",
     "arg",
-    "arguments",
+    "command",
     "group",
     "mutex_group",
     "subcommand",
-    "subparsers",
     "short",
     "long"
 ]

@@ -5,7 +5,7 @@ import re
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field, fields
-from enum import Enum, EnumType, auto
+from enum import Enum, EnumType, StrEnum, auto
 from inspect import getsource
 from textwrap import dedent
 from typing import (
@@ -25,10 +25,10 @@ _SUBCOMMAND_MARKER = "__com.github.adityasz.clap_py.subcommand_marker__"
 _PARSER = "__parser__"
 _COMMAND_DATA = "__command_data__"
 _SUBCOMMAND_DEST = "__subcommand_dest__"
-_PARSER_CONFIG = "__argparse_parser_config__"
+_SHORT_HELP_DEST = "0__"
+_LONG_HELP_DEST = "00__"
 
 
-# will be useful when help output is implemented
 class ColorChoice(Enum):
     Auto = auto()
     Always = auto()
@@ -43,6 +43,19 @@ class _LongFlag:
     ...
 
 
+class ArgAction(StrEnum):
+    Set = "store"
+    SetTrue = "store_true"
+    SetFalse = "store_false"
+    Append = "append"
+    Extend = "extend"
+    Count = "count"
+    Help = "help"
+    HelpShort = "help"
+    HelpLong = "help"
+    Version = "version"
+
+
 short = _ShortFlag()
 """Generate short from the first character in the case-converted field name."""
 
@@ -51,6 +64,7 @@ long = _LongFlag()
 
 ActionType = Union[
     argparse.Action,
+    ArgAction,
     Literal[
         "store",
         "store_const",
@@ -61,10 +75,9 @@ ActionType = Union[
         "extend",
         "count",
         "help",
-        "version"
-    ]
+        "version",
+    ],
 ]
-
 
 NargsType = Union[Literal['?', '*', '+'], int]
 
@@ -80,15 +93,14 @@ class ArgType:
     class Enum(Base):
         def __init__(self, enum: type, optional: bool):
             self.enum = enum
-            members = enum.__members__
-            self.choices = list(
-                map(to_kebab_case, members.keys())
-            )
-            if len(set(self.choices)) != len(members):
-                raise TypeError("Cannot uniquely extract choices from this Enum.")
-            self.choice_to_enum_member: dict[str, type] = {
-                c: m for c, m in zip(self.choices, members.values(), strict=False)
-            }
+            self.members = enum.__members__
+            choices = list(map(to_kebab_case, self.members.keys()))
+            try:
+                self.choice_to_enum_member: dict[str, Any] = {
+                    c: m for c, m in zip(choices, self.members.values(), strict=True)
+                }
+            except ValueError:
+                raise TypeError("Cannot uniquely extract choices from this Enum.") from None
             self.optional = optional
 
     @dataclass
@@ -144,7 +156,7 @@ class MutexGroup:
 
 
 @dataclass
-class ArgparseConfig(ConfigBase):
+class ArgConfig(ConfigBase):
     action: Optional[ActionType] = None
     nargs: Optional[NargsType] = None
     const: Optional[Any] = None
@@ -152,49 +164,52 @@ class ArgparseConfig(ConfigBase):
     type: Optional[builtins.type] = None
     choices: Optional[Sequence[str]] = None
     required: Optional[bool] = None
-    help: Optional[str] = None
-    metavar: Optional[str] = None
     deprecated: Optional[bool] = None
     dest: Optional[str] = None
 
 
 @dataclass
-class Argument:
-    argparse_config: ArgparseConfig = field(default_factory=ArgparseConfig)
+class Arg:
+    arg_config: ArgConfig = field(default_factory=ArgConfig)
     """The kwargs for `parser.add_argument()`."""
 
+    about: Optional[str] = None
+    """..."""
+    long_about: Optional[str] = None
+    """..."""
+    value_name: Optional[str] = None
+    """..."""
     short: Optional[Union[_ShortFlag, str]] = None
     """The short flag."""
     long: Optional[Union[_LongFlag, str]] = None
     """The long flag."""
-    is_positional: bool = False
-    """True if positional argument."""
+    aliases: Optional[Sequence[str]] = None
+    """Flags in addition to `short` and `long`."""
     ty: Optional[ArgType.Base] = None
     """Stores type information for the argument."""
     group: Optional[Group] = None
-    """The group for the argument."""
+    """The group containing the argument."""
     mutex: Optional[MutexGroup] = None
-    """The mutually exclusive group for the argument."""
+    """The mutually exclusive group containing the argument."""
 
     def __repr__(self):
         attrs = []
-
         if self.short is not None:
             attrs.append(f'"{self.short}"' if isinstance(self.short, str) else "short")
         if self.long is not None:
             attrs.append(f'"{self.long}"' if isinstance(self.long, str) else "long")
-
-        for attr, val in self.argparse_config.get_kwargs().items():
+        for attr, val in self.arg_config.get_kwargs().items():
             attrs.append(f"{attr}={val}")
-
         for f in fields(self):
             if (
                 f.name not in ("arg_kwargs", "short", "long", "ty")
                 and (value := getattr(self, f.name)) is not None
             ):
                 attrs.append(f"{f.name}={value}")
-
         return f"{self.__class__.__name__}({", ".join(attrs)})"
+
+    def is_positional(self) -> bool:
+        return not self.short and not self.long
 
     def get_flags(self) -> list[str]:
         flags = []
@@ -205,7 +220,7 @@ class Argument:
         return flags
 
     def get_kwargs(self) -> dict[str, Any]:
-        kwargs = self.argparse_config.get_kwargs()
+        kwargs = self.arg_config.get_kwargs()
         # argparse does not add an argument to the `argparse.Namespace` that
         # `argparse.ArgumentParser.parser_args()` returns unless it has a value.
         # So, to get everything, set default value to None if not already set.
@@ -215,35 +230,21 @@ class Argument:
 
 @dataclass
 class SubparsersConfig(ConfigBase):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    prog: Optional[str] = None
-    parser_class: Optional[type] = None
-    action: Optional[ActionType] = None
     required: Optional[bool] = None
-    help: Optional[str] = None
-    metavar: Optional[str] = None
     dest: Optional[str] = None
 
 
 @dataclass
 class ParserConfig(ConfigBase):
     prog: Optional[str] = None
-    usage: Optional[str] = None
-    description: Optional[str] = None
-    epilog: Optional[str] = None
-    parents: Optional[Sequence[argparse.ArgumentParser]] = None
-    formatter_class = None
     prefix_chars: Optional[str] = None
     fromfile_prefix_chars: Optional[str] = None
     conflict_handler: Optional[str] = None
-    add_help: Optional[bool] = None
     allow_abbrev: Optional[bool] = None
     exit_on_error: Optional[bool] = None
     # The following are used by subcommands (subparsers.add_parser()):
     name: Optional[str] = None
     deprecated: Optional[bool] = None
-    help: Optional[str] = None
     aliases: Optional[Sequence[str]] = None
 
 
@@ -256,15 +257,34 @@ class Command:
     subcommand_class: Optional[type] = None
     """Contains the class if the command is a subcommand."""
 
-    arguments: dict[str, Argument] = field(default_factory=dict)
+    name: Optional[str] = None
+    version: Optional[str] = None
+    usage: Optional[str] = None
+    about: Optional[str] = None
+    long_about: Optional[str] = None
+    after_help: Optional[str] = None
+    subcommand_help_heading: Optional[str] = None
+    subcommand_value_name: Optional[str] = None
+    disable_version_flag: bool = False
+    disable_help_flag: bool = False
+    disable_help_subcommand: bool = False
+    heading_ansi_prefix: Optional[str] = None
+    argument_ansi_prefix: Optional[str] = None
+
+    arguments: dict[str, Arg] = field(default_factory=dict)
+    options: dict[str, Arg] = field(default_factory=dict)
+    groups: dict[Group, list[Arg]] = field(default_factory=dict)
+    mutexes: defaultdict[MutexGroup, list[Arg]] = field(default_factory=lambda: defaultdict(list))
     subcommands: dict[str, Self] = field(default_factory=dict)
     subcommand_aliases: dict[str, str] = field(default_factory=dict)
     subcommand_dest: Optional[str] = None
-    groups: dict[Group, list[Argument]] = field(default_factory=dict)
-    mutexes: defaultdict[MutexGroup, list[Argument]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
-    convert_to_tuple: set[str] = field(default_factory=set)
+
+    def get_usage(self) -> str:
+        ...
+
+
+def get_about_from_docstring(docstring: str) -> str:
+    return docstring[:docstring.find("\n")]
 
 
 def is_subcommand(cls: type) -> bool:
@@ -309,7 +329,7 @@ class DocstringExtractor(ast.NodeVisitor):
                 and isinstance(stmt_2.value, ast.Constant)
                 and isinstance(stmt_2.value.value, str)
             ):
-                self.docstrings[stmt_1.target.id] = stmt_2.value.value
+                self.docstrings[stmt_1.target.id] = stmt_2.value.value.strip()
                 # Class attributes do not have __doc__, but the interpreter does
                 # not strip away the docstrings either. So we can get them from
                 # the AST.
@@ -364,7 +384,7 @@ def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
     raise TypeError(f"Could not parse {type_hint}.")
 
 
-def configure_flags(arg: Argument, field_name: str):
+def configure_flags(arg: Arg, field_name: str):
     """Sets short and long flags of the argument."""
     if isinstance(arg.short, _ShortFlag):
         arg.short = "-" + field_name[0].lower()
@@ -377,16 +397,16 @@ def configure_flags(arg: Argument, field_name: str):
         arg.long = "--" + arg.long
 
 
-def configure_action_behavior(arg: Argument, optional_type_hint: bool):
-    kwargs = arg.argparse_config
+def configure_action_behavior(arg: Arg, optional_type_hint: bool):
+    kwargs = arg.arg_config
 
     match kwargs.action:
-        case "append" | "append_const" | "extend":
+        case ArgAction.Append | "append_const" | ArgAction.Extend:
             if not optional_type_hint and not kwargs.default:
                 kwargs.default = []
             if kwargs.required is None:
                 kwargs.required = False
-        case "count":
+        case ArgAction.Count:
             if kwargs.default is None:
                 kwargs.default = 0
             if kwargs.required is None:
@@ -396,8 +416,8 @@ def configure_action_behavior(arg: Argument, optional_type_hint: bool):
                     "An argument with the 'count' action cannot be None. If no default is "
                     "provided, it is set to 0."
                 )
-            kwargs.metavar = None
-        case "store":
+            arg.value_name = None
+        case ArgAction.Set:
             if kwargs.required is not None:
                 if kwargs.required and optional_type_hint:
                     raise TypeError("An argument with 'required=True' can never be None.")
@@ -413,24 +433,24 @@ def configure_action_behavior(arg: Argument, optional_type_hint: bool):
                 kwargs.required = False
             if kwargs.required is None:
                 kwargs.required = not optional_type_hint
-        case "store_false":
+        case ArgAction.SetFalse:
             if optional_type_hint:
                 raise TypeError("An argument with the 'store_false' action can never be None.")
             if kwargs.default is None:
                 kwargs.default = True
             if kwargs.required is None:
                 kwargs.required = False
-            kwargs.metavar = None
-        case "store_true":
+            arg.value_name = None
+        case ArgAction.SetTrue:
             if optional_type_hint:
                 raise TypeError("An argument with the 'store_true' action can never be None.")
             if kwargs.default is None:
                 kwargs.default = False
             if kwargs.required is None:
                 kwargs.required = False
-            kwargs.metavar = None
+            arg.value_name = None
 
-    if arg.is_positional:
+    if arg.is_positional():
         if optional_type_hint:
             if (nargs := kwargs.nargs) is not None and nargs != '?':
                 raise TypeError(
@@ -440,12 +460,20 @@ def configure_action_behavior(arg: Argument, optional_type_hint: bool):
             kwargs.nargs = '?'
         kwargs.required = None
 
-    if kwargs.action in ("store_const", "append_const", "count", "store_true", "store_false"):
+    if kwargs.action in (
+        "store_const",
+        "append_const",
+        ArgAction.Count,
+        ArgAction.SetTrue,
+        ArgAction.SetFalse,
+    ):
         kwargs.type = None
+    if isinstance(kwargs.action, ArgAction):
+        kwargs.action = cast(ActionType, str(kwargs.action))
 
 
 def add_argument(
-    arg: Argument,
+    arg: Arg,
     ty: ArgType.Base,
     command: Command,
     field_name: str,
@@ -455,41 +483,44 @@ def add_argument(
     configure_flags(arg, field_name)
 
     arg.ty = ty
-    kwargs = arg.argparse_config
-    if arg.short is None and arg.long is None:
-        arg.is_positional = True
-        arg.long = command_path + field_name
-    else:
-        kwargs.dest = command_path + field_name
-    if kwargs.help is None:
-        kwargs.help = docstrings.get(field_name)
-    if kwargs.metavar is None:
-        kwargs.metavar = field_name.upper()
+    kwargs = arg.arg_config
+    kwargs.dest = command_path + field_name
+    docstring = docstrings.get(field_name)
+    if docstring is not None:
+        if arg.about is None:
+            arg.about = get_about_from_docstring(docstring)
+        if arg.long_about is None:
+            arg.long_about = docstring
+    if arg.value_name is None:
+        arg.value_name = field_name.upper()
 
     match ty:
         case ArgType.SimpleType(t):
             if t is bool:
                 if kwargs.action is None:
-                    kwargs.action = "store_true"
+                    kwargs.action = ArgAction.SetTrue
             else:
                 if kwargs.action is None:
-                    kwargs.action = "store"
+                    kwargs.action = ArgAction.Set
                 kwargs.type = t
-        case ArgType.Enum(choices=choices):
+        case ArgType.Enum(enum=enum, choice_to_enum_member=choice_to_enum_member):
             if kwargs.action is None:
-                kwargs.action = "store"
+                kwargs.action = ArgAction.Set
             kwargs.type = str
-            kwargs.choices = choices
+            kwargs.choices = list(choice_to_enum_member.keys())
+            if isinstance(kwargs.default, enum):
+                for choice, member in choice_to_enum_member.items():
+                    if member == kwargs.default:
+                        kwargs.default = choice  # set default to a string for help message
         case ArgType.List(t):
             if kwargs.action is None:
-                kwargs.action = "store"
-            if kwargs.nargs is None and kwargs.action == "store":
+                kwargs.action = ArgAction.Set
+            if kwargs.nargs is None and kwargs.action == ArgAction.Set:
                 kwargs.nargs = "*"
             kwargs.type = t
         case ArgType.Tuple(t, n):
             if kwargs.action is None:
-                kwargs.action = "store"
-            command.convert_to_tuple.add(field_name)
+                kwargs.action = ArgAction.Set
             kwargs.type = t
             if (nargs := kwargs.nargs) is not None:
                 if nargs != n:
@@ -498,6 +529,19 @@ def add_argument(
                 kwargs.nargs = n
         case _:
             raise TypeError("An unknown error occurred.")
+
+    if kwargs.const is not None:
+        if kwargs.action == ArgAction.SetTrue:
+            raise TypeError(
+                "'default_missing_value' has no purpose when action is 'SetTrue'."
+            )
+        if kwargs.action not in ("append_const", "store_const"):
+            if kwargs.nargs is None:
+                kwargs.nargs = "?"
+            if kwargs.nargs not in ("?", "*", 0):
+                raise TypeError(
+                    "'nargs' must be '?', '*', or 0 if 'default_missing_value' is not None"
+                )
 
     configure_action_behavior(arg, ty.optional)
 
@@ -529,30 +573,17 @@ def configure_subcommands(
         )
     command.subcommand_dest = field_name
     if value is not None:
-        if isinstance(value, SubparsersConfig):
-            command.subparsers_config = value
-            if command.subparsers_config.required == ty.optional:
-                raise TypeError(
-                    f"'required' is set to {ty.optional} but the annotation says that "
-                    f"the subcommand is {"" if ty.optional else "not "}optional."
-                )
-        else:
-            raise TypeError(
-                f"{field_name} is a subcommand destination based on the annotation; "
-                f"cannot assign {type(value)} to it."
-            )
-    else:
-        command.subparsers_config = SubparsersConfig(required=not ty.optional)
-
-    subparsers_config = command.subparsers_config
-    if subparsers_config.title is None:
-        subparsers_config.title = "Commands"
-        subparsers_config.metavar = "COMMAND"
+        raise TypeError(
+            f"{field_name} is a subcommand destination based on the annotation; "
+            f"cannot assign {type(value)} to it."
+        )
     # if dest is not provided to add_subparsers(), argparse does not give the
     # command name, and if a subcommand shares a flag name with the command and
     # the flag is provided for both of them, argparse simply overwrites it in
     # the output (argparse.Namespace)
-    subparsers_config.dest = command_path + command.subcommand_dest
+    command.subparsers_config = SubparsersConfig(
+        required=not ty.optional, dest=command_path + command.subcommand_dest
+    )
     for cmd in ty.subcommands:
         subcommand = create_command(cmd, command_path)
         name = subcommand.parser_config.name
@@ -564,7 +595,7 @@ def configure_subcommands(
 
 
 def create_command(cls: type, command_path: str = "") -> Command:
-    command = Command(ParserConfig(**getattr(cls, _PARSER_CONFIG)))
+    command = getattr(cls, _COMMAND_DATA)
 
     if getattr(cls, _SUBCOMMAND_MARKER, False):
         assert command.parser_config.name is not None
@@ -581,24 +612,28 @@ def create_command(cls: type, command_path: str = "") -> Command:
     docstrings: dict[str, str] = extract_docstrings(cls)
     type_hints = get_type_hints(cls)
 
+    curr_group: Optional[Group] = None
     for field_name, type_hint in type_hints.items():
         ty = parse_type_hint(type_hint)
         value = getattr(cls, field_name, None)
         if isinstance(ty, ArgType.SubcommandDest):
             configure_subcommands(ty, command, value, field_name, command_path)
         elif isinstance(value, Group):
+            if field_name == "_":
+                curr_group = value
             continue  # already handled in the previous loop
         elif isinstance(value, MutexGroup):
             continue  # nothing to do
-        elif isinstance(value, Argument):
-            add_argument(value, ty, command, field_name, command_path, docstrings)
-        elif value is None:
-            add_argument(Argument(), ty, command, field_name, command_path, docstrings)
         else:
-            raise TypeError(
-                "Can only assign 'arg(...)', 'group(...)', 'mutex(...)', or 'subparsers(...)' to "
-                "a field of an arguments class."
-            )
+            if value is not None and not isinstance(value, Arg):
+                raise TypeError(
+                    "Can only assign 'arg(...)', 'group(...)', 'mutex(...)', or 'subparsers(...)' "
+                    "to a field of an arguments class."
+                )
+            arg = value or Arg()
+            if curr_group is not None and arg.group is None:
+                arg.group = curr_group
+            add_argument(arg, ty, command, field_name, command_path, docstrings)
 
     setattr(cls, _COMMAND_DATA, command)
     return command
@@ -616,11 +651,15 @@ def configure_parser(parser: argparse.ArgumentParser, command: Command):
         for group_obj in command.groups
     }
 
+    # so that `-h, --help` shows up at the end of the options list
+    # if command.parser_config.add_help in (None, True):
+    #     parser.add_argument("-h", "--help", action="help", help="Print help")
+
     # when both group and mutex are provided for an argument, the argument is
     # only added to the mutex when the command is created
     for group, arguments in command.groups.items():
         for arg in arguments:
-            kwargs = arg.argparse_config.get_kwargs()
+            kwargs = arg.arg_config.get_kwargs()
             kwargs.setdefault("default", None)
             groups[group].add_argument(*arg.get_flags(), **arg.get_kwargs())
 
@@ -637,13 +676,13 @@ def configure_parser(parser: argparse.ArgumentParser, command: Command):
     if (subparser_info := command.subparsers_config) is not None:
         subparsers = parser.add_subparsers(**subparser_info.get_kwargs())
         for subcommand in command.subcommands.values():
-            parser = subparsers.add_parser(**subcommand.parser_config.get_kwargs())
+            parser = subparsers.add_parser(**subcommand.parser_config.get_kwargs(), add_help=False)
             configure_parser(parser, subcommand)
 
 
-def create_parser(cls: type, **kwargs):
+def create_parser(cls: type):
     command = create_command(cls)
-    parser = argparse.ArgumentParser(**command.parser_config.get_kwargs())
+    parser = argparse.ArgumentParser(**command.parser_config.get_kwargs(), add_help=False)
     configure_parser(parser, command)
     return parser
 
@@ -678,10 +717,7 @@ def apply_parsed_arguments(args: dict[str, Any], instance: Any):
             setattr(instance, command.subcommand_dest, None)
         return
 
-    # If an alias is used, argparse gives that instead of the subcommand name!
-    # head-exploding-emoji
-    # (If dest is not provided to add_subparsers(), it does not even tell
-    # which command was provided!)
+    # If an alias is used, argparse gives that instead of the subcommand name
     subcommand_name = cast(str, subcommand_name)
     subcommand_name = command.subcommand_aliases.get(subcommand_name, subcommand_name)
 

@@ -8,21 +8,23 @@ from typing import (
 )
 
 from .core import (
+    _COMMAND_DATA,
     _COMMAND_MARKER,
     _PARSER,
-    _PARSER_CONFIG,
     _SUBCOMMAND_MARKER,
     ActionType,
-    ArgparseConfig,
-    Argument,
+    Arg,
+    ArgConfig,
+    Command,
     Group,
     MutexGroup,
     NargsType,
-    SubparsersConfig,
+    ParserConfig,
     _LongFlag,
     _ShortFlag,
     apply_parsed_arguments,
     create_parser,
+    get_about_from_docstring,
     to_kebab_case,
 )
 
@@ -36,40 +38,86 @@ class Parser:
         ...
 
 
-def arguments[T](
+def command[T](
     cls: Optional[type[T]] = None,
     /,
-    **kwargs
+    *,
+    name: Optional[str] = None,
+    version: Optional[str] = None,
+    usage: Optional[str] = None,
+    about: Optional[str] = None,
+    long_about: Optional[str] = None,
+    after_help: Optional[str] = None,
+    subcommand_help_heading: str = "Commands",
+    subcommand_value_name: str = "COMMAND",
+    disable_version_flag: bool = False,
+    disable_help_flag: bool = False,
+    disable_help_subcommand: bool = False,
+    parents: Optional[list[type]] = None,
+    prefix_chars: str = "-",
+    fromfile_prefix_chars: Optional[str] = None,
+    conflict_handler: str = "error",
+    allow_abbrev: bool = True,
+    exit_on_error: bool = True,
+    heading_ansi_prefix: Optional[str] = None,
+    argument_ansi_prefix: Optional[str] = None,
 ) -> Union[type[T], Callable[[type[T]], type[T]]]:
     """Configure a class to parse command-line arguments.
 
     Args:
         cls: The class to decorate. When used without parentheses, this is
             the class being decorated.
-        prog: The name of the program. By default, `ArgumentParser` calculates
-            the name of the program from `sys.argv[0]`.
+        name: The name of the program. Default: `sys.argv[0]`.
         usage: The string describing the program usage. The default is
             generated from arguments added to parser.
-        description: Text to display before the argument help.
-        epilog: Text to display after the argument help.
+        about: Text to display before the argument help.
+        after_help: Text to display after the argument help.
         parents: A list of `ArgumentParser` objects whose arguments should
             also be included.
-        formatter_class: A class for customizing the help output.
         prefix_chars: The set of characters that prefix optional arguments.
         fromfile_prefix_chars: The set of characters that prefix files from
             which additional arguments should be read.
         conflict_handler: The strategy for resolving conflicting optionals.
-        add_help: Whether to add a `-h/--help` option to the parser.
         allow_abbrev: Whether to allow long options to be abbreviated if the
             abbreviation is unambiguous.
         exit_on_error: Whether `ArgumentParser` exits with error info when
             an error occurs.
     """
     def wrap(cls: type[T]) -> type[T]:
+        nonlocal about, long_about, name
         setattr(cls, _COMMAND_MARKER, True)
-        kwargs.setdefault("description", cls.__doc__)
-        setattr(cls, _PARSER_CONFIG, kwargs)
-        setattr(cls, _PARSER, create_parser(cls, **kwargs))
+        if name is None:
+            name = to_kebab_case(cls.__name__)
+        if cls.__doc__ is not None:
+            docstring = cls.__doc__.strip()
+            if about is None:
+                about = get_about_from_docstring(docstring)
+            if long_about is None:
+                long_about = docstring
+        command = Command(
+            ParserConfig(
+                prefix_chars=prefix_chars,
+                fromfile_prefix_chars=fromfile_prefix_chars,
+                conflict_handler=conflict_handler,
+                allow_abbrev=allow_abbrev,
+                exit_on_error=exit_on_error,
+            ),
+            name=name,
+            version=version,
+            usage=usage,
+            about=about,
+            long_about=long_about,
+            after_help=after_help,
+            subcommand_help_heading=subcommand_help_heading,
+            subcommand_value_name=subcommand_value_name,
+            disable_version_flag=disable_version_flag,
+            disable_help_flag=disable_help_flag,
+            disable_help_subcommand=disable_help_subcommand,
+            heading_ansi_prefix=heading_ansi_prefix,
+            argument_ansi_prefix=argument_ansi_prefix
+        )
+        setattr(cls, _COMMAND_DATA, command)
+        setattr(cls, _PARSER, create_parser(cls))
 
         @classmethod
         def parse_args(cls: type, args: Optional[list[str]] = None) -> T:
@@ -91,7 +139,26 @@ def arguments[T](
 def subcommand[T](
     cls: Optional[type[T]] = None,
     /,
-    **kwargs
+    *,
+    name: Optional[str] = None,
+    aliases: Sequence[str] = [],
+    usage: Optional[str] = None,
+    about: Optional[str] = None,
+    long_about: Optional[str] = None,
+    after_help: Optional[str] = None,
+    subcommand_help_heading: Optional[str] = None,
+    subcommand_value_name: Optional[str] = None,
+    disable_help_flag: bool = False,
+    disable_help_subcommand: bool = False,
+    parents: Optional[Sequence[type]] = None,
+    prefix_chars: str = "-",
+    fromfile_prefix_chars: Optional[str] = None,
+    conflict_handler: str = "error",
+    allow_abbrev: bool = True,
+    exit_on_error: bool = True,
+    deprecated: bool = False,
+    heading_ansi_prefix: Optional[str] = None,
+    argument_ansi_prefix: Optional[str] = None,
 ) -> Union[type[T], Callable[[type[T]], type[T]]]:
     """Configure a class as a subcommand parser.
 
@@ -102,8 +169,6 @@ def subcommand[T](
         deprecated: Whether this subcommand is deprecated and should not be used.
         help: A brief description of what the subcommand does.
         aliases: A sequence of alternative names for the subcommand.
-        prog: The name of the program. By default, `ArgumentParser` calculates
-            the name of the program from `sys.argv[0]`.
         usage: The string describing the program usage. The default is
             generated from arguments added to parser.
         description: Text to display before the argument help.
@@ -122,10 +187,39 @@ def subcommand[T](
             an error occurs.
     """
     def wrap(cls: type[T]) -> type[T]:
+        nonlocal about, long_about, name
         setattr(cls, _SUBCOMMAND_MARKER, True)
-        kwargs.setdefault("name", to_kebab_case(cls.__name__))
-        kwargs.setdefault("help", cls.__doc__)
-        setattr(cls, _PARSER_CONFIG, kwargs)
+        if name is None:
+            name = to_kebab_case(cls.__name__)
+        if cls.__doc__ is not None:
+            docstring = cls.__doc__.strip()
+            if about is None:
+                about = get_about_from_docstring(docstring)
+            if long_about is None:
+                long_about = docstring
+        command = Command(
+            ParserConfig(
+                name=name,
+                aliases=aliases,
+                deprecated=deprecated,
+                prefix_chars=prefix_chars,
+                fromfile_prefix_chars=fromfile_prefix_chars,
+                conflict_handler=conflict_handler,
+                allow_abbrev=allow_abbrev,
+                exit_on_error=exit_on_error,
+            ),
+            usage=usage,
+            about=about,
+            long_about=long_about,
+            after_help=after_help,
+            subcommand_help_heading=subcommand_help_heading,
+            subcommand_value_name=subcommand_value_name,
+            disable_help_flag=disable_help_flag,
+            disable_help_subcommand=disable_help_subcommand,
+            heading_ansi_prefix=heading_ansi_prefix,
+            argument_ansi_prefix=argument_ansi_prefix
+        )
+        setattr(cls, _COMMAND_DATA, command)
         return cls
 
     if cls is None:
@@ -140,18 +234,20 @@ def arg[T, U](
     *,
     short: Optional[Union[str, bool]] = None,
     long: Optional[Union[str, bool]] = None,
+    aliases: Optional[Sequence[str]] = None,
     group: Optional[Group] = None,
     mutex: Optional[MutexGroup] = None,
     action: Optional[ActionType] = None,
-    nargs: Optional[NargsType] = None,
-    const: Optional[U] = None,
-    default: Optional[U] = None,
+    num_args: Optional[NargsType] = None,
+    default_missing_value: Optional[U] = None,
+    default_value: Optional[U] = None,
     choices: Optional[Sequence[str]] = None,
     required: Optional[bool] = None,
-    help: Optional[str] = None,
-    metavar: Optional[str] = None,
+    about: Optional[str] = None,
+    long_about: Optional[str] = None,
+    value_name: Optional[str] = None,
     deprecated: bool = False
-) -> Argument:
+) -> Arg:
     """Create a command-line argument.
 
     Args:
@@ -166,13 +262,13 @@ def arg[T, U](
         group: The group for the argument.
         mutex: The mutually exclusive group for the argument.
         action: The action to be taken when this argument is encountered.
-        nargs: The number of command-line arguments that should be consumed.
-        const: The constant value required by some action and nargs selections.
-        default: The default value for the argument if not provided.
+        num_args: The number of command-line arguments that should be consumed.
+        default_missing_value: The constant value required by some action and num_args selections.
+        default_value: The default value for the argument if not provided.
         choices: A sequence of valid choices for the argument.
         required: Whether the argument is required or optional.
         help: A brief description of what the argument does.
-        metavar: The name for the argument in usage messages.
+        value_name: The name for the argument in usage messages.
         deprecated: Whether this argument is deprecated and should not be used.
     """
     short_name = None
@@ -205,63 +301,24 @@ def arg[T, U](
         elif long is True:
             long_name = _LongFlag()
 
-    return Argument(
-        ArgparseConfig(
+    return Arg(
+        ArgConfig(
             action=action,
-            nargs=nargs,
-            const=const,
-            default=default,
+            nargs=num_args,
+            const=default_missing_value,
+            default=default_value,
             choices=choices,
             required=required,
-            help=help,
-            metavar=metavar,
             deprecated=deprecated
         ),
         short=short_name,
         long=long_name,
+        aliases=aliases,
         group=group,
-        mutex=mutex
-    )
-
-
-def subparsers(
-    title: Optional[str] = None,
-    description: Optional[str] = None,
-    prog: Optional[str] = None,
-    parser_class: Optional[type] = None,
-    action: Optional[ActionType] = None,
-    required: bool = False,
-    help: Optional[str] = None,
-    metavar: Optional[str] = None
-) -> SubparsersConfig:
-    """Create subparser configuration for command-line sub-commands.
-
-    Args:
-        title: Title for the sub-parser group in help output. By default
-            "subcommands" if description is provided, otherwise uses title
-            for positional arguments.
-        description: Description for the sub-parser group in help output.
-        prog: Usage information that will be displayed with sub-command help.
-            By default the name of the program and any positional arguments
-            before the subparser argument.
-        parser_class: Class which will be used to create sub-parser instances.
-            By default the class of the current parser.
-        action: The basic type of action to be taken when this argument is
-            encountered at the command line.
-        required: Whether a subcommand must be provided.
-        help: Help for sub-parser group in help output.
-        metavar: String presenting available subcommands in help. By default
-            it presents subcommands in form `{cmd1, cmd2, ...}`.
-    """
-    return SubparsersConfig(
-        title=title,
-        description=description,
-        prog=prog,
-        parser_class=parser_class,
-        action=action,
-        required=required,
-        help=help,
-        metavar=metavar
+        mutex=mutex,
+        about=about,
+        long_about=long_about,
+        value_name=value_name,
     )
 
 

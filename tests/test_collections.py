@@ -8,9 +8,9 @@ from clap import arg, long
 
 class TestListArguments(unittest.TestCase):
     def test_list_with_nargs_star(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
-            files: list[str] = arg(nargs="*")
+            files: list[str] = arg(num_args="*")
 
         args = Cli.parse_args([])
         self.assertEqual(args.files, [])
@@ -22,9 +22,9 @@ class TestListArguments(unittest.TestCase):
             Cli.parse_args(["--unknown", "file1.txt"])
 
     def test_list_of_paths(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
-            files: list[Path] = arg(nargs="+")
+            files: list[Path] = arg(num_args="+")
 
         args = Cli.parse_args(["file1.txt", "file2.txt"])
         self.assertEqual(args.files, [Path("file1.txt"), Path("file2.txt")])
@@ -39,9 +39,9 @@ class TestListArguments(unittest.TestCase):
             Cli.parse_args(["file1.txt", "--unknown"])
 
     def test_optional_list_argument(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
-            tags: Optional[list[str]] = arg(long, nargs="*")
+            tags: Optional[list[str]] = arg(long, num_args="*")
 
         args = Cli.parse_args([])
         self.assertIsNone(args.tags)
@@ -55,7 +55,7 @@ class TestListArguments(unittest.TestCase):
 
 class TestTupleArguments(unittest.TestCase):
     def test_tuple_three_elements(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             color: tuple[int, int, int]
 
@@ -76,14 +76,14 @@ class TestTupleArguments(unittest.TestCase):
 
     def test_tuple_nargs_mismatch_error(self):
         with self.assertRaises(TypeError):
-            @clap.arguments
+            @clap.command
             class Cli(clap.Parser):
-                point: tuple[int, int] = arg(nargs=3)
+                point: tuple[int, int] = arg(num_args=3)
 
     def test_optional_tuple(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
-            size: Optional[tuple[int, int]] = arg(long, nargs=2)
+            size: Optional[tuple[int, int]] = arg(long, num_args=2)
 
         args = Cli.parse_args([])
         self.assertIsNone(args.size)

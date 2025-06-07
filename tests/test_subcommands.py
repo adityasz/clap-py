@@ -12,7 +12,7 @@ class TestBasicSubcommands(unittest.TestCase):
         class Create:
             name: str
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: Create
 
@@ -30,7 +30,7 @@ class TestBasicSubcommands(unittest.TestCase):
             name: str
             force: bool = arg(long)
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: Union[Create, Delete]
 
@@ -50,9 +50,9 @@ class TestBasicSubcommands(unittest.TestCase):
             input_file: Path
             output: Optional[Path] = arg(long)
             verbose: bool = arg(short, long)
-            threads: int = arg(long, default=1)
+            threads: int = arg(long, default_value=1)
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: Process
 
@@ -76,7 +76,7 @@ class TestBasicSubcommands(unittest.TestCase):
         class Action:
             target: str
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: Optional[Action]
 
@@ -103,7 +103,7 @@ class TestNestedSubcommands(unittest.TestCase):
         class Stash:
             subcommand: Union[Push, Pop]
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: Stash
 
@@ -136,7 +136,7 @@ class TestNestedSubcommands(unittest.TestCase):
         class System:
             component: Service
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: System
 
@@ -165,7 +165,7 @@ class TestNestedSubcommands(unittest.TestCase):
         class Status:
             verbose: bool = arg(long)
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: Union[Database, Status]
 
@@ -193,7 +193,7 @@ class TestSubcommandNamingAndAliases(unittest.TestCase):
         class DeleteAll:
             confirm: bool = arg(long)
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: Union[CreateProject, DeleteAll]
 
@@ -210,9 +210,9 @@ class TestSubcommandNamingAndAliases(unittest.TestCase):
     def test_subcommand_with_custom_name(self):
         @clap.subcommand(name="ls")
         class ListFiles:
-            directory: str = arg(nargs="?", default=".")
+            directory: str = arg(num_args="?", default_value=".")
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: ListFiles
 
@@ -221,11 +221,11 @@ class TestSubcommandNamingAndAliases(unittest.TestCase):
         self.assertEqual(args.command.directory, "/tmp")
 
     def test_subcommand_with_aliases(self):
-        @clap.subcommand(aliases=["rm", "del"])
+        @clap.subcommand(aliases=("rm", "del"))
         class Remove:
             target: str
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: Remove
 
@@ -248,7 +248,7 @@ class TestSubcommandErrors(unittest.TestCase):
         class Valid:
             arg: str
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: Valid
 
@@ -260,7 +260,7 @@ class TestSubcommandErrors(unittest.TestCase):
         class Required:
             arg: str
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: Required
 
@@ -272,7 +272,7 @@ class TestSubcommandErrors(unittest.TestCase):
         class Command:
             count: int
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: Command
 
@@ -284,7 +284,7 @@ class TestSubcommandErrors(unittest.TestCase):
         class Command:
             required_arg: str
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: Command
 
@@ -298,7 +298,7 @@ class TestSubcommandIntegration(unittest.TestCase):
         class Action:
             target: str
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             verbose: bool = arg(short, long)
             command: Action
@@ -315,7 +315,7 @@ class TestSubcommandIntegration(unittest.TestCase):
         class Configure:
             color: ColorChoice
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: Configure
 
@@ -326,10 +326,10 @@ class TestSubcommandIntegration(unittest.TestCase):
     def test_subcommand_with_lists(self):
         @clap.subcommand
         class Process:
-            files: list[str] = arg(nargs="+")
-            exclude: Optional[list[str]] = arg(long, nargs="*")
+            files: list[str] = arg(num_args="+")
+            exclude: Optional[list[str]] = arg(long, num_args="*")
 
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             command: Process
 

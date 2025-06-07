@@ -31,7 +31,7 @@ class PascalEnum(Enum):
 
 class TestEnums(unittest.TestCase):
     def test_color_choice_enum(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             color: ColorChoice
 
@@ -54,7 +54,7 @@ class TestEnums(unittest.TestCase):
             Cli.parse_args(["Auto"])
 
     def test_optional_color_choice(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             color: Optional[ColorChoice] = arg(long)
 
@@ -71,7 +71,7 @@ class TestEnums(unittest.TestCase):
             Cli.parse_args(["--color", "invalid"])
 
     def test_enum_kebab_conversion(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             option: PascalEnum
 
@@ -103,7 +103,7 @@ class TestEnums(unittest.TestCase):
             Cli.parse_args(["non-existent"])
 
     def test_optional_enum(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             priority: Optional[Priority] = arg(short, long)
 
@@ -126,9 +126,9 @@ class TestEnums(unittest.TestCase):
             Cli.parse_args(["--priority", "High"])
 
     def test_enum_with_default(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
-            level: LogLevel = arg(long, default=LogLevel.Info)
+            level: LogLevel = arg(long, default_value=LogLevel.Info)
 
         args = Cli.parse_args([])
         self.assertEqual(args.level, LogLevel.Info)
@@ -145,7 +145,7 @@ class TestEnums(unittest.TestCase):
 
 class TestEnumErrors(unittest.TestCase):
     def test_invalid_enum_value(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             priority: Priority
 

@@ -17,11 +17,11 @@ class Clone:
 
 @clap.subcommand
 class Diff:
-    base: Optional[str] = arg(metavar="COMMIT")
-    head: Optional[str] = arg(metavar="COMMIT")
+    base: Optional[str] = arg(value_name="COMMIT")
+    head: Optional[str] = arg(value_name="COMMIT")
     path: Optional[str]  # what's `argparse`'s equivalent of last=true?
     color: ColorChoice = arg(
-        long, metavar="WHEN", nargs="?", default=ColorChoice.Auto, const="always"
+        long, value_name="WHEN", nargs="?", default_value=ColorChoice.Auto, const="always"
     )
 
 
@@ -60,7 +60,7 @@ class External:
     args: list[str] = arg(nargs="*")
 
 
-@clap.arguments(prog="git")
+@clap.command(name="git")
 class Cli(clap.Parser):
     command: Union[Clone, Diff, Push, Add, Stash, External]
 

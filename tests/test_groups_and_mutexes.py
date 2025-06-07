@@ -9,7 +9,7 @@ from clap import arg, group, long, mutex_group, short
 
 class TestArgumentGroups(unittest.TestCase):
     def test_basic_argument_group(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             input_file: str
             debug_group = group(title="Debug Options", description="Options for debugging")
@@ -22,7 +22,7 @@ class TestArgumentGroups(unittest.TestCase):
         self.assertTrue(args.debug)
 
     def test_multiple_groups(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             input_group = group(title="Input Options")
             output_group = group(title="Output Options")
@@ -48,7 +48,7 @@ class TestArgumentGroups(unittest.TestCase):
 
 class TestMutuallyExclusiveGroups(unittest.TestCase):
     def test_basic_mutex_group(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             mode_mutex = mutex_group(required=True)
 
@@ -76,7 +76,7 @@ class TestMutuallyExclusiveGroups(unittest.TestCase):
             Cli.parse_args(["--create", "--update", "--delete"])
 
     def test_optional_mutex_group(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             mode_mutex = mutex_group(required=False)
 
@@ -91,7 +91,7 @@ class TestMutuallyExclusiveGroups(unittest.TestCase):
             Cli.parse_args(["--create", "--update"])
 
     def test_mutex_with_values(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             source_mutex = mutex_group(required=True)
 
@@ -121,7 +121,7 @@ class TestMutuallyExclusiveGroups(unittest.TestCase):
 
 class TestGroupsWithMutexes(unittest.TestCase):
     def test_mutex_within_group(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             config_group = group(title="Configuration Options")
             format_mutex = mutex_group(parent_group=config_group, required=True)
@@ -148,7 +148,7 @@ class TestGroupsWithMutexes(unittest.TestCase):
             Cli.parse_args(["--config-file", "config.txt"])
 
     def test_multiple_mutexes_in_group(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             network_group = group(title="Network Options")
 
@@ -193,7 +193,7 @@ class TestGroupsWithMutexes(unittest.TestCase):
             Cli.parse_args(["--https", "--timeout", "invalid"])
 
     def test_group_and_mutex_conflict_within_parent(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             parent_group = group(title="Parent Group")
             child_mutex = mutex_group(parent_group=parent_group)
@@ -215,7 +215,7 @@ class TestGroupsWithMutexes(unittest.TestCase):
 
 class TestComplexGroupScenarios(unittest.TestCase):
     def test_standalone_and_grouped_arguments(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             input_file: str
             verbose: bool = arg(short, long)
@@ -259,7 +259,7 @@ class TestComplexGroupScenarios(unittest.TestCase):
             Cli.parse_args(["input.txt", "--process", "--json-out", "--csv-out"])
 
     def test_nested_group_structure(self):
-        @clap.arguments
+        @clap.command
         class Cli(clap.Parser):
             input_group = group(title="Input Options")
             processing_group = group(title="Processing Options")
