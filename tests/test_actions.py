@@ -4,14 +4,14 @@ from pathlib import Path
 from typing import Optional
 
 import clap
-from clap import arg, long
+from clap import ArgAction, arg, long, short
 
 
 class TestActions(unittest.TestCase):
     def test_store_const_action(self):
         @clap.command
         class Cli(clap.Parser):
-            mode: Optional[str] = arg(long, action="store_const", default_missing_value="debug")
+            mode: Optional[str] = arg(long, default_missing_value="debug", num_args=0)
 
         args = Cli.parse_args([])
         self.assertIsNone(args.mode)
@@ -25,7 +25,7 @@ class TestActions(unittest.TestCase):
     def test_append_action_optional_type(self):
         @clap.command
         class Cli(clap.Parser):
-            include: Optional[list[str]] = arg(long="-I", action="append")
+            include: Optional[list[str]] = arg(short="I", action=ArgAction.Append)
 
         args = Cli.parse_args(["-I", "path1", "-I", "path2", "-I", "path3"])
         self.assertEqual(args.include, ["path1", "path2", "path3"])
@@ -39,7 +39,7 @@ class TestActions(unittest.TestCase):
     def test_count_action(self):
         @clap.command
         class Cli(clap.Parser):
-            verbose: int = arg(short="-v", action="count")
+            verbose: int = arg(short, action=ArgAction.Count)
 
         args = Cli.parse_args([])
         self.assertEqual(args.verbose, 0)
@@ -56,7 +56,7 @@ class TestActions(unittest.TestCase):
     def test_store_false_action(self):
         @clap.command
         class Cli(clap.Parser):
-            no_cache: bool = arg(long, action="store_false", default_value=True)
+            no_cache: bool = arg(long, action=ArgAction.SetFalse, default_value=True)
 
         args = Cli.parse_args([])
         self.assertTrue(args.no_cache)
@@ -70,7 +70,7 @@ class TestActions(unittest.TestCase):
     def test_append_action(self):
         @clap.command
         class Cli(clap.Parser):
-            libs: list[str] = arg(long="-l", action="append")
+            libs: list[str] = arg(short, action=ArgAction.Append)
 
         args = Cli.parse_args([])
         self.assertEqual(args.libs, [])
@@ -84,7 +84,7 @@ class TestActions(unittest.TestCase):
     def test_append_action_with_explicit_default(self):
         @clap.command
         class Cli(clap.Parser):
-            flags: list[str] = arg(long, action="append", default_value=["default"])
+            flags: list[str] = arg(long, action=ArgAction.Append, default_value=["default"])
 
         args = Cli.parse_args([])
         self.assertEqual(args.flags, ["default"])
@@ -99,7 +99,10 @@ class TestActions(unittest.TestCase):
         @clap.command
         class Cli(clap.Parser):
             features: list[str] = arg(
-                long="--enable-feature", action="append_const", default_missing_value="feature1"
+                long="--enable-feature",
+                action=ArgAction.Append,
+                num_args=0,
+                default_missing_value="feature1",
             )
 
         args = Cli.parse_args([])
@@ -114,7 +117,7 @@ class TestActions(unittest.TestCase):
     def test_extend_action(self):
         @clap.command
         class Cli(clap.Parser):
-            items: list[str] = arg(long, action="extend", num_args="+")
+            items: list[str] = arg(long, action=ArgAction.Extend, num_args="+")
 
         args = Cli.parse_args([])
         self.assertEqual(args.items, [])
@@ -128,7 +131,7 @@ class TestActions(unittest.TestCase):
     def test_store_const_with_required(self):
         @clap.command
         class Cli(clap.Parser):
-            mode: str = arg(long, action="store_const", default_missing_value="production")
+            mode: str = arg(long, default_missing_value="production", num_args=0)
 
         args = Cli.parse_args(["--mode"])
         self.assertEqual(args.mode, "production")
@@ -142,8 +145,8 @@ class TestActions(unittest.TestCase):
     def test_store_true_false_defaults(self):
         @clap.command
         class Cli(clap.Parser):
-            enable: bool = arg(long, action="store_true")
-            disable: bool = arg(long, action="store_false")
+            enable: bool = arg(long, action=ArgAction.SetTrue)
+            disable: bool = arg(long, action=ArgAction.SetFalse)
 
         args = Cli.parse_args([])
         self.assertFalse(args.enable)
@@ -159,7 +162,7 @@ class TestActions(unittest.TestCase):
     def test_count_action_with_default(self):
         @clap.command
         class Cli(clap.Parser):
-            level: int = arg(short="-l", action="count", default_value=5)
+            level: int = arg(short="-l", action=ArgAction.Count, default_value=5)
 
         args = Cli.parse_args([])
         self.assertEqual(args.level, 5)
@@ -173,11 +176,14 @@ class TestActions(unittest.TestCase):
     def test_multiple_action_combinations(self):
         @clap.command
         class Cli(clap.Parser):
-            verbose: int = arg(short="-v", action="count")
-            debug: bool = arg(long, action="store_true")
-            includes: list[str] = arg(short="-I", action="append")
+            verbose: int = arg(short="-v", action=ArgAction.Count)
+            debug: bool = arg(long, action=ArgAction.SetTrue)
+            includes: list[str] = arg(short="-I", action=ArgAction.Append)
             features: list[str] = arg(
-                long="--feature", action="append_const", default_missing_value="enabled"
+                long="--feature",
+                action=ArgAction.Append,
+                default_missing_value="enabled",
+                num_args=0,
             )
 
         args = Cli.parse_args(["-vv", "--debug", "-I", "lib1", "-I", "lib2", "--feature"])
@@ -201,19 +207,19 @@ class TestActionTypeErrors(unittest.TestCase):
         with self.assertRaises(TypeError):
             @clap.command
             class Cli(clap.Parser):
-                count: Optional[int] = arg(short="-c", action="count")
+                count: Optional[int] = arg(short="-c", action=ArgAction.Count)
 
     def test_store_true_with_optional_type_error(self):
         with self.assertRaises(TypeError):
             @clap.command
             class Cli(clap.Parser):
-                flag: Optional[bool] = arg(long, action="store_true")
+                flag: Optional[bool] = arg(long, action=ArgAction.SetTrue)
 
     def test_store_false_with_optional_type_error(self):
         with self.assertRaises(TypeError):
             @clap.command
             class Cli(clap.Parser):
-                flag: Optional[bool] = arg(long, action="store_false")
+                flag: Optional[bool] = arg(long, action=ArgAction.SetFalse)
 
     def test_store_const_with_optional_and_default_error(self):
         with self.assertRaises(TypeError):
@@ -221,8 +227,9 @@ class TestActionTypeErrors(unittest.TestCase):
             class Cli(clap.Parser):
                 mode: Optional[str] = arg(
                     long,
-                    action="store_const",
+                    action=ArgAction.Set,
                     default_missing_value="test",
+                    num_args=0,
                     default_value="default",
                 )
 
@@ -230,13 +237,13 @@ class TestActionTypeErrors(unittest.TestCase):
         with self.assertRaises(TypeError):
             @clap.command
             class Cli(clap.Parser):
-                value: Optional[str] = arg(long, action="store", required=True)
+                value: Optional[str] = arg(long, action=ArgAction.Set, required=True)
 
     def test_store_with_default_and_optional_error(self):
         with self.assertRaises(TypeError):
             @clap.command
             class Cli(clap.Parser):
-                value: Optional[str] = arg(long, action="store", default_value="test")
+                value: Optional[str] = arg(long, action=ArgAction.Set, default_value="test")
 
 
 class TestActionsWithComplexTypes(unittest.TestCase):
@@ -248,7 +255,7 @@ class TestActionsWithComplexTypes(unittest.TestCase):
 
         @clap.command
         class Cli(clap.Parser):
-            colors: list[Color] = arg(long, action="append")
+            colors: list[Color] = arg(long, action=ArgAction.Append)
 
         args = Cli.parse_args(["--colors", "red", "--colors", "blue"])
         self.assertEqual(args.colors, [Color.RED, Color.BLUE])
@@ -262,7 +269,7 @@ class TestActionsWithComplexTypes(unittest.TestCase):
     def test_extend_with_path_type(self):
         @clap.command
         class Cli(clap.Parser):
-            files: list[Path] = arg(long, action="extend", num_args="+")
+            files: list[Path] = arg(long, action=ArgAction.Extend, num_args="+")
 
         args = Cli.parse_args(["--files", "a.txt", "b.txt", "--files", "c.txt"])
         self.assertEqual(args.files, [Path("a.txt"), Path("b.txt"), Path("c.txt")])

@@ -1,3 +1,6 @@
+# TODO: short/long validation
+# TODO: help actions with _ = ...
+
 import argparse
 import ast
 import builtins
@@ -25,8 +28,10 @@ _SUBCOMMAND_MARKER = "__com.github.adityasz.clap_py.subcommand_marker__"
 _PARSER = "__parser__"
 _COMMAND_DATA = "__command_data__"
 _SUBCOMMAND_DEST = "__subcommand_dest__"
-_SHORT_HELP_DEST = "0"
-_LONG_HELP_DEST = "00"
+_HELP_DEST = "0h"
+_HELP_SHORT_DEST = "0s"
+_HELP_LONG_DEST = "0l"
+_VERSION_DEST = "0v"
 
 
 class ColorChoice(Enum):
@@ -35,11 +40,11 @@ class ColorChoice(Enum):
     Never = auto()
 
 
-class _ShortFlag:
+class AutoShortFlag:
     ...
 
 
-class _LongFlag:
+class AutoLongFlag:
     ...
 
 
@@ -50,21 +55,20 @@ class ArgAction(StrEnum):
     Append = "append"
     Extend = "extend"
     Count = "count"
-    Help = "help"
-    HelpShort = "help"
-    HelpLong = "help"
-    Version = "version"
+    Help = auto()
+    HelpShort = auto()
+    HelpLong = auto()
+    Version = auto()
 
 
-short = _ShortFlag()
+short = AutoShortFlag()
 """Generate short from the first character in the case-converted field name."""
 
-long = _LongFlag()
+long = AutoLongFlag()
 """Generate long from the case-converted field name."""
 
-ActionType = Union[
-    argparse.Action,
-    ArgAction,
+type ArgparseAction = Union[
+    type,
     Literal[
         "store",
         "store_const",
@@ -74,12 +78,10 @@ ActionType = Union[
         "append_const",
         "extend",
         "count",
-        "help",
-        "version",
     ],
 ]
 
-NargsType = Union[Literal['?', '*', '+'], int]
+type NargsType = Union[Literal['?', '*', '+'], int]
 
 
 class ArgType:
@@ -158,7 +160,7 @@ class MutexGroup:
 
 @dataclass
 class ArgConfig(ConfigBase):
-    action: Optional[ActionType] = None
+    action: Optional[ArgparseAction | ArgAction] = None
     nargs: Optional[NargsType] = None
     const: Optional[Any] = None
     default: Optional[Any] = None
@@ -166,6 +168,7 @@ class ArgConfig(ConfigBase):
     choices: Optional[Sequence[str]] = None
     required: Optional[bool] = None
     deprecated: Optional[bool] = None
+    metavar: Optional[str] = None  # for argparse error messages
     dest: Optional[str] = None
 
 
@@ -180,9 +183,9 @@ class Arg:
     """..."""
     value_name: Optional[str] = None
     """..."""
-    short: Optional[Union[_ShortFlag, str]] = None
+    short: Optional[Union[AutoShortFlag, str]] = None
     """The short flag."""
-    long: Optional[Union[_LongFlag, str]] = None
+    long: Optional[Union[AutoLongFlag, str]] = None
     """The long flag."""
     aliases: Optional[Sequence[str]] = None
     """Flags in addition to `short` and `long`."""
@@ -214,10 +217,12 @@ class Arg:
 
     def get_flags(self) -> list[str]:
         flags = []
-        if self.short is not None:
+        if self.short:
             flags.append(self.short)
-        if self.long is not None:
+        if self.long:
             flags.append(self.long)
+        if self.aliases:
+            flags.extend(self.aliases)
         return flags
 
     def get_kwargs(self) -> dict[str, Any]:
@@ -225,7 +230,8 @@ class Arg:
         # argparse does not add an argument to the `argparse.Namespace` that
         # `argparse.ArgumentParser.parser_args()` returns unless it has a value.
         # So, to get everything, set default value to None if not already set.
-        kwargs.setdefault("default", None)
+        if not isinstance(self.arg_config.action, type):
+            kwargs.setdefault("default", None)
         return kwargs
 
 
@@ -238,7 +244,8 @@ class SubparsersConfig(ConfigBase):
 @dataclass
 class ParserConfig(ConfigBase):
     prog: Optional[str] = None
-    prefix_chars: Optional[str] = None
+    usage: Optional[str] = None
+    prefix_chars: str = "-"
     fromfile_prefix_chars: Optional[str] = None
     conflict_handler: Optional[str] = None
     allow_abbrev: Optional[bool] = None
@@ -260,7 +267,6 @@ class Command:
 
     name: Optional[str] = None
     version: Optional[str] = None
-    usage: Optional[str] = None
     about: Optional[str] = None
     long_about: Optional[str] = None
     after_help: Optional[str] = None
@@ -279,9 +285,6 @@ class Command:
     subcommands: dict[str, Self] = field(default_factory=dict)
     subcommand_aliases: dict[str, str] = field(default_factory=dict)
     subcommand_dest: Optional[str] = None
-
-    def get_usage(self) -> str:
-        ...
 
 
 def get_about_from_docstring(docstring: str) -> str:
@@ -385,16 +388,16 @@ def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
     raise TypeError(f"Could not parse {type_hint}.")
 
 
-def set_flags(arg: Arg, field_name: str):
+def set_flags(arg: Arg, field_name: str, prefix_chars: str):
     """Sets short and long flags of the argument."""
-    if isinstance(arg.short, _ShortFlag):
+    if isinstance(arg.short, AutoShortFlag):
         arg.short = "-" + field_name[0].lower()
     elif isinstance(arg.short, str) and not arg.short.startswith("-"):
         arg.short = "-" + arg.short
 
-    if isinstance(arg.long, _LongFlag):
+    if isinstance(arg.long, AutoLongFlag):
         arg.long = "--" + to_kebab_case(field_name)
-    elif isinstance(arg.long, str) and not arg.long.startswith("-"):
+    elif isinstance(arg.long, str) and not arg.long.startswith("--"):
         arg.long = "--" + arg.long
 
 
@@ -444,7 +447,16 @@ def set_action_dependent_kwargs(arg: Arg):
     optional_type_hint = arg.ty.optional
 
     match kwargs.action:
-        case ArgAction.Append | "append_const" | ArgAction.Extend:
+        case ArgAction.Append:
+            if not optional_type_hint and not kwargs.default:
+                kwargs.default = []
+            if kwargs.required is None:
+                kwargs.required = False
+            if kwargs.nargs == 0:
+                kwargs.nargs = None
+                kwargs.action = "append_const"
+                kwargs.type = None
+        case ArgAction.Extend:
             if not optional_type_hint and not kwargs.default:
                 kwargs.default = []
             if kwargs.required is None:
@@ -469,13 +481,10 @@ def set_action_dependent_kwargs(arg: Arg):
                 raise TypeError("An argument with a default value can never be None.")
             if kwargs.default is None:
                 kwargs.required = not optional_type_hint
-        case "store_const":
-            if kwargs.default is not None:
-                if optional_type_hint:
-                    raise TypeError("An argument with a default value can never be None.")
-                kwargs.required = False
-            if kwargs.required is None:
-                kwargs.required = not optional_type_hint
+            if kwargs.nargs == 0:
+                kwargs.nargs = None
+                kwargs.action = "store_const"
+                kwargs.type = None
         case ArgAction.SetFalse:
             if optional_type_hint:
                 raise TypeError("An argument with the 'store_false' action can never be None.")
@@ -503,13 +512,7 @@ def set_action_dependent_kwargs(arg: Arg):
             kwargs.nargs = '?'
         kwargs.required = None
 
-    if kwargs.action in (
-        "store_const",
-        "append_const",
-        ArgAction.Count,
-        ArgAction.SetTrue,
-        ArgAction.SetFalse,
-    ):
+    if kwargs.action in (ArgAction.Count, ArgAction.SetTrue, ArgAction.SetFalse):
         kwargs.type = None
 
     if kwargs.const is not None:
@@ -520,7 +523,7 @@ def set_action_dependent_kwargs(arg: Arg):
         if kwargs.action not in ("append_const", "store_const"):
             if kwargs.nargs is None:
                 kwargs.nargs = "?"
-            if kwargs.nargs not in ("?", "*", 0):
+            elif kwargs.nargs not in ("?", "*", 0):
                 raise TypeError(
                     "'num_args' must be '?', '*', or 0 if 'default_missing_value' is not None"
                 )
@@ -546,6 +549,8 @@ def set_value_name(arg: Arg, field_name: str):
                 case _:
                     arg.value_name = None
 
+    kwargs.metavar = arg.value_name
+
 
 def add_argument(
     arg: Arg,
@@ -563,10 +568,8 @@ def add_argument(
             arg.about = get_about_from_docstring(docstring)
         if arg.long_about is None:
             arg.long_about = docstring
-    if arg.long_about is None:
-        arg.long_about = arg.about
 
-    set_flags(arg, field_name)
+    set_flags(arg, field_name, command.parser_config.prefix_chars)
 
     set_type_dependent_kwargs(arg)
 
@@ -575,7 +578,7 @@ def add_argument(
     set_value_name(arg, field_name)
 
     if isinstance(arg.arg_config.action, ArgAction):
-        arg.arg_config.action = cast(ActionType, str(arg.arg_config.action))
+        arg.arg_config.action = cast(ArgparseAction, str(arg.arg_config.action))
 
     command.arguments[field_name] = arg
 
@@ -626,8 +629,89 @@ def configure_subcommands(
                 command.subcommand_aliases[alias] = name
 
 
+class ClapArgumentParser(argparse.ArgumentParser):
+    def __init__(
+        self,
+        command: Command,
+        prog: Optional[str] = None,
+        prefix_chars="-",
+        fromfile_prefix_chars=None,
+        conflict_handler="error",
+        allow_abbrev=True,
+        exit_on_error=True,
+        **kwargs,
+    ):
+        self.command = command
+        super().__init__(
+            prog=prog,
+            prefix_chars=prefix_chars,
+            fromfile_prefix_chars=fromfile_prefix_chars,
+            conflict_handler=conflict_handler,
+            allow_abbrev=allow_abbrev,
+            exit_on_error=exit_on_error,
+            add_help=False,
+            **kwargs
+        )
+
+    def print_version(self):
+        print("version")
+
+    def print_short_help(self):
+        print("short_help")
+
+    def print_long_help(self):
+        print("long_help")
+
+
+class VersionAction(argparse.Action):
+    def __init__(self, option_strings, dest):
+        super().__init__(option_strings, dest, nargs=0)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        import sys
+        assert isinstance(parser, ClapArgumentParser)
+        parser.print_version()
+        sys.exit(0)
+
+
+class HelpAction(argparse.Action):
+    def __init__(self, option_strings, dest):
+        super().__init__(option_strings, dest, nargs=0)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        import sys
+        assert isinstance(parser, ClapArgumentParser)
+        if isinstance(option_string, str) and len(option_string) == 2:
+            parser.print_short_help()
+        else:
+            parser.print_long_help()
+        sys.exit(0)
+
+
+class ShortHelpAction(argparse.Action):
+    def __init__(self, option_strings, dest):
+        super().__init__(option_strings, dest, nargs=0)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        import sys
+        assert isinstance(parser, ClapArgumentParser)
+        parser.print_short_help()
+        sys.exit(0)
+
+
+class LongHelpAction(argparse.Action):
+    def __init__(self, option_strings, dest):
+        super().__init__(option_strings, dest, nargs=0)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        import sys
+        assert isinstance(parser, ClapArgumentParser)
+        parser.print_long_help()
+        sys.exit(0)
+
+
 def create_command(cls: type, command_path: str = "") -> Command:
-    command = getattr(cls, _COMMAND_DATA)
+    command: Command = getattr(cls, _COMMAND_DATA)
 
     if getattr(cls, _SUBCOMMAND_MARKER, False):
         assert command.parser_config.name is not None
@@ -640,22 +724,24 @@ def create_command(cls: type, command_path: str = "") -> Command:
             if value in command.groups:
                 raise ValueError(f"A group with title '{value.title}' already exists.")
             command.groups[value] = []
+        if isinstance(value, Arg) and value.arg_config.action in (
+            HelpAction,
+            ShortHelpAction,
+            LongHelpAction,
+            VersionAction,
+        ):
+            command.arguments[command_path + field_name] = value
 
     docstrings: dict[str, str] = extract_docstrings(cls)
     type_hints = get_type_hints(cls)
 
-    curr_group: Optional[Group] = None
     for field_name, type_hint in type_hints.items():
         ty = parse_type_hint(type_hint)
         value = getattr(cls, field_name, None)
         if isinstance(ty, ArgType.SubcommandDest):
             configure_subcommands(ty, command, value, field_name, command_path)
         elif isinstance(value, Group):
-            if field_name == "_":
-                curr_group = value
             continue  # already handled in the previous loop
-        elif isinstance(value, MutexGroup):
-            continue  # nothing to do
         else:
             if value is not None and not isinstance(value, Arg):
                 raise TypeError(
@@ -663,9 +749,23 @@ def create_command(cls: type, command_path: str = "") -> Command:
                     "to a field of an arguments class."
                 )
             arg = value or Arg()
-            if curr_group is not None and arg.group is None:
-                arg.group = curr_group
             add_argument(arg, ty, command, field_name, command_path, docstrings)
+
+    if not command.disable_help_flag:
+        command.arguments[_HELP_DEST] = Arg(
+            arg_config=ArgConfig(action=HelpAction, dest=_HELP_DEST),
+            short="-h",
+            long="--help",
+            about="Print help"
+        )
+
+    if not command.disable_version_flag:
+        command.arguments[_VERSION_DEST] = Arg(
+            arg_config=ArgConfig(action=VersionAction, dest=_VERSION_DEST),
+            short="-V",
+            long="--version",
+            about="Print version",
+        )
 
     setattr(cls, _COMMAND_DATA, command)
     return command
@@ -677,28 +777,16 @@ def configure_parser(parser: argparse.ArgumentParser, command: Command):
             continue
         parser.add_argument(*arg.get_flags(), **arg.get_kwargs())
 
-    if not command.disable_help_flag:
-        parser.add_argument("-h", "--help")
-
-    if not command.disable_version_flag:
-        parser.add_argument("-V", "--version")
-
     # groups can have mutexes in them, so storing them temporarily in a dict
     groups = {
         group_obj: parser.add_argument_group(**group_obj.get_kwargs())
         for group_obj in command.groups
     }
 
-    # so that `-h, --help` shows up at the end of the options list
-    # if command.parser_config.add_help in (None, True):
-    #     parser.add_argument("-h", "--help", action="help", help="Print help")
-
     # when both group and mutex are provided for an argument, the argument is
     # only added to the mutex when the command is created
     for group, arguments in command.groups.items():
         for arg in arguments:
-            kwargs = arg.arg_config.get_kwargs()
-            kwargs.setdefault("default", None)
             groups[group].add_argument(*arg.get_flags(), **arg.get_kwargs())
 
     for mutex, arguments in command.mutexes.items():
@@ -714,13 +802,15 @@ def configure_parser(parser: argparse.ArgumentParser, command: Command):
     if (subparser_info := command.subparsers_config) is not None:
         subparsers = parser.add_subparsers(**subparser_info.get_kwargs())
         for subcommand in command.subcommands.values():
-            parser = subparsers.add_parser(**subcommand.parser_config.get_kwargs(), add_help=False)
+            parser = subparsers.add_parser(
+                command=subcommand, **subcommand.parser_config.get_kwargs()
+            )
             configure_parser(parser, subcommand)
 
 
 def create_parser(cls: type):
     command = create_command(cls)
-    parser = argparse.ArgumentParser(**command.parser_config.get_kwargs(), add_help=False)
+    parser = ClapArgumentParser(command, **command.parser_config.get_kwargs())
     configure_parser(parser, command)
     return parser
 

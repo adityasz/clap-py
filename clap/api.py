@@ -12,23 +12,22 @@ from .core import (
     _COMMAND_MARKER,
     _PARSER,
     _SUBCOMMAND_MARKER,
-    ActionType,
     Arg,
+    ArgAction,
     ArgConfig,
+    AutoLongFlag,
+    AutoShortFlag,
     Command,
     Group,
     MutexGroup,
     NargsType,
     ParserConfig,
-    _LongFlag,
-    _ShortFlag,
     apply_parsed_arguments,
     create_parser,
     get_about_from_docstring,
     to_kebab_case,
 )
 
-T = TypeVar('T')
 U = TypeVar('U')
 
 
@@ -96,6 +95,8 @@ def command[T](
                 long_about = docstring
         command = Command(
             ParserConfig(
+                prog=name,
+                usage=usage,
                 prefix_chars=prefix_chars,
                 fromfile_prefix_chars=fromfile_prefix_chars,
                 conflict_handler=conflict_handler,
@@ -104,7 +105,6 @@ def command[T](
             ),
             name=name,
             version=version,
-            usage=usage,
             about=about,
             long_about=long_about,
             after_help=after_help,
@@ -200,6 +200,7 @@ def subcommand[T](
         command = Command(
             ParserConfig(
                 name=name,
+                usage=usage,
                 aliases=aliases,
                 deprecated=deprecated,
                 prefix_chars=prefix_chars,
@@ -208,7 +209,6 @@ def subcommand[T](
                 allow_abbrev=allow_abbrev,
                 exit_on_error=exit_on_error,
             ),
-            usage=usage,
             about=about,
             long_about=long_about,
             after_help=after_help,
@@ -227,9 +227,9 @@ def subcommand[T](
     return wrap(cls)
 
 
-def arg[T, U](
-    short_or_long: Optional[Union[_ShortFlag, _LongFlag, str]] = None,
-    long_: Optional[Union[_LongFlag, str]] = None,
+def arg[U](
+    short_or_long: Optional[Union[AutoShortFlag, AutoLongFlag, str]] = None,
+    long_: Optional[Union[AutoLongFlag, str]] = None,
     /,
     *,
     short: Optional[Union[str, bool]] = None,
@@ -237,7 +237,7 @@ def arg[T, U](
     aliases: Optional[Sequence[str]] = None,
     group: Optional[Group] = None,
     mutex: Optional[MutexGroup] = None,
-    action: Optional[ActionType] = None,
+    action: Optional[Union[type, ArgAction]] = None,
     num_args: Optional[NargsType] = None,
     default_missing_value: Optional[U] = None,
     default_value: Optional[U] = None,
@@ -274,9 +274,9 @@ def arg[T, U](
     short_name = None
     long_name = None
 
-    if isinstance(short_or_long, _LongFlag):
+    if isinstance(short_or_long, AutoLongFlag):
         short_name = None
-        long_name = cast(_LongFlag, short_or_long)
+        long_name = cast(AutoLongFlag, short_or_long)
     elif (
         isinstance(short_or_long, str) and (
             short_or_long.startswith("--")
@@ -286,20 +286,20 @@ def arg[T, U](
         short_name = None
         long_name = cast(str, short_or_long)
     else:
-        short_name = cast(Optional[Union[_ShortFlag, str]], short_or_long)
+        short_name = cast(Optional[Union[AutoShortFlag, str]], short_or_long)
         long_name = long_
 
     if short is not None:
         if isinstance(short, str):
             short_name = short
         elif short is True:
-            short_name = _ShortFlag()
+            short_name = AutoShortFlag()
 
     if long is not None:
         if isinstance(long, str):
             long_name = long
         elif long is True:
-            long_name = _LongFlag()
+            long_name = AutoLongFlag()
 
     return Arg(
         ArgConfig(

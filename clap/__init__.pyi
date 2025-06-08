@@ -1,10 +1,20 @@
+import argparse
 from collections.abc import Callable, Sequence
 from typing import Any, Optional, TypeVar, Union, overload
 
 from .api import Group, MutexGroup, Parser, group, mutex_group
-from .core import ActionType, ColorChoice, NargsType, _LongFlag, _ShortFlag, long, short
+from .core import (
+    ArgAction,
+    AutoLongFlag,
+    AutoShortFlag,
+    ColorChoice,
+    NargsType,
+    long,
+    short,
+)
 
 __all__ = [
+    "ArgAction",
     "ColorChoice",
     "Parser",
     "arg",
@@ -21,8 +31,8 @@ U = TypeVar('U')
 
 # TODO: Add overloads that return `Optional[Any]` based on the `required` and `default` parameters.
 def arg(
-    short_or_long: Optional[Union[_ShortFlag, _LongFlag, str]] = None,
-    long_: Optional[Union[_LongFlag, str]] = None,
+    short_or_long: Optional[Union[AutoShortFlag, AutoLongFlag, str]] = None,
+    long_: Optional[Union[AutoLongFlag, str]] = None,
     /,
     *,
     short: Optional[Union[str, bool]] = None,
@@ -30,7 +40,7 @@ def arg(
     aliases: Optional[Sequence[str]] = None,
     group: Optional[Group] = None,
     mutex: Optional[MutexGroup] = None,
-    action: Optional[ActionType] = None,
+    action: Optional[Union[argparse.Action, ArgAction]] = None,
     num_args: Optional[NargsType] = None,
     default_missing_value: Optional[U] = None,
     default_value: Optional[U] = None,

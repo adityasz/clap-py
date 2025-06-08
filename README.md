@@ -52,17 +52,17 @@ class List:
     directory: Path
 
 
-@clap.arguments
+@clap.command
 class Cli(clap.Parser):
     command: Union[Add, Remove]
 
 
 args = Cli.parse_args()
-match args.command:
-    case Add(file=file):
-        print(f"Adding {file}...")
-    case List(directory=directory):
-        print(f"Listing {directory}...")
+match cmd := args.command:
+    case Add():
+        print(f"Adding {cmd.file}...")
+    case List():
+        print(f"Listing {cmd.directory}...")
 ```
 
 See more examples in [/examples](https://github.com/adityasz/clap-py/tree/master/examples).
@@ -78,6 +78,7 @@ type checkers.
 
 ```python
 import argparse
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--type", type=str)
 args = parser.parse_args()
@@ -91,14 +92,12 @@ print(args.typo)
 
 ## TODO
 
-- [ ] Better help output
-
-  Currently, `clap-py` uses `argparse` to output help, and that is very ugly.
+- [ ] Implement `parents` in `@command()`: Maybe use inheritance?
 
 ## Future work
 
+- Parse arguments from the command-line.
+
+  Currently, `clap-py` uses `argparse` for parsing, so error messages look bad.
+
 - Generate shell completions
-
-- Actually parse command line arguments.
-
-  Currently, `clap-py` is just an `argparse` wrapper, and error messages aren't pretty.

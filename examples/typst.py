@@ -45,9 +45,6 @@ class Init:
 
 @clap.command(name="typst")
 class Cli(clap.Parser):
-    input: Path
-    """Input."""
-
     command: Union[Watch, Init]
 
     cert: Optional[str] = arg(long)
