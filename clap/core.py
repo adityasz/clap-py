@@ -391,14 +391,19 @@ def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
 def set_flags(arg: Arg, field_name: str, prefix_chars: str):
     """Sets short and long flags of the argument."""
     if isinstance(arg.short, AutoShortFlag):
-        arg.short = "-" + field_name[0].lower()
-    elif isinstance(arg.short, str) and not arg.short.startswith("-"):
-        arg.short = "-" + arg.short
+        arg.short = prefix_chars[0] + field_name[0].lower()
+    elif isinstance(arg.short, str):
+        if len(arg.short) == 0:
+            raise ValueError
+        if arg.short[0] not in prefix_chars:
+            arg.short = prefix_chars[0] + arg.short
+        elif arg.short[1] in prefix_chars or len(arg.short) != 2:
+            raise ValueError
 
     if isinstance(arg.long, AutoLongFlag):
-        arg.long = "--" + to_kebab_case(field_name)
-    elif isinstance(arg.long, str) and not arg.long.startswith("--"):
-        arg.long = "--" + arg.long
+        arg.long = 2 * prefix_chars[0] + to_kebab_case(field_name)
+    elif isinstance(arg.long, str) and arg.long[0] not in prefix_chars:
+        arg.long = 2 * prefix_chars[0] + arg.long
 
 
 def set_type_dependent_kwargs(arg: Arg):
