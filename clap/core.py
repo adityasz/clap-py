@@ -287,37 +287,85 @@ class Command:
     subcommand_dest: Optional[str] = None
 
 
-def get_about_from_docstring(docstring: str) -> str:
-    return docstring[:docstring.find("\n")]
+class ClapArgumentParser(argparse.ArgumentParser):
+    def __init__(
+        self,
+        command: Command,
+        prog: Optional[str] = None,
+        prefix_chars="-",
+        fromfile_prefix_chars=None,
+        conflict_handler="error",
+        allow_abbrev=True,
+        exit_on_error=True,
+        **kwargs,
+    ):
+        self.command = command
+        super().__init__(
+            prog=prog,
+            prefix_chars=prefix_chars,
+            fromfile_prefix_chars=fromfile_prefix_chars,
+            conflict_handler=conflict_handler,
+            allow_abbrev=allow_abbrev,
+            exit_on_error=exit_on_error,
+            add_help=False,
+            **kwargs
+        )
+
+    def print_version(self):
+        print("version")
+
+    def print_short_help(self):
+        print("short_help")
+
+    def print_long_help(self):
+        print("long_help")
 
 
-def is_subcommand(cls: type) -> bool:
-    return getattr(cls, _SUBCOMMAND_MARKER, False)
+class VersionAction(argparse.Action):
+    def __init__(self, option_strings, dest):
+        super().__init__(option_strings, dest, nargs=0)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        import sys
+        assert isinstance(parser, ClapArgumentParser)
+        parser.print_version()
+        sys.exit(0)
 
 
-def contains_subcommands(types: list[type]) -> bool:
-    error_msg = "Field contains a mixture of subcommands and other types."
-    flag = None
-    for ty in types:
-        if is_subcommand(ty):
-            if flag is False:
-                raise TypeError(error_msg)
-            flag = True
+class HelpAction(argparse.Action):
+    def __init__(self, option_strings, dest):
+        super().__init__(option_strings, dest, nargs=0)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        import sys
+        assert isinstance(parser, ClapArgumentParser)
+        if isinstance(option_string, str) and len(option_string) == 2:
+            parser.print_short_help()
         else:
-            if flag is True:
-                raise TypeError(error_msg)
-            flag = False
-    return bool(flag)
+            parser.print_long_help()
+        sys.exit(0)
 
 
-def to_kebab_case(name: str) -> str:
-    name = name.replace('_', '-')  # snake_case, SCREAMING_SNAKE_CASE
-    name = re.sub(r'([a-z0-9])([A-Z])', r'\1-\2', name)  # camelCase, PascalCase
-    name = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1-\2', name)  # HTTPSConnection -> HTTPS-Connection
-    name = name.lower()
-    name = re.sub(r'-+', '-', name)
-    name = name.strip('-')
-    return name
+class ShortHelpAction(argparse.Action):
+    def __init__(self, option_strings, dest):
+        super().__init__(option_strings, dest, nargs=0)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        import sys
+        assert isinstance(parser, ClapArgumentParser)
+        parser.print_short_help()
+        sys.exit(0)
+
+
+class LongHelpAction(argparse.Action):
+    def __init__(self, option_strings, dest):
+        super().__init__(option_strings, dest, nargs=0)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        import sys
+        assert isinstance(parser, ClapArgumentParser)
+        parser.print_long_help()
+        sys.exit(0)
 
 
 class DocstringExtractor(ast.NodeVisitor):
@@ -352,6 +400,39 @@ def extract_docstrings(cls: type) -> dict[str, str]:
     tree = ast.parse(source)
     extractor.visit(tree)
     return extractor.docstrings
+
+
+def get_about_from_docstring(docstring: str) -> str:
+    return docstring[:docstring.find("\n")]
+
+
+def is_subcommand(cls: type) -> bool:
+    return getattr(cls, _SUBCOMMAND_MARKER, False)
+
+
+def contains_subcommands(types: list[type]) -> bool:
+    error_msg = "Field contains a mixture of subcommands and other types."
+    flag = None
+    for ty in types:
+        if is_subcommand(ty):
+            if flag is False:
+                raise TypeError(error_msg)
+            flag = True
+        else:
+            if flag is True:
+                raise TypeError(error_msg)
+            flag = False
+    return bool(flag)
+
+
+def to_kebab_case(name: str) -> str:
+    name = name.replace('_', '-')  # snake_case, SCREAMING_SNAKE_CASE
+    name = re.sub(r'([a-z0-9])([A-Z])', r'\1-\2', name)  # camelCase, PascalCase
+    name = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1-\2', name)  # HTTPSConnection -> HTTPS-Connection
+    name = name.lower()
+    name = re.sub(r'-+', '-', name)
+    name = name.strip('-')
+    return name
 
 
 def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
@@ -632,87 +713,6 @@ def configure_subcommands(
         if subcommand.parser_config.aliases:
             for alias in subcommand.parser_config.aliases:
                 command.subcommand_aliases[alias] = name
-
-
-class ClapArgumentParser(argparse.ArgumentParser):
-    def __init__(
-        self,
-        command: Command,
-        prog: Optional[str] = None,
-        prefix_chars="-",
-        fromfile_prefix_chars=None,
-        conflict_handler="error",
-        allow_abbrev=True,
-        exit_on_error=True,
-        **kwargs,
-    ):
-        self.command = command
-        super().__init__(
-            prog=prog,
-            prefix_chars=prefix_chars,
-            fromfile_prefix_chars=fromfile_prefix_chars,
-            conflict_handler=conflict_handler,
-            allow_abbrev=allow_abbrev,
-            exit_on_error=exit_on_error,
-            add_help=False,
-            **kwargs
-        )
-
-    def print_version(self):
-        print("version")
-
-    def print_short_help(self):
-        print("short_help")
-
-    def print_long_help(self):
-        print("long_help")
-
-
-class VersionAction(argparse.Action):
-    def __init__(self, option_strings, dest):
-        super().__init__(option_strings, dest, nargs=0)
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        import sys
-        assert isinstance(parser, ClapArgumentParser)
-        parser.print_version()
-        sys.exit(0)
-
-
-class HelpAction(argparse.Action):
-    def __init__(self, option_strings, dest):
-        super().__init__(option_strings, dest, nargs=0)
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        import sys
-        assert isinstance(parser, ClapArgumentParser)
-        if isinstance(option_string, str) and len(option_string) == 2:
-            parser.print_short_help()
-        else:
-            parser.print_long_help()
-        sys.exit(0)
-
-
-class ShortHelpAction(argparse.Action):
-    def __init__(self, option_strings, dest):
-        super().__init__(option_strings, dest, nargs=0)
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        import sys
-        assert isinstance(parser, ClapArgumentParser)
-        parser.print_short_help()
-        sys.exit(0)
-
-
-class LongHelpAction(argparse.Action):
-    def __init__(self, option_strings, dest):
-        super().__init__(option_strings, dest, nargs=0)
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        import sys
-        assert isinstance(parser, ClapArgumentParser)
-        parser.print_long_help()
-        sys.exit(0)
 
 
 def create_command(cls: type, command_path: str = "") -> Command:
