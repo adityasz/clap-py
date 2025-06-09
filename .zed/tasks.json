@@ -1,0 +1,8 @@
+[
+  {
+    "label": "Run tests",
+    "command": "pytest",
+    "use_new_terminal": false,
+    "hide": "on_success"
+  }
+]
