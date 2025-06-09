@@ -61,6 +61,7 @@ def command(
     usage: Optional[str] = ...,
     about: Optional[str] = None,
     long_about: Optional[str] = None,
+    before_help: Optional[str] = None,
     after_help: Optional[str] = None,
     subcommand_help_heading: str = ...,
     subcommand_value_name: str = ...,

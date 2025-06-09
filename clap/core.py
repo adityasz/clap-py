@@ -281,6 +281,7 @@ class Command:
     version: Optional[str] = None
     about: Optional[str] = None
     long_about: Optional[str] = None
+    before_help: Optional[str] = None
     after_help: Optional[str] = None
     subcommand_help_heading: str = "Commands"
     subcommand_value_name: str = "COMMAND"
