@@ -32,6 +32,13 @@ _HELP_SHORT_DEST = "0s"
 _HELP_LONG_DEST = "0l"
 _VERSION_DEST = "0v"
 
+HELP_TEMPLATE = """\
+{before-help}{about-with-newline}
+{usage-heading} {usage}
+
+{all-args}{after-help}\
+"""
+
 
 class AutoFlag(Enum):
     Short = auto()
@@ -51,7 +58,7 @@ class ArgAction(StrEnum):
             super().__init__(option_strings, dest, nargs=0)
 
         def __call__(self, parser, namespace, values, option_string=None):
-            parser = cast(ClapArgumentParser, parser)
+            parser = cast(ClapArgParser, parser)
             parser.print_version()
             sys.exit(0)
 
@@ -61,7 +68,7 @@ class ArgAction(StrEnum):
 
         def __call__(self, parser, namespace, values, option_string=None):
             import sys
-            parser = cast(ClapArgumentParser, parser)
+            parser = cast(ClapArgParser, parser)
             if isinstance(option_string, str) and len(option_string) == 2:
                 parser.print_short_help()
             else:
@@ -73,7 +80,7 @@ class ArgAction(StrEnum):
             super().__init__(option_strings, dest, nargs=0)
 
         def __call__(self, parser, namespace, values, option_string=None):
-            parser = cast(ClapArgumentParser, parser)
+            parser = cast(ClapArgParser, parser)
             parser.print_short_help()
             sys.exit(0)
 
@@ -82,7 +89,7 @@ class ArgAction(StrEnum):
             super().__init__(option_strings, dest, nargs=0)
 
         def __call__(self, parser, namespace, values, option_string=None):
-            parser = cast(ClapArgumentParser, parser)
+            parser = cast(ClapArgParser, parser)
             parser.print_long_help()
             sys.exit(0)
 
@@ -303,8 +310,6 @@ class Command:
     subparser_dest: Optional[str] = None
     subcommand_required: bool = False
 
-    usage_prefix: str = ""
-
     prefix_chars: str = "-"
     fromfile_prefix_chars: Optional[str] = None
     conflict_handler: Optional[str] = None
@@ -312,32 +317,35 @@ class Command:
     exit_on_error: Optional[bool] = None
     deprecated: Optional[bool] = None
 
-    def get_usage(self) -> str:
-        usage = ""
-        if self.usage_prefix:
-            usage = self.usage_prefix + " "
-        usage += self.usage_prefix + self.name
+    def generate_usage(self, usage_prefix: str = ""):
+        if self.usage is not None:
+            return self.usage
+        self.usage = ""
+        if usage_prefix:
+            self.usage = usage_prefix + " "
+        self.usage += usage_prefix + self.name
         if any(arg.required is not True and not arg.is_positional() for arg in self.args.values()):
-            usage += " [OPTIONS]"
+            self.usage += " [OPTIONS]"
         for arg in self.args.values():
             if arg.required is True and not arg.is_positional():
-                usage += f" {arg.long or arg.short} {arg.value_name}"
+                self.usage += f" {arg.long or arg.short} {arg.value_name}"
         for mutex, args in self.mutexes.items():
             if mutex.required:
-                usage += " <"
-            usage += " | ".join(f"{arg.short or arg.long} {arg.value_name}" for arg in args)
-            usage += ">"
+                self.usage += " <"
+            self.usage += " | ".join(f"{arg.short or arg.long} {arg.value_name}" for arg in args)
+            self.usage += ">"
         for arg in self.args.values():
             if arg.is_positional():
-                usage += f" {arg.value_name}"
+                self.usage += f" {arg.value_name}"
         if self.contains_subcommands():
+            for subcommand in self.subcommands.values():
+                subcommand.generate_usage(self.usage)
             if self.subcommand_required is True:
                 value_name = f"<{self.subcommand_value_name}>"
             else:
                 value_name = f"[{self.subcommand_value_name}]"
-            usage += f" {value_name}"
-        self.usage = usage
-        return usage
+            self.usage += f" {value_name}"
+        return self.usage
 
     def is_subcommand(self) -> bool:
         return self.subcommand_class is not None
@@ -371,7 +379,7 @@ class Command:
         return kwargs
 
 
-class ClapArgumentParser(argparse.ArgumentParser):
+class ClapArgParser(argparse.ArgumentParser):
     def __init__(
         self,
         command: Command,
@@ -639,6 +647,8 @@ def add_argument(
 
     command.args[field_name] = arg
 
+    if (group := arg.group) is not None:
+        command.groups[group].append(arg)
     if (mutex := arg.mutex) is not None:
         if (group := arg.group) is not None and mutex.parent != group:
             raise ValueError(
@@ -648,8 +658,6 @@ def add_argument(
                 "mutex group's parent must be the given group."
             )
         command.mutexes[mutex].append(arg)
-    elif (group := arg.group) is not None:
-        command.groups[group].append(arg)
 
 
 def configure_subcommands(
@@ -737,7 +745,6 @@ def create_command(cls: type, command_path: str = "") -> Command:
             about="Print version",
         )
 
-    command.usage = command.get_usage()
     setattr(cls, _COMMAND_DATA, command)
     return command
 
@@ -756,18 +763,20 @@ def configure_parser(parser: argparse.ArgumentParser, command: Command):
 
     # when both group and mutex are provided for an argument, the argument is
     # only added to the mutex when the command is created
-    for group, arguments in command.groups.items():
-        for arg in arguments:
+    for group, args in command.groups.items():
+        for arg in args:
+            if arg.mutex is not None:
+                continue
             groups[group].add_argument(*arg.get_argparse_flags(), **arg.get_argparse_kwargs())
 
-    for mutex, arguments in command.mutexes.items():
+    for mutex, args in command.mutexes.items():
         if mutex.parent is None:
             mutex_group = parser.add_mutually_exclusive_group(required=mutex.required)
         else:
             mutex_group = groups[mutex.parent].add_mutually_exclusive_group(
                 required=mutex.required
             )
-        for arg in arguments:
+        for arg in args:
             mutex_group.add_argument(*arg.get_argparse_flags(), **arg.get_argparse_kwargs())
 
     if command.contains_subcommands():
@@ -781,12 +790,13 @@ def configure_parser(parser: argparse.ArgumentParser, command: Command):
 
 def create_parser(cls: type):
     command = create_command(cls)
-    parser = ClapArgumentParser(command, **command.get_parser_kwargs())
+    command.generate_usage()
+    parser = ClapArgParser(command, **command.get_parser_kwargs())
     configure_parser(parser, command)
     return parser
 
 
-def apply_parsed_arguments(args: dict[str, Any], instance: Any):
+def apply_parsed_args(args: dict[str, Any], instance: Any):
     command: Command = getattr(instance, _COMMAND_DATA)
     subcommand_args: dict[str, Any] = {}
 
@@ -831,7 +841,7 @@ def apply_parsed_arguments(args: dict[str, Any], instance: Any):
     cls = command.subcommands[subcommand_name].subcommand_class
     assert cls is not None
     subcommand_instance = object.__new__(cls)
-    apply_parsed_arguments(subcommand_args, subcommand_instance)
+    apply_parsed_args(subcommand_args, subcommand_instance)
     setattr(instance, command.subcommand_dest, subcommand_instance)
 
 

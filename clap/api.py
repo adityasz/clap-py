@@ -18,7 +18,7 @@ from .core import (
     Command,
     Group,
     MutexGroup,
-    apply_parsed_arguments,
+    apply_parsed_args,
     create_parser,
     get_about_from_docstring,
     to_kebab_case,
@@ -85,7 +85,7 @@ def command[T](
             parser = getattr(cls, _PARSER)
             parsed_args = parser.parse_args(args)
             obj = object.__new__(cls)
-            apply_parsed_arguments(dict(parsed_args._get_kwargs()), obj)
+            apply_parsed_args(dict(parsed_args._get_kwargs()), obj)
             return obj
 
         cls.parse_args = parse_args
