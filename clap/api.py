@@ -1,10 +1,11 @@
+import os
+import sys
 from collections.abc import Callable, Sequence
 from typing import (
     Optional,
     Self,
     TypeVar,
     Union,
-    cast,
 )
 
 from .core import (
@@ -13,15 +14,10 @@ from .core import (
     _PARSER,
     _SUBCOMMAND_MARKER,
     Arg,
-    ArgAction,
-    ArgConfig,
-    AutoLongFlag,
-    AutoShortFlag,
+    AutoFlag,
     Command,
     Group,
     MutexGroup,
-    NargsType,
-    ParserConfig,
     apply_parsed_arguments,
     create_parser,
     get_about_from_docstring,
@@ -41,25 +37,10 @@ def command[T](
     cls: Optional[type[T]] = None,
     /,
     *,
-    name: Optional[str] = None,
-    version: Optional[str] = None,
-    usage: Optional[str] = None,
+    name: str = os.path.basename(sys.argv[0]),
     about: Optional[str] = None,
     long_about: Optional[str] = None,
-    after_help: Optional[str] = None,
-    subcommand_help_heading: str = "Commands",
-    subcommand_value_name: str = "COMMAND",
-    disable_version_flag: bool = False,
-    disable_help_flag: bool = False,
-    disable_help_subcommand: bool = False,
-    parents: Optional[list[type]] = None,
-    prefix_chars: str = "-",
-    fromfile_prefix_chars: Optional[str] = None,
-    conflict_handler: str = "error",
-    allow_abbrev: bool = True,
-    exit_on_error: bool = True,
-    heading_ansi_prefix: Optional[str] = None,
-    argument_ansi_prefix: Optional[str] = None,
+    **kwargs,
 ) -> Union[type[T], Callable[[type[T]], type[T]]]:
     """Configure a class to parse command-line arguments.
 
@@ -86,36 +67,15 @@ def command[T](
         nonlocal about, long_about, name
         setattr(cls, _COMMAND_MARKER, True)
         if name is None:
-            name = to_kebab_case(cls.__name__)
+            name = os.path.basename(sys.argv[0])
+        kwargs["name"] = name
         if cls.__doc__ is not None:
             docstring = cls.__doc__.strip()
             if about is None:
-                about = get_about_from_docstring(docstring)
+                kwargs["about"] = get_about_from_docstring(docstring)
             if long_about is None:
-                long_about = docstring
-        command = Command(
-            ParserConfig(
-                prog=name,
-                usage=usage,
-                prefix_chars=prefix_chars,
-                fromfile_prefix_chars=fromfile_prefix_chars,
-                conflict_handler=conflict_handler,
-                allow_abbrev=allow_abbrev,
-                exit_on_error=exit_on_error,
-            ),
-            name=name,
-            version=version,
-            about=about,
-            long_about=long_about,
-            after_help=after_help,
-            subcommand_help_heading=subcommand_help_heading,
-            subcommand_value_name=subcommand_value_name,
-            disable_version_flag=disable_version_flag,
-            disable_help_flag=disable_help_flag,
-            disable_help_subcommand=disable_help_subcommand,
-            heading_ansi_prefix=heading_ansi_prefix,
-            argument_ansi_prefix=argument_ansi_prefix
-        )
+                kwargs["long_about"] = docstring
+        command = Command(**kwargs)
         setattr(cls, _COMMAND_DATA, command)
         setattr(cls, _PARSER, create_parser(cls))
 
@@ -141,24 +101,9 @@ def subcommand[T](
     /,
     *,
     name: Optional[str] = None,
-    aliases: Sequence[str] = [],
-    usage: Optional[str] = None,
     about: Optional[str] = None,
     long_about: Optional[str] = None,
-    after_help: Optional[str] = None,
-    subcommand_help_heading: Optional[str] = None,
-    subcommand_value_name: Optional[str] = None,
-    disable_help_flag: bool = False,
-    disable_help_subcommand: bool = False,
-    parents: Optional[Sequence[type]] = None,
-    prefix_chars: str = "-",
-    fromfile_prefix_chars: Optional[str] = None,
-    conflict_handler: str = "error",
-    allow_abbrev: bool = True,
-    exit_on_error: bool = True,
-    deprecated: bool = False,
-    heading_ansi_prefix: Optional[str] = None,
-    argument_ansi_prefix: Optional[str] = None,
+    **kwargs,
 ) -> Union[type[T], Callable[[type[T]], type[T]]]:
     """Configure a class as a subcommand parser.
 
@@ -167,15 +112,12 @@ def subcommand[T](
             the class being decorated.
         name: The name of the subcommand. If not provided, uses the class name.
         deprecated: Whether this subcommand is deprecated and should not be used.
-        help: A brief description of what the subcommand does.
+        about: A brief description of what the subcommand does.
         aliases: A sequence of alternative names for the subcommand.
         usage: The string describing the program usage. The default is
             generated from arguments added to parser.
-        description: Text to display before the argument help.
-        epilog: Text to display after the argument help.
         parents: A sequence of `ArgumentParser` objects whose arguments should
             also be included.
-        formatter_class: A class for customizing the help output.
         prefix_chars: The set of characters that prefix optional arguments.
         fromfile_prefix_chars: The set of characters that prefix files from
             which additional arguments should be read.
@@ -191,34 +133,14 @@ def subcommand[T](
         setattr(cls, _SUBCOMMAND_MARKER, True)
         if name is None:
             name = to_kebab_case(cls.__name__)
+        kwargs["name"] = name
         if cls.__doc__ is not None:
             docstring = cls.__doc__.strip()
             if about is None:
-                about = get_about_from_docstring(docstring)
+                kwargs["about"] = get_about_from_docstring(docstring)
             if long_about is None:
-                long_about = docstring
-        command = Command(
-            ParserConfig(
-                name=name,
-                usage=usage,
-                aliases=aliases,
-                deprecated=deprecated,
-                prefix_chars=prefix_chars,
-                fromfile_prefix_chars=fromfile_prefix_chars,
-                conflict_handler=conflict_handler,
-                allow_abbrev=allow_abbrev,
-                exit_on_error=exit_on_error,
-            ),
-            about=about,
-            long_about=long_about,
-            after_help=after_help,
-            subcommand_help_heading=subcommand_help_heading,
-            subcommand_value_name=subcommand_value_name,
-            disable_help_flag=disable_help_flag,
-            disable_help_subcommand=disable_help_subcommand,
-            heading_ansi_prefix=heading_ansi_prefix,
-            argument_ansi_prefix=argument_ansi_prefix
-        )
+                kwargs["long_about"] = docstring
+        command = Command(**kwargs)
         setattr(cls, _COMMAND_DATA, command)
         return cls
 
@@ -228,25 +150,14 @@ def subcommand[T](
 
 
 def arg[U](
-    short_or_long: Optional[Union[AutoShortFlag, AutoLongFlag, str]] = None,
-    long_: Optional[Union[AutoLongFlag, str]] = None,
+    short_or_long: Optional[Union[AutoFlag, str]] = None,
+    long_: Optional[Union[AutoFlag, str]] = None,
     /,
     *,
     short: Optional[Union[str, bool]] = None,
     long: Optional[Union[str, bool]] = None,
-    aliases: Optional[Sequence[str]] = None,
-    group: Optional[Group] = None,
-    mutex: Optional[MutexGroup] = None,
-    action: Optional[Union[type, ArgAction]] = None,
-    num_args: Optional[NargsType] = None,
-    default_missing_value: Optional[U] = None,
-    default_value: Optional[U] = None,
-    choices: Optional[Sequence[str]] = None,
-    required: Optional[bool] = None,
-    about: Optional[str] = None,
-    long_about: Optional[str] = None,
-    value_name: Optional[str] = None,
-    deprecated: bool = False
+    prefix_chars: str = "-",
+    **kwargs,
 ) -> Arg:
     """Create a command-line argument.
 
@@ -274,60 +185,55 @@ def arg[U](
     short_name = None
     long_name = None
 
-    if isinstance(short_or_long, AutoLongFlag):
+    if short_or_long == AutoFlag.Long:
         short_name = None
-        long_name = cast(AutoLongFlag, short_or_long)
-    elif (
-        isinstance(short_or_long, str) and (
-            short_or_long.startswith("--")
-            or (not short_or_long.startswith("-") and len(short_or_long) > 1)
-        )
-    ):
-        short_name = None
-        long_name = cast(str, short_or_long)
+        long_name = short_or_long
+    elif isinstance(short_or_long, str):
+        if len(short_or_long) == 1 or (
+            len(short_or_long) == 2 and short_or_long[0] in prefix_chars
+        ):
+            short_name = short_or_long
+            long_name = long_
+        else:
+            short_name = None
+            long_name = short_or_long
     else:
-        short_name = cast(Optional[Union[AutoShortFlag, str]], short_or_long)
+        short_name = short_or_long
         long_name = long_
 
     if short is not None:
         if isinstance(short, str):
             short_name = short
         elif short is True:
-            short_name = AutoShortFlag()
+            short_name = AutoFlag.Short
 
     if long is not None:
         if isinstance(long, str):
             long_name = long
         elif long is True:
-            long_name = AutoLongFlag()
+            long_name = AutoFlag.Long
 
-    return Arg(
-        ArgConfig(
-            action=action,
-            nargs=num_args,
-            const=default_missing_value,
-            default=default_value,
-            choices=choices,
-            required=required,
-            deprecated=deprecated
-        ),
-        short=short_name,
-        long=long_name,
-        aliases=aliases,
-        group=group,
-        mutex=mutex,
-        about=about,
-        long_about=long_about,
-        value_name=value_name,
-    )
+    if isinstance(short_name, str):
+        if len(short_name) == 0:
+            raise ValueError
+        if short_name[0] not in prefix_chars:
+            short_name = prefix_chars[0] + short_name
+        elif short_name[1] in prefix_chars or len(short_name) != 2:
+            raise ValueError
+
+    if isinstance(long_name, str) and long_name[0] not in prefix_chars:
+        long_name = 2 * prefix_chars[0] + long_name
+
+    kwargs["short"] = short_name
+    kwargs["long"] = long_name
+
+    return Arg(**kwargs)
 
 
 def group(
     title: Optional[str] = None,
     description: Optional[str] = None,
-    *,
-    prefix_chars: str = "-",
-    conflict_handler: str = "error"
+    **kwargs,
 ) -> Group:
     """Create an argument group for organizing related arguments.
 
@@ -349,8 +255,7 @@ def group(
     return Group(
         title=title,
         description=description,
-        prefix_chars=prefix_chars,
-        conflict_handler=conflict_handler
+        **kwargs
     )
 
 

@@ -5,8 +5,7 @@ from typing import Any, Optional, TypeVar, Union, overload
 from .api import Group, MutexGroup, Parser, group, mutex_group
 from .core import (
     ArgAction,
-    AutoLongFlag,
-    AutoShortFlag,
+    AutoFlag,
     ColorChoice,
     NargsType,
     long,
@@ -31,8 +30,8 @@ U = TypeVar('U')
 
 # TODO: Add overloads that return `Optional[Any]` based on the `required` and `default` parameters.
 def arg(
-    short_or_long: Optional[Union[AutoShortFlag, AutoLongFlag, str]] = None,
-    long_: Optional[Union[AutoLongFlag, str]] = None,
+    short_or_long: Optional[Union[AutoFlag, str]] = None,
+    long_: Optional[Union[AutoFlag, str]] = None,
     /,
     *,
     short: Optional[Union[str, bool]] = None,
@@ -58,24 +57,24 @@ def command[T](cls: type[T], /) -> type[T]: ...
 @overload
 def command(
     *,
-    name: Optional[str] = None,
-    usage: Optional[str] = None,
+    name: str = ...,
+    usage: Optional[str] = ...,
     about: Optional[str] = None,
     long_about: Optional[str] = None,
     after_help: Optional[str] = None,
-    subcommand_help_heading: str = "Commands",
-    subcommand_value_name: str = "COMMAND",
+    subcommand_help_heading: str = ...,
+    subcommand_value_name: str = ...,
     disable_version_flag: bool = False,
     disable_help_flag: bool = False,
     disable_help_subcommand: bool = False,
     parents: Optional[Sequence[type]] = None,
     prefix_chars: str = "-",
     fromfile_prefix_chars: Optional[str] = None,
-    conflict_handler: str = "error",
+    conflict_handler: str = ...,
     allow_abbrev: bool = True,
     exit_on_error: bool = True,
-    heading_ansi_prefix: Optional[str] = None,
-    argument_ansi_prefix: Optional[str] = None,
+    heading_ansi_prefix: Optional[str] = ...,
+    argument_ansi_prefix: Optional[str] = ...,
 ) -> Callable[[type[T]], type[T]]: ...
 
 @overload
@@ -84,7 +83,7 @@ def subcommand[T](cls: type[T], /) -> type[T]: ...
 @overload
 def subcommand[T](
     *,
-    name: Optional[str] = ...,
+    name: str = ...,
     aliases: Sequence[str] = ...,
     usage: Optional[str] = ...,
     about: Optional[str] = ...,

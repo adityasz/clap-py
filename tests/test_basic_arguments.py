@@ -148,7 +148,9 @@ class TestBasicArgumentParsing(unittest.TestCase):
     def test_const_default(self):
         @clap.command
         class Cli(clap.Parser):
-            output: str = arg(long, num_args="?", default_missing_value="stdout", default_value="file.txt")
+            output: str = arg(
+                long, num_args="?", default_missing_value="stdout", default_value="file.txt"
+            )
 
         args = Cli.parse_args([])
         self.assertEqual(args.output, "file.txt")
