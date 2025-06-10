@@ -8,7 +8,7 @@ from typing import (
     Union,
 )
 
-from clap.styling import HelpStyle
+from clap.styling import Styles
 
 from .help import ColorChoice
 from .models import Arg, AutoFlag, Command, Group, MutexGroup
@@ -41,7 +41,7 @@ def command[T](
     about: Optional[str] = None,
     long_about: Optional[str] = None,
     color: ColorChoice = ColorChoice.Auto,
-    help_style: Optional[HelpStyle] = None,
+    help_style: Optional[Styles] = None,
     help_template: Optional[str] = None,
     **kwargs,
 ) -> Union[type[T], Callable[[type[T]], type[T]]]:

@@ -28,64 +28,36 @@ class AnsiColor(IntEnum):
     BrightCyan = 96
     BrightWhite = 97
 
-    def bold(self) -> "ColorStyle":
-        return ColorStyle(self, is_bold=True)
-
-    def dim(self) -> "ColorStyle":
-        return ColorStyle(self, is_dim=True)
-
-    def italic(self) -> "ColorStyle":
-        return ColorStyle(self, is_italic=True)
-
-    def underline(self) -> "ColorStyle":
-        return ColorStyle(self, is_underline=True)
-
 
 @dataclass
-class ColorStyle:
+class Style:
     color: Optional[AnsiColor] = None
     is_bold: bool = False
     is_dim: bool = False
     is_italic: bool = False
     is_underline: bool = False
 
-    def bold(self) -> "ColorStyle":
-        return ColorStyle(
-            self.color,
-            is_bold=True,
-            is_dim=self.is_dim,
-            is_italic=self.is_italic,
-            is_underline=self.is_underline,
-        )
+    def bold(self) -> "Style":
+        self.is_bold = True
+        return self
 
-    def dim(self) -> "ColorStyle":
-        return ColorStyle(
-            self.color,
-            is_bold=self.is_bold,
-            is_dim=True,
-            is_italic=self.is_italic,
-            is_underline=self.is_underline,
-        )
+    def dim(self) -> "Style":
+        self.is_dim = True
+        return self
 
-    def italic(self) -> "ColorStyle":
-        return ColorStyle(
-            self.color,
-            is_bold=self.is_bold,
-            is_dim=self.is_dim,
-            is_italic=True,
-            is_underline=self.is_underline,
-        )
+    def italic(self) -> "Style":
+        self.is_italic = True
+        return self
 
-    def underline(self) -> "ColorStyle":
-        return ColorStyle(
-            self.color,
-            is_bold=self.is_bold,
-            is_dim=self.is_dim,
-            is_italic=self.is_italic,
-            is_underline=True,
-        )
+    def underline(self) -> "Style":
+        self.is_underline = True
+        return self
 
-    def to_ansi(self) -> str:
+    def fg_color(self, color: Optional[AnsiColor] = None) -> "Style":
+        self.color = color
+        return self
+
+    def __str__(self) -> str:
         codes = []
         if self.color is not None:
             codes.append(str(self.color.value))
@@ -101,9 +73,35 @@ class ColorStyle:
 
 
 @dataclass
-class HelpStyle:
-    header_style: Optional[ColorStyle] = None
-    option_style: Optional[ColorStyle] = None
+class Styles:
+    def __init__(self):
+        self.header_style = Style()
+        self.literal_style = Style()
+        self.usage_style = Style()
+        self.placeholder_style = Style()
+
+    @classmethod
+    def styled(cls) -> "Styles":
+        return (Styles().header(Style().bold().underline())
+                    .literal(Style().bold())
+                    .usage(Style().bold().underline())
+                    .placeholder(Style()))
+
+    def header(self, style: Style) -> "Styles":
+        self.header_style = style
+        return self
+
+    def literal(self, style: Style) -> "Styles":
+        self.literal_style = style
+        return self
+
+    def usage(self, style: Style) -> "Styles":
+        self.usage_style = style
+        return self
+
+    def placeholder(self, style: Style) -> "Styles":
+        self.placeholder_style = style
+        return self
 
 
 def determine_color_usage(color_choice: ColorChoice) -> bool:

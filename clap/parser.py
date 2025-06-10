@@ -24,7 +24,7 @@ from .models import (
     short,
     to_kebab_case,
 )
-from .styling import ColorChoice, HelpStyle
+from .styling import ColorChoice, Styles
 
 _COMMAND_MARKER = "__com.github.adityasz.clap_py.command_marker__"
 _SUBCOMMAND_MARKER = "__com.github.adityasz.clap_py.subcommand_marker__"
@@ -43,7 +43,7 @@ class ClapArgParser(argparse.ArgumentParser):
         self,
         command: Command,
         color: ColorChoice,
-        style: Optional[HelpStyle],
+        style: Optional[Styles],
         help_template: Optional[str],
         **kwargs,
     ):
@@ -52,6 +52,8 @@ class ClapArgParser(argparse.ArgumentParser):
         self.style = style
         self.help_template = help_template
         self.help_renderer = HelpRenderer(command, color, help_template)
+        # override usage for argparse error messages
+        kwargs["usage"] = self.help_renderer.format_usage(self.command)
         super().__init__(**kwargs, add_help=False)
 
     def print_version(self):
@@ -444,7 +446,7 @@ def configure_parser(parser: ClapArgParser, command: Command):
 def create_parser(
     cls: type,
     color: ColorChoice,
-    help_style: Optional[HelpStyle] = None,
+    help_style: Optional[Styles] = None,
     help_template: Optional[str] = None,
 ):
     command = create_command(cls)
