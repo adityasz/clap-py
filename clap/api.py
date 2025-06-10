@@ -8,16 +8,16 @@ from typing import (
     Union,
 )
 
-from .core import (
+from clap.styling import HelpStyle
+
+from .help import ColorChoice
+from .models import Arg, AutoFlag, Command, Group, MutexGroup
+from .parser import (
     _COMMAND_DATA,
     _COMMAND_MARKER,
     _PARSER,
+    _SUBCOMMAND_DEFAULTS,
     _SUBCOMMAND_MARKER,
-    Arg,
-    AutoFlag,
-    Command,
-    Group,
-    MutexGroup,
     apply_parsed_args,
     create_parser,
     get_about_from_docstring,
@@ -40,6 +40,9 @@ def command[T](
     name: str = os.path.basename(sys.argv[0]),
     about: Optional[str] = None,
     long_about: Optional[str] = None,
+    color: ColorChoice = ColorChoice.Auto,
+    help_style: Optional[HelpStyle] = None,
+    help_template: Optional[str] = None,
     **kwargs,
 ) -> Union[type[T], Callable[[type[T]], type[T]]]:
     """Configure a class to parse command-line arguments.
@@ -52,8 +55,6 @@ def command[T](
             generated from arguments added to parser.
         about: Text to display before the argument help.
         after_help: Text to display after the argument help.
-        parents: A list of `ArgumentParser` objects whose arguments should
-            also be included.
         prefix_chars: The set of characters that prefix optional arguments.
         fromfile_prefix_chars: The set of characters that prefix files from
             which additional arguments should be read.
@@ -77,7 +78,13 @@ def command[T](
                 kwargs["long_about"] = docstring
         command = Command(**kwargs)
         setattr(cls, _COMMAND_DATA, command)
-        setattr(cls, _PARSER, create_parser(cls))
+        setattr(cls, _PARSER, create_parser(cls, color, help_style, help_template))
+
+        # delete default values of fields so that `@dataclass` does not complain
+        # about mutable defaults (`Arg`)
+        for name, _ in cls.__annotations__.items():
+            if hasattr(cls, name):
+                delattr(cls, name)
 
         @classmethod
         def parse_args(cls: type, args: Optional[list[str]] = None) -> T:
@@ -116,8 +123,6 @@ def subcommand[T](
         aliases: A sequence of alternative names for the subcommand.
         usage: The string describing the program usage. The default is
             generated from arguments added to parser.
-        parents: A sequence of `ArgumentParser` objects whose arguments should
-            also be included.
         prefix_chars: The set of characters that prefix optional arguments.
         fromfile_prefix_chars: The set of characters that prefix files from
             which additional arguments should be read.
@@ -142,6 +147,16 @@ def subcommand[T](
                 kwargs["long_about"] = docstring
         command = Command(**kwargs)
         setattr(cls, _COMMAND_DATA, command)
+
+        # delete default values of fields so that `@dataclass` does not complain
+        # about mutable defaults (`Arg`)
+        attrs = {}
+        for name, _ in cls.__annotations__.items():
+            if attr := getattr(cls, name, None):
+                attrs[name] = attr
+                delattr(cls, name)
+        setattr(cls, _SUBCOMMAND_DEFAULTS, attrs)
+
         return cls
 
     if cls is None:

@@ -2,19 +2,23 @@ import argparse
 from collections.abc import Callable, Sequence
 from typing import Any, Optional, TypeVar, Union, overload
 
-from .api import Group, MutexGroup, Parser, group, mutex_group
-from .core import (
+from .api import Parser, group, mutex_group
+from .models import (
     ArgAction,
     AutoFlag,
-    ColorChoice,
+    Group,
+    MutexGroup,
     NargsType,
     long,
     short,
 )
+from .styling import AnsiColor, ColorChoice, HelpStyle
 
 __all__ = [
+    "AnsiColor",
     "ArgAction",
     "ColorChoice",
+    "HelpStyle",
     "Parser",
     "arg",
     "command",
@@ -68,7 +72,6 @@ def command(
     disable_version_flag: bool = False,
     disable_help_flag: bool = False,
     disable_help_subcommand: bool = False,
-    parents: Optional[Sequence[type]] = None,
     prefix_chars: str = "-",
     fromfile_prefix_chars: Optional[str] = None,
     conflict_handler: str = ...,
@@ -94,7 +97,6 @@ def subcommand[T](
     subcommand_value_name: Optional[str] = ...,
     disable_help_flag: bool = False,
     disable_help_subcommand: bool = False,
-    parents: Optional[Sequence[type]] = ...,
     prefix_chars: str = "-",
     fromfile_prefix_chars: Optional[str] = None,
     conflict_handler: str = ...,

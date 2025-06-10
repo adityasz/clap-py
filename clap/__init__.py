@@ -1,9 +1,12 @@
 from .api import Parser, arg, command, group, mutex_group, subcommand
-from .core import ArgAction, ColorChoice, long, short
+from .models import ArgAction, long, short
+from .styling import AnsiColor, ColorChoice, HelpStyle
 
 __all__ = [
+    "AnsiColor",
     "ArgAction",
     "ColorChoice",
+    "HelpStyle",
     "Parser",
     "arg",
     "command",
