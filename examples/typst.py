@@ -39,7 +39,7 @@ class Init:
     dir: Optional[Path]
     """The project directory, defaults to the template's name"""
 
-    package_path: Optional[Path] = arg(value_name="DIR")
+    package_path: Optional[Path] = arg(long, value_name="DIR")
     """Custom path to local packages, defaults to system-dependent location"""
 
 
