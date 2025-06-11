@@ -224,38 +224,3 @@ class HelpRenderer:
             output.append(self.format_section(group.title, *format_args_content(args)))
 
         return "\n\n".join(output)
-
-
-def generate_usage(command: Command, ansi_prefix: str, usage_prefix: str = ""):
-    if command.usage is not None:
-        return command.usage
-
-    RESET = "\033[0m"
-    command.usage = ""
-    if usage_prefix:
-        command.usage = usage_prefix + " "
-    command.usage += usage_prefix + command.name
-    command.usage += f"{usage_prefix}{ansi_prefix}{command.name}{RESET}"
-    if any(arg.required is not True and not arg.is_positional() for arg in command.args.values()):
-        command.usage += " [OPTIONS]"
-    for arg in command.args.values():
-        if arg.required is True and not arg.is_positional():
-            command.usage += f" {ansi_prefix}{arg.long or arg.short}{RESET} {arg.value_name}"
-    for mutex, args in command.mutexes.items():
-        if mutex.required:
-            command.usage += " <"
-        command.usage += " | ".join(f"{arg.short or arg.long} {arg.value_name}" for arg in args)
-        command.usage += ">"
-    for arg in command.args.values():
-        if arg.is_positional():
-            command.usage += f" {arg.value_name}"
-    if command.contains_subcommands():
-        for subcommand in command.subcommands.values():
-            generate_usage(subcommand, "", command.usage)
-        if command.subcommand_required is True:
-            value_name = f"<{command.subcommand_value_name}>"
-        else:
-            value_name = f"[{command.subcommand_value_name}]"
-        command.usage += f" {value_name}"
-
-    return command.usage
