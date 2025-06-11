@@ -233,6 +233,16 @@ def set_default_and_required(arg: Arg):
                 raise TypeError("An argument with a default value can never be None.")
             if arg.default_value is None:
                 arg.required = not optional_type_hint
+                if arg.is_positional():
+                    if not arg.required:
+                        if arg.num_args is not None and arg.num_args != "?":
+                            raise TypeError(
+                                "A positional argument with 'num_args != ?' can never be None; "
+                                "an empty list is returned when no argument is provided with "
+                                "'num_args' is 0 or *."
+                            )
+                        arg.num_args = "?"
+                    arg.required = None
         case ArgAction.SetFalse:
             if optional_type_hint:
                 raise TypeError("An argument with the 'store_false' action can never be None.")

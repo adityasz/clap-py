@@ -234,16 +234,7 @@ class Arg:
             kwargs["type"] = self.ty.ty
 
         if self.is_positional():
-            kwargs.pop("required", None)
             kwargs.pop("dest")
-
-            if self.required is False:
-                if self.num_args is not None and self.num_args != "?":
-                    raise TypeError(
-                        "A positional argument with 'num_args != ?' can never be None; an empty "
-                        "list is returned when no argument is provided with 'num_args' is 0 or *."
-                    )
-                kwargs["nargs"] = "?"
 
         if self.action in (ArgAction.Count, ArgAction.SetTrue, ArgAction.SetFalse):
             kwargs.pop("type")
