@@ -44,7 +44,7 @@ class HelpRenderer:
             self.usage_style = ""
             self.reset_ansi = ""
         import shutil
-        self.width = max(shutil.get_terminal_size().columns, 100)
+        self.width = min(shutil.get_terminal_size().columns, 100)
 
     def style_header(self, text: str) -> str:
         return f"{self.header_style}{text}{self.reset_ansi}"
@@ -125,7 +125,7 @@ class HelpRenderer:
                 lines.extend(
                     textwrap.wrap(
                         row[1],
-                        self.width - indent,
+                        width=self.width,
                         initial_indent=" " * indent,
                         subsequent_indent=" " * indent,
                     )
@@ -136,7 +136,7 @@ class HelpRenderer:
                 lines.extend(
                     textwrap.wrap(
                         f"{row[0]}{'': <{padding}}{row[1]}",
-                        width=self.width - left_column_width - self.COL_SEP,
+                        width=self.width,
                         initial_indent=" " * self.SECTION_INDENT,
                         subsequent_indent=(
                             " " * (self.SECTION_INDENT + left_column_width + self.COL_SEP)
