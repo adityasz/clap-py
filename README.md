@@ -4,8 +4,8 @@ A declarative and type-safe argument parser for Python, inspired by [clap-rs](ht
 
 ## Installation
 
-```python
-pip install clap
+```console
+$ pip install git+https://github.com/adityasz/clap-py.git
 ```
 
 ## Example
@@ -107,15 +107,10 @@ print(args.typo)
 # no static analysis
 ```
 
-## TODO
+## Roadmap
 
-- [ ] Share arguments between (sub)commands with class inheritance.
-- [ ] clap-rs like `Styling` class instead of raw ANSI codes for help formatting.
 - [ ] Support more tags in the help template.
-
-## Future work
-
-- Actually parse arguments instead of relying on `argparse`.
-  This will improve error message greatly.
-
-- Generate shell completions.
+- [ ] Share arguments between (sub)commands using class inheritance.
+- [ ] Actually parse arguments intead of relying on `argparse`.
+      This will improve error message greatly.
+- [ ] Generate shell completions.
