@@ -40,7 +40,7 @@ class TestBasicArgumentParsing(unittest.TestCase):
     def test_bool_flag_with_manual_flags(self):
         @clap.command
         class Cli(clap.Parser):
-            verbose: bool = arg("v", "verbose")
+            verbose: bool = arg(short="v", long="verbose")
 
         args = Cli.parse_args([])
         self.assertFalse(args.verbose)
@@ -60,7 +60,7 @@ class TestBasicArgumentParsing(unittest.TestCase):
     def test_bool_flag_with_hyphenated_flags(self):
         @clap.command
         class Cli(clap.Parser):
-            verbose: bool = arg("-v", "--verbose")
+            verbose: bool = arg(short="-v", long="--verbose")
 
         args = Cli.parse_args([])
         self.assertFalse(args.verbose)

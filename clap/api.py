@@ -165,13 +165,12 @@ def subcommand[T](
 
 
 def arg[U](
-    short_or_long: Optional[Union[AutoFlag, str]] = None,
-    long_: Optional[Union[AutoFlag, str]] = None,
+    short_or_long: Optional[AutoFlag] = None,
+    long_or_short: Optional[AutoFlag] = None,
     /,
     *,
     short: Optional[Union[str, bool]] = None,
     long: Optional[Union[str, bool]] = None,
-    prefix_chars: str = "-",
     **kwargs,
 ) -> Arg:
     """Create a command-line argument.
@@ -200,44 +199,29 @@ def arg[U](
     short_name = None
     long_name = None
 
-    if short_or_long == AutoFlag.Long:
-        short_name = None
-        long_name = short_or_long
-    elif isinstance(short_or_long, str):
-        if len(short_or_long) == 1 or (
-            len(short_or_long) == 2 and short_or_long[0] in prefix_chars
-        ):
-            short_name = short_or_long
-            long_name = long_
-        else:
-            short_name = None
-            long_name = short_or_long
-    else:
-        short_name = short_or_long
-        long_name = long_
+    match short_or_long:
+        case AutoFlag.Short: short_name = AutoFlag.Short
+        case AutoFlag.Long: long_name = AutoFlag.Long
+
+    match long_or_short:
+        case AutoFlag.Short: short_name = AutoFlag.Short
+        case AutoFlag.Long: long_name = AutoFlag.Long
 
     if short is not None:
         if isinstance(short, str):
+            if len(short) == 0:
+                raise ValueError
             short_name = short
         elif short is True:
             short_name = AutoFlag.Short
 
     if long is not None:
         if isinstance(long, str):
+            if len(long) == 0:
+                raise ValueError
             long_name = long
         elif long is True:
             long_name = AutoFlag.Long
-
-    if isinstance(short_name, str):
-        if len(short_name) == 0:
-            raise ValueError
-        if short_name[0] not in prefix_chars:
-            short_name = prefix_chars[0] + short_name
-        elif short_name[1] in prefix_chars or len(short_name) != 2:
-            raise ValueError
-
-    if isinstance(long_name, str) and long_name[0] not in prefix_chars:
-        long_name = 2 * prefix_chars[0] + long_name
 
     kwargs["short"] = short_name
     kwargs["long"] = long_name

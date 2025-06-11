@@ -164,9 +164,16 @@ def set_flags(arg: Arg, field_name: str, prefix_chars: str):
     """Sets short and long flags of the argument."""
     if arg.short == short:
         arg.short = prefix_chars[0] + field_name[0].lower()
+    elif isinstance(arg.short, str):
+        if arg.short[0] not in prefix_chars:
+            arg.short = prefix_chars[0] + arg.short
+        elif len(arg.short) != 2 or arg.short[1] in prefix_chars:
+            raise ValueError
 
     if arg.long == long:
         arg.long = 2 * prefix_chars[0] + to_kebab_case(field_name)
+    elif isinstance(arg.long, str) and arg.long[0] not in prefix_chars:
+        arg.long = 2 * prefix_chars[0] + arg.long
 
 
 def set_type_dependent_kwargs(arg: Arg):

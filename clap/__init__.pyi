@@ -32,10 +32,11 @@ __all__ = [
 T = TypeVar('T')
 U = TypeVar('U')
 
-# TODO: Add overloads that return `Optional[Any]` based on the `required` and `default` parameters.
+# TODO: Add overloads that return `Optional[Any]` based on the `required`,
+# `default`, and `num_args`.
 def arg(
-    short_or_long: Optional[Union[AutoFlag, str]] = None,
-    long_: Optional[Union[AutoFlag, str]] = None,
+    short_or_long: Optional[AutoFlag] = None,
+    long_or_short: Optional[AutoFlag] = None,
     /,
     *,
     short: Optional[Union[str, bool]] = None,

@@ -99,7 +99,7 @@ class TestActions(unittest.TestCase):
         @clap.command
         class Cli(clap.Parser):
             features: list[str] = arg(
-                long="--enable-feature",
+                long="enable-feature",
                 action=ArgAction.Append,
                 num_args=0,
                 default_missing_value="feature1",
@@ -162,7 +162,7 @@ class TestActions(unittest.TestCase):
     def test_count_action_with_default(self):
         @clap.command
         class Cli(clap.Parser):
-            level: int = arg(short="-l", action=ArgAction.Count, default_value=5)
+            level: int = arg(short="l", action=ArgAction.Count, default_value=5)
 
         args = Cli.parse_args([])
         self.assertEqual(args.level, 5)
@@ -176,11 +176,11 @@ class TestActions(unittest.TestCase):
     def test_multiple_action_combinations(self):
         @clap.command
         class Cli(clap.Parser):
-            verbose: int = arg(short="-v", action=ArgAction.Count)
+            verbose: int = arg(short="v", action=ArgAction.Count)
             debug: bool = arg(long, action=ArgAction.SetTrue)
-            includes: list[str] = arg(short="-I", action=ArgAction.Append)
+            includes: list[str] = arg(short="I", action=ArgAction.Append)
             features: list[str] = arg(
-                long="--feature",
+                long="feature",
                 action=ArgAction.Append,
                 default_missing_value="enabled",
                 num_args=0,
@@ -207,7 +207,7 @@ class TestActionTypeErrors(unittest.TestCase):
         with self.assertRaises(TypeError):
             @clap.command
             class Cli(clap.Parser):
-                count: Optional[int] = arg(short="-c", action=ArgAction.Count)
+                count: Optional[int] = arg(short="c", action=ArgAction.Count)
 
     def test_store_true_with_optional_type_error(self):
         with self.assertRaises(TypeError):
