@@ -21,7 +21,11 @@ class Diff:
     head: Optional[str] = arg(value_name="COMMIT")
     path: Optional[str]  # what's `argparse`'s equivalent of last=true?
     color: ColorChoice = arg(
-        long, value_name="WHEN", num_args="?", default_value=ColorChoice.Auto, default_missing_value="always"
+        long,
+        value_name="WHEN",
+        num_args="?",
+        default_value=ColorChoice.Auto,
+        default_missing_value="always",
     )
 
 
