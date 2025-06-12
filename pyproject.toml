@@ -3,7 +3,7 @@ name = "clap-py"
 version = "0.1.0"
 description = "A declarative command-line argument parser."
 readme = "README.md"
-requires-python = ">=3.13.3"
+requires-python = ">=3.13"
 dependencies = [
     "packaging>=25.0",
 ]
