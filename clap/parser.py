@@ -26,15 +26,10 @@ from .models import (
 )
 from .styling import ColorChoice, Styles
 
-_COMMAND_MARKER = "__com.github.adityasz.clap_py.command_marker__"
 _SUBCOMMAND_MARKER = "__com.github.adityasz.clap_py.subcommand_marker__"
-_PARSER = "__parser__"
 _COMMAND_DATA = "__command_data__"
-_SUBCOMMAND_DEST = "__subcommand_dest__"
 _SUBCOMMAND_DEFAULTS = "__subcommand_defaults__"
 _HELP_DEST = "0h"
-_HELP_SHORT_DEST = "0s"
-_HELP_LONG_DEST = "0l"
 _VERSION_DEST = "0v"
 
 
@@ -56,16 +51,16 @@ class ClapArgParser(argparse.ArgumentParser):
         kwargs["usage"] = self.help_renderer.format_usage(self.command)
         super().__init__(**kwargs, add_help=False)
 
-    def print_version(self):
-        print(f"{self.command.name} {self.command.version}")
+    def print_version(self, long: bool):
+        if long:
+            print(f"{self.command.name} {self.command.version}")
+        else:
+            version = self.command.long_version or self.command.version
+            print(f"{self.command.name} {version}")
         sys.exit(0)
 
-    def print_short_help(self):
-        print(self.help_renderer.render(long=False))
-        sys.exit(0)
-
-    def print_long_help(self):
-        print(self.help_renderer.render(long=True))
+    def print_nice_help(self, long: bool):
+        print(self.help_renderer.render(long=long))
         sys.exit(0)
 
 
@@ -296,10 +291,10 @@ def add_argument(
     arg.dest = command_path + field_name
     docstring = docstrings.get(field_name)
     if docstring is not None:
-        if arg.about is None:
-            arg.about = get_about_from_docstring(docstring)
-        if arg.long_about is None:
-            arg.long_about = docstring
+        if arg.help is None:
+            arg.help = get_about_from_docstring(docstring)
+        if arg.long_help is None:
+            arg.long_help = docstring
 
     set_flags(arg, field_name, command.prefix_chars)
 
@@ -381,7 +376,6 @@ def create_command(cls: type, command_path: str = "") -> Command:
                 if value.long_about is None:
                     value.about = docstring
             command.groups[value] = []
-
         if isinstance(value, Arg) and value.action in (
             ArgAction.Help,
             ArgAction.HelpShort,
@@ -410,16 +404,16 @@ def create_command(cls: type, command_path: str = "") -> Command:
 
     if not command.disable_help_flag:
         command.args[command_path + _HELP_DEST] = Arg(
-            action=ArgAction.Help, dest=_HELP_DEST, short="-h", long="--help", about="Print help"
+            action=ArgAction.Help, dest=_HELP_DEST, short="-h", long="--help", help="Print help"
         )
 
-    if not command.disable_version_flag and command.version is not None:
+    if not command.disable_version_flag and (command.version or command.long_version):
         command.args[command_path + _VERSION_DEST] = Arg(
             action=ArgAction.Version,
             dest=_VERSION_DEST,
             short="-V",
             long="--version",
-            about="Print version",
+            help="Print version",
         )
 
     setattr(cls, _COMMAND_DATA, command)
@@ -474,12 +468,12 @@ def configure_parser(parser: ClapArgParser, command: Command):
 def create_parser(
     cls: type,
     color: ColorChoice,
-    help_style: Optional[Styles] = None,
+    help_styles: Optional[Styles] = None,
     help_template: Optional[str] = None,
 ):
     command = create_command(cls)
     parser = ClapArgParser(
-        command, color, help_style, help_template, **command.get_parser_kwargs()
+        command, color, help_styles, help_template, **command.get_parser_kwargs()
     )
     configure_parser(parser, command)
     return parser

@@ -1,6 +1,5 @@
 import argparse
 import re
-import sys
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -35,8 +34,10 @@ class ArgAction(StrEnum):
         def __call__(self, parser, namespace, values, option_string=None):
             from .parser import ClapArgParser
             parser = cast(ClapArgParser, parser)
-            parser.print_version()
-            sys.exit(0)
+            if isinstance(option_string, str) and len(option_string) == 2:
+                parser.print_version(long=False)
+            else:
+                parser.print_version(long=True)
 
     class Help(argparse.Action):
         def __init__(self, option_strings, dest, **kwargs):
@@ -46,10 +47,9 @@ class ArgAction(StrEnum):
             from .parser import ClapArgParser
             parser = cast(ClapArgParser, parser)
             if isinstance(option_string, str) and len(option_string) == 2:
-                parser.print_short_help()
+                parser.print_nice_help(long=False)
             else:
-                parser.print_long_help()
-            sys.exit(0)
+                parser.print_nice_help(long=True)
 
     class HelpShort(argparse.Action):
         def __init__(self, option_strings, dest, **kwargs):
@@ -58,8 +58,7 @@ class ArgAction(StrEnum):
         def __call__(self, parser, namespace, values, option_string=None):
             from .parser import ClapArgParser
             parser = cast(ClapArgParser, parser)
-            parser.print_short_help()
-            sys.exit(0)
+            parser.print_nice_help(long=False)
 
     class HelpLong(argparse.Action):
         def __init__(self, option_strings, dest, **kwargs):
@@ -68,8 +67,7 @@ class ArgAction(StrEnum):
         def __call__(self, parser, namespace, values, option_string=None):
             from .parser import ClapArgParser
             parser = cast(ClapArgParser, parser)
-            parser.print_long_help()
-            sys.exit(0)
+            parser.print_nice_help(long=True)
 
 
 short = AutoFlag.Short
@@ -173,8 +171,8 @@ class Arg:
     """The short flag."""
     long: Optional[Union[AutoFlag, str]] = None
     """The long flag."""
-    about: Optional[str] = None
-    long_about: Optional[str] = None
+    help: Optional[str] = None
+    long_help: Optional[str] = None
     value_name: Optional[str] = None
     aliases: Sequence[str] = field(default_factory=list)
     """Flags in addition to `short` and `long`."""
@@ -268,13 +266,14 @@ class Command:
     about: Optional[str] = None
     long_about: Optional[str] = None
     before_help: Optional[str] = None
+    before_long_help: Optional[str] = None
     after_help: Optional[str] = None
+    after_long_help: Optional[str] = None
     subcommand_help_heading: str = "Commands"
     subcommand_value_name: str = "COMMAND"
     propagate_version: bool = False
     disable_version_flag: bool = False
     disable_help_flag: bool = False
-    disable_help_subcommand: bool = False
 
     args: dict[str, Arg] = field(default_factory=dict)
     groups: dict[Group, list[Arg]] = field(default_factory=dict)
