@@ -354,6 +354,7 @@ def configure_subcommands(
 
 def create_command(cls: type, command_path: str = "") -> Command:
     command: Command = getattr(cls, _COMMAND_DATA)
+    docstrings: dict[str, str] = extract_docstrings(cls)
 
     if getattr(cls, _SUBCOMMAND_MARKER, False):
         command_path += command.name + "."
@@ -369,7 +370,14 @@ def create_command(cls: type, command_path: str = "") -> Command:
                 raise ValueError(
                     f"A group with title '{value.title}' and the same description already exists."
                 )
+            docstring = docstrings.get(field_name)
+            if docstring is not None:
+                if value.about is None:
+                    value.about = get_about_from_docstring(docstring)
+                if value.long_about is None:
+                    value.about = docstring
             command.groups[value] = []
+
         if isinstance(value, Arg) and value.action in (
             ArgAction.Help,
             ArgAction.HelpShort,
@@ -379,7 +387,6 @@ def create_command(cls: type, command_path: str = "") -> Command:
             # no processing to be done
             command.args[command_path + field_name] = value
 
-    docstrings: dict[str, str] = extract_docstrings(cls)
     type_hints = get_type_hints(cls)
 
     for field_name, type_hint in type_hints.items():

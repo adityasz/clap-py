@@ -12,7 +12,7 @@ class TestArgumentGroups(unittest.TestCase):
         @clap.command
         class Cli(clap.Parser):
             input_file: str
-            debug_group = group(title="Debug Options", description="Options for debugging")
+            debug_group = group(title="Debug Options")
             verbose: bool = arg(short, long, group=debug_group)
             debug: bool = arg(short, long, group=debug_group)
 

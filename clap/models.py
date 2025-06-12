@@ -1,5 +1,3 @@
-# TODO: Add support for argparse.Action
-
 import argparse
 import re
 import sys
@@ -139,12 +137,12 @@ class ArgType:
 @dataclass
 class Group:
     title: str
-    description: Optional[str] = None
-    prefix_chars: Optional[str] = None
+    about: Optional[str] = None
+    long_about: Optional[str] = None
     conflict_handler: Optional[str] = None
 
     def __hash__(self):
-        return hash((self.title, self.description))
+        return hash(id(self))
 
     def get_argparse_kwargs(self):
         kwargs = {}
@@ -152,8 +150,7 @@ class Group:
             k: v
             for k, v in {
                 "title": self.title,
-                "description": self.description,
-                "prefix_chars": self.prefix_chars,
+                "description": self.long_about,
                 "conflict_handler": self.conflict_handler,
             }.items()
             if v is not None
