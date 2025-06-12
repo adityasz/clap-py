@@ -8,12 +8,7 @@ etc.
 import os
 import sys
 from collections.abc import Callable, Sequence
-from typing import (
-    Optional,
-    Self,
-    TypeVar,
-    Union,
-)
+from typing import Optional, Self, Union
 
 from clap.styling import Styles
 
@@ -112,7 +107,7 @@ def command[T](
                 delattr(cls, name)
 
         @classmethod
-        def parse_args(cls: type, args: Optional[list[str]] = None) -> T:
+        def parse_args(cls: type[T], args: Optional[list[str]] = None) -> T:
             """Parse command-line arguments and return an instance of the class."""
             parser = getattr(cls, _PARSER)
             parsed_args = parser.parse_args(args)
