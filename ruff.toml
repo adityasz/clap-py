@@ -3,7 +3,7 @@ line-length = 99
 [lint]
 preview = true
 select = ["E", "F", "UP", "B", "SIM", "I"]
-ignore = ["UP007", "UP045", "E701"]
+ignore = ["UP007", "UP045", "E701", "SIM108"]
 
 [lint.pydocstyle]
 convention = "google"
