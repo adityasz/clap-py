@@ -193,6 +193,7 @@ def set_type_dependent_kwargs(arg: Arg):
                 for choice, member in choice_to_enum_member.items():
                     if member == arg.default_value:
                         arg.default_value = choice  # set default to a string for help message
+                        break
         case ArgType.List(t):
             if arg.action is None:
                 arg.action = ArgAction.Set
