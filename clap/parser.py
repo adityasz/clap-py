@@ -349,6 +349,9 @@ def configure_subcommands(
     command.subparser_dest = command_path + field_name
     for cmd in ty.subcommands:
         subcommand = create_command(cmd, command_path)
+        if command.propagate_version and not (subcommand.version or subcommand.long_version):
+            subcommand.version = command.version
+            subcommand.long_version = command.long_version
         name = subcommand.name
         command.subcommands[name] = subcommand
 

@@ -264,12 +264,14 @@ class Command:
     aliases: Sequence[str] = field(default_factory=list)
     usage: Optional[str] = None
     version: Optional[str] = None
+    long_version: Optional[str] = None
     about: Optional[str] = None
     long_about: Optional[str] = None
     before_help: Optional[str] = None
     after_help: Optional[str] = None
     subcommand_help_heading: str = "Commands"
     subcommand_value_name: str = "COMMAND"
+    propagate_version: bool = False
     disable_version_flag: bool = False
     disable_help_flag: bool = False
     disable_help_subcommand: bool = False
