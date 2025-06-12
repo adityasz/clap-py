@@ -2,7 +2,7 @@ import argparse
 from collections.abc import Callable, Sequence
 from typing import Any, Optional, TypeVar, Union, overload
 
-from .api import Parser, group, mutex_group
+from .api import Parser, mutex_group
 from .models import (
     ArgAction,
     AutoFlag,
@@ -22,7 +22,6 @@ __all__ = [
     "Parser",
     "arg",
     "command",
-    "group",
     "mutex_group",
     "subcommand",
     "short",
@@ -44,14 +43,14 @@ def arg(
     aliases: Optional[Sequence[str]] = None,
     group: Optional[Group] = None,
     mutex: Optional[MutexGroup] = None,
-    action: Optional[Union[argparse.Action, ArgAction]] = None,
+    action: Optional[Union[type, ArgAction]] = None,
     num_args: Optional[NargsType] = None,
     default_missing_value: Optional[U] = None,
     default_value: Optional[U] = None,
     choices: Optional[Sequence[str]] = None,
-    required: Optional[bool] = None,
-    about: Optional[str] = None,
-    long_about: Optional[str] = None,
+    required: Optional[bool] = ...,
+    help: Optional[str] = ...,
+    long_help: Optional[str] = ...,
     value_name: Optional[str] = None,
     deprecated: bool = False
 ) -> Any: ...
@@ -63,23 +62,29 @@ def command[T](cls: type[T], /) -> type[T]: ...
 def command(
     *,
     name: str = ...,
+    version: Optional[str] = None,
+    long_version: Optional[str] = None,
     usage: Optional[str] = ...,
-    about: Optional[str] = None,
-    long_about: Optional[str] = None,
-    before_help: Optional[str] = None,
+    aliases: Sequence[str] = [],
+    about: Optional[str] = ...,
+    long_about: Optional[str] = ...,
     after_help: Optional[str] = None,
+    after_long_help: Optional[str] = ...,
+    before_help: Optional[str] = None,
+    before_long_help: Optional[str] = ...,
     subcommand_help_heading: str = ...,
     subcommand_value_name: str = ...,
+    color: ColorChoice = ColorChoice.Auto,
+    help_styles: Optional[Styles] = ...,
+    help_template: Optional[str] = ...,
+    propagate_version: bool = False,
     disable_version_flag: bool = False,
     disable_help_flag: bool = False,
-    disable_help_subcommand: bool = False,
     prefix_chars: str = "-",
     fromfile_prefix_chars: Optional[str] = None,
     conflict_handler: str = ...,
     allow_abbrev: bool = True,
     exit_on_error: bool = True,
-    heading_ansi_prefix: Optional[str] = ...,
-    argument_ansi_prefix: Optional[str] = ...,
 ) -> Callable[[type[T]], type[T]]: ...
 
 @overload
@@ -89,13 +94,20 @@ def subcommand[T](cls: type[T], /) -> type[T]: ...
 def subcommand[T](
     *,
     name: str = ...,
+    version: Optional[str] = None,
+    long_version: Optional[str] = None,
     aliases: Sequence[str] = ...,
     usage: Optional[str] = ...,
     about: Optional[str] = ...,
     long_about: Optional[str] = ...,
-    after_help: Optional[str] = ...,
+    after_help: Optional[str] = None,
+    after_long_help: Optional[str] = ...,
+    before_help: Optional[str] = None,
+    before_long_help: Optional[str] = ...,
     subcommand_help_heading: Optional[str] = ...,
     subcommand_value_name: Optional[str] = ...,
+    propagate_version: bool = False,
+    disable_version_flag: bool = False,
     disable_help_flag: bool = False,
     disable_help_subcommand: bool = False,
     prefix_chars: str = "-",
@@ -104,6 +116,11 @@ def subcommand[T](
     allow_abbrev: bool = ...,
     exit_on_error: bool = ...,
     deprecated: bool = False,
-    heading_ansi_prefix: Optional[str] = ...,
-    argument_ansi_prefix: Optional[str] = ...,
 ) -> Callable[[type[T]], type[T]]: ...
+
+def group(
+    title: str,
+    about: Optional[str] = ...,
+    long_about: Optional[str] = ...,
+    conflict_handler: Optional[str] = ...
+) -> Group: ...
