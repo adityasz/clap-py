@@ -1,4 +1,3 @@
-import argparse
 from collections.abc import Callable, Sequence
 from typing import Any, Optional, TypeVar, Union, overload
 

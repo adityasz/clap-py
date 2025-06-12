@@ -1,10 +1,3 @@
-"""
-Version propagation
-subcommand version
-subcommand docstring incomplete
-etc.
-"""
-
 import os
 import sys
 from collections.abc import Callable, Sequence
@@ -191,7 +184,7 @@ def subcommand[T](
     return wrap(cls)
 
 
-def arg[U](
+def arg(
     short_or_long: Optional[AutoFlag] = None,
     long_or_short: Optional[AutoFlag] = None,
     /,
