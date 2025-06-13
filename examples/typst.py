@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 from typing import Optional, Union
@@ -13,6 +14,7 @@ class OutputFormat(Enum):
     HTML = auto()
 
 
+@dataclass
 @clap.subcommand(aliases=("w"))
 class Watch:
     """Watches an input file and recompiles on changes"""
@@ -20,7 +22,14 @@ class Watch:
     input: Path
     """Path to input Typst file. Use `-` to read input from stdin"""
     output: Optional[Path]
-    """Path to output file (PDF, PNG, SVG, or HTML). Use `-` to write output to stdout"""
+    """Path to output file (PDF, PNG, SVG, or HTML). Use `-` to write output to stdout.
+
+    For output formats emitting one file per page (PNG & SVG), a page number template
+    must be present if the source document renders to multiple pages. Use `{p}` for
+    page numbers, `{0p}` for zero padded page numbers and `{t}` for page count. For
+    example, `page-{0p}-of-{t}.png` creates `page-01-of-10.png`, `page-02-of-10.png`,
+    and so on.
+    """
 
     format: Optional[OutputFormat] = arg(short, long)
     """The format of the output file, inferred from the extension by default"""
@@ -30,6 +39,7 @@ class Watch:
     """Number of parallel jobs spawned during compilation. Defaults to number of CPUs"""
 
 
+@dataclass
 @clap.subcommand
 class Init:
     """Initializes a new project from a template"""
@@ -54,13 +64,13 @@ class Cli(clap.Parser):
 def main():
     args = Cli.parse_args()
 
-    if (cert := args.cert):
+    if cert := args.cert:
         print(f"Using {cert} as the CA certificate")
 
     match args.command:
-        case Watch(input=input):
+        case Watch(input):
             print(f"Watching {input}...")
-        case Init(template=template):
+        case Init(template):
             print(f"{template} is a cool template!")
 
 

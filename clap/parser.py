@@ -98,8 +98,26 @@ def extract_docstrings(cls: type) -> dict[str, str]:
     return extractor.docstrings
 
 
-def get_about_from_docstring(docstring: str) -> str:
-    return docstring[:docstring.find("\n")]
+def get_help_from_docstring(docstring: str) -> tuple[str, str]:
+    paragraphs: list[str] = []
+    curr_paragraph: list[str] = []
+    for line in map(str.strip, docstring.splitlines()):
+        if line:
+            curr_paragraph.append(line)
+        else:
+            if curr_paragraph:
+                paragraphs.append(" ".join(curr_paragraph))
+                curr_paragraph.clear()
+    if curr_paragraph:
+        paragraphs.append(" ".join(curr_paragraph))
+    if not paragraphs:
+        return "", ""
+    short_help = paragraphs[0]
+    if short_help[-1] == "." and (len(short_help) == 1 or short_help[-2] != "."):
+        short_help = short_help[:-1]
+    if len(paragraphs) == 1:
+        return short_help, short_help
+    return short_help, "\n\n".join(paragraphs)
 
 
 def is_subcommand(cls: type) -> bool:
@@ -289,12 +307,12 @@ def add_argument(
 ):
     arg.ty = ty
     arg.dest = command_path + field_name
-    docstring = docstrings.get(field_name)
-    if docstring is not None:
+    if (docstring := docstrings.get(field_name)) is not None:
+        help, long_help = get_help_from_docstring(docstring)
         if arg.help is None:
-            arg.help = get_about_from_docstring(docstring)
+            arg.help = help
         if arg.long_help is None:
-            arg.long_help = docstring
+            arg.long_help = long_help
 
     set_flags(arg, field_name, command.prefix_chars)
 
@@ -369,12 +387,12 @@ def create_command(cls: type, command_path: str = "") -> Command:
                 raise ValueError(
                     f"A group with title '{value.title}' and the same description already exists."
                 )
-            docstring = docstrings.get(field_name)
-            if docstring is not None:
+            if (docstring := docstrings.get(field_name)) is not None:
+                about, long_about = get_help_from_docstring(docstring)
                 if value.about is None:
-                    value.about = get_about_from_docstring(docstring)
+                    value.about = about
                 if value.long_about is None:
-                    value.about = docstring
+                    value.about = long_about
             command.groups[value] = []
         if isinstance(value, Arg) and value.action in (
             ArgAction.Help,

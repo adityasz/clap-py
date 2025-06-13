@@ -13,7 +13,7 @@ from .parser import (
     _SUBCOMMAND_MARKER,
     apply_parsed_args,
     create_parser,
-    get_about_from_docstring,
+    get_help_from_docstring,
     to_kebab_case,
 )
 
@@ -84,11 +84,11 @@ def command[T](
         nonlocal about, long_about, name
         kwargs["name"] = name
         if cls.__doc__ is not None:
-            docstring = cls.__doc__.strip()
+            doc_about, doc_long_about = get_help_from_docstring(cls.__doc__.strip())
             if about is None:
-                kwargs["about"] = get_about_from_docstring(docstring)
+                kwargs["about"] = doc_about
             if long_about is None:
-                kwargs["long_about"] = docstring
+                kwargs["long_about"] = doc_long_about
         command = Command(**kwargs)
         setattr(cls, _COMMAND_DATA, command)
         setattr(cls, _PARSER, create_parser(cls, color, help_styles, help_template))
@@ -160,11 +160,11 @@ def subcommand[T](
             name = to_kebab_case(cls.__name__)
         kwargs["name"] = name
         if cls.__doc__ is not None:
-            docstring = cls.__doc__.strip()
+            doc_about, doc_long_about = get_help_from_docstring(cls.__doc__.strip())
             if about is None:
-                kwargs["about"] = get_about_from_docstring(docstring)
+                kwargs["about"] = doc_about
             if long_about is None:
-                kwargs["long_about"] = docstring
+                kwargs["long_about"] = doc_long_about
         command = Command(**kwargs)
         setattr(cls, _COMMAND_DATA, command)
 
