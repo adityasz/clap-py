@@ -14,6 +14,7 @@ ${all_args}${after_help}\
 """
 
 
+# TODO: refactor methods
 class HelpRenderer:
     TAB = 8
     SECTION_INDENT = 2
@@ -125,33 +126,59 @@ class HelpRenderer:
         max_arg_header_width: int
     ) -> str:
         lines: list[str] = [self.style_header(f"{title}:")]
-        if max_arg_header_width > 0.3 * self.width:
+        if max_arg_header_width > 0.4 * self.width:
             for row in rows:
                 arg_header, help_string, _ = row
                 lines.append(textwrap.indent(arg_header, " " * self.SECTION_INDENT))
                 indent = self.TAB + self.SECTION_INDENT
-                lines.extend(
-                    textwrap.wrap(
-                        help_string,
-                        width=self.width,
-                        initial_indent=" " * indent,
-                        subsequent_indent=" " * indent,
+
+                paragraphs = help_string.split('\n\n')
+                for i, paragraph in enumerate(paragraphs):
+                    lines.extend(
+                        textwrap.wrap(
+                            paragraph,
+                            width=self.width,
+                            initial_indent=" " * indent,
+                            subsequent_indent=" " * indent,
+                        )
                     )
-                )
+                    if i < len(paragraphs) - 1:
+                        lines.append("")
+                lines.append("")
         else:
             for row in rows:
                 arg_header, help_string, arg_header_width = row
                 space = self.COL_SEP + max_arg_header_width - arg_header_width
-                lines.extend(
-                    textwrap.wrap(
-                        f"{arg_header}{'': <{space}}{help_string}",
-                        width=self.width,
-                        initial_indent=" " * self.SECTION_INDENT,
-                        subsequent_indent=(
-                            " " * (self.SECTION_INDENT + max_arg_header_width + self.COL_SEP)
-                        ),
-                    )
-                )
+
+                paragraphs = help_string.split('\n\n')
+                first_paragraph = True
+
+                for paragraph in paragraphs:
+                    if first_paragraph:
+                        lines.extend(
+                            textwrap.wrap(
+                                f"{arg_header}{' ' * space}{paragraph}",
+                                width=self.width,
+                                initial_indent=" " * self.SECTION_INDENT,
+                                subsequent_indent=(
+                                    " "
+                                    * (self.SECTION_INDENT + max_arg_header_width + self.COL_SEP)
+                                ),
+                            )
+                        )
+                        first_paragraph = False
+                    else:
+                        lines.append("")
+                        lines.extend(
+                            textwrap.wrap(
+                                paragraph,
+                                width=self.width,
+                                initial_indent=" "
+                                * (self.SECTION_INDENT + max_arg_header_width + self.COL_SEP),
+                                subsequent_indent=" "
+                                * (self.SECTION_INDENT + max_arg_header_width + self.COL_SEP),
+                            )
+                        )
         return "\n".join(lines)
 
     def build_arg_header(self, arg: Arg) -> tuple[str, int]:

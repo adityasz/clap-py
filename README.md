@@ -109,6 +109,7 @@ print(args.typo)
 
 ## Roadmap
 
+- [ ] `max_term_width`
 - [ ] Support more tags in the help template.
 - [ ] Share arguments between (sub)commands using class inheritance.
 - [ ] Actually parse arguments intead of relying on `argparse`.
