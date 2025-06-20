@@ -33,7 +33,7 @@ U = TypeVar('U')
 
 # TODO: Add overloads that return `Optional[Any]` based on the `required`,
 # `default`, and `num_args`.
-def arg(
+def arg[U](
     short_or_long: Optional[AutoFlag] = None,
     long_or_short: Optional[AutoFlag] = None,
     /,
@@ -65,7 +65,6 @@ def command(
     version: Optional[str] = None,
     long_version: Optional[str] = None,
     usage: Optional[str] = ...,
-    aliases: Sequence[str] = [],
     about: Optional[str] = ...,
     long_about: Optional[str] = ...,
     after_help: Optional[str] = None,
@@ -101,10 +100,10 @@ def subcommand[T](
     usage: Optional[str] = ...,
     about: Optional[str] = ...,
     long_about: Optional[str] = ...,
-    after_help: Optional[str] = None,
-    after_long_help: Optional[str] = ...,
     before_help: Optional[str] = None,
     before_long_help: Optional[str] = ...,
+    after_help: Optional[str] = None,
+    after_long_help: Optional[str] = ...,
     subcommand_help_heading: Optional[str] = ...,
     subcommand_value_name: Optional[str] = ...,
     color: Optional[ColorChoice] = ...,
@@ -114,7 +113,6 @@ def subcommand[T](
     propagate_version: bool = False,
     disable_version_flag: bool = False,
     disable_help_flag: bool = False,
-    disable_help_subcommand: bool = False,
     prefix_chars: str = "-",
     fromfile_prefix_chars: Optional[str] = None,
     conflict_handler: str = ...,

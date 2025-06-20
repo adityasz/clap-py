@@ -23,13 +23,129 @@ class AutoFlag(Enum):
 
 class ArgAction(StrEnum):
     Set = "store"
+    """When encountered, store the associated value(s).
+
+    Example:
+
+    ```python
+    import clap
+    from clap import ArgAction, long
+
+    @clap.command
+    class Cli(clap.Parser):
+        output: str = arg(long, action=ArgAction.Set)
+
+    args = Cli.parse_args(["--output", "file.txt"])
+    assert args.output == "file.txt"
+    ```
+    """
     SetTrue = "store_true"
+    """When encountered, act as if `"True"` was encountered on the command-line.
+
+    Example:
+
+    ```python
+    import clap
+    from clap import ArgAction, long
+
+    @clap.command
+    class Cli(clap.Parser):
+        verbose: bool = arg(long, action=ArgAction.SetTrue)
+
+    args = Cli.parse_args(["--verbose"])
+    assert args.verbose == True
+
+    args = Cli.parse_args([])
+    assert args.verbose == False
+    ```
+    """
     SetFalse = "store_false"
+    """When encountered, act as if `"False"` was encountered on the command-line.
+
+    Example:
+
+    ```python
+    import clap
+    from clap import ArgAction, long
+
+    @clap.command
+    class Cli(clap.Parser):
+        quiet: bool = arg(long, action=ArgAction.SetFalse)
+
+    args = Cli.parse_args(["--quiet"])
+    assert args.quiet == False
+
+    args = Cli.parse_args([])
+    assert args.quiet == True
+    ```
+    """
     Append = "append"
+    """When encountered, store the associated value(s) in a `list`.
+
+    Example:
+
+    ```python
+    import clap
+    from clap import ArgAction, long
+
+    @clap.command
+    class Cli(clap.Parser):
+        files: list[str] = arg(long, action=ArgAction.Append)
+
+    args = Cli.parse_args(["--files", "a.txt", "--files", "b.txt"])
+    assert args.files == ["a.txt", "b.txt"]
+
+    args = Cli.parse_args([])
+    assert args.files == []
+    ```
+    """
     Extend = "extend"
+    """When encountered, extend a `list` with the associated values.
+
+    Example:
+
+    ```python
+    import clap
+    from clap import ArgAction, long
+
+    @clap.command
+    class Cli(clap.Parser):
+        items: list[str] = arg(long, action=ArgAction.Extend, num_args='+')
+
+    args = Cli.parse_args(["--items", "a", "b", "--items", "c", "d"])
+    assert args.items == ["a", "b", "c", "d"]
+
+    args = Cli.parse_args([])
+    assert args.items == []
+    ```
+    """
     Count = "count"
+    """When encountered, increment an `int` counter starting from `0`.
+
+    Example:
+
+    ```python
+    import clap
+    from clap import ArgAction, short
+
+    @clap.command
+    class Cli(clap.Parser):
+        verbose: int = arg(short, action=ArgAction.Count)
+
+    args = Cli.parse_args(["-vvv"])
+    assert args.verbose == 3
+
+    args = Cli.parse_args([])
+    assert args.verbose == 0
+    ```
+    """
 
     class Version(argparse.Action):
+        """When encountered, display version information.
+
+        Depending on the flag, `long_version` may be shown.
+        """
+
         def __init__(self, option_strings, dest, **kwargs):
             super().__init__(option_strings, dest, nargs=0)
 
@@ -42,6 +158,11 @@ class ArgAction(StrEnum):
                 parser.print_version(use_long=True)
 
     class Help(argparse.Action):
+        """When encountered, display help information.
+
+        Depending on the flag, `long_help` may be shown.
+        """
+
         def __init__(self, option_strings, dest, **kwargs):
             super().__init__(option_strings, dest, nargs=0)
 
@@ -54,6 +175,8 @@ class ArgAction(StrEnum):
                 parser.print_nice_help(use_long=True)
 
     class HelpShort(argparse.Action):
+        """When encountered, display short help information."""
+
         def __init__(self, option_strings, dest, **kwargs):
             super().__init__(option_strings, dest, nargs=0)
 
@@ -63,6 +186,8 @@ class ArgAction(StrEnum):
             parser.print_nice_help(use_long=False)
 
     class HelpLong(argparse.Action):
+        """When encountered, display long help information."""
+
         def __init__(self, option_strings, dest, **kwargs):
             super().__init__(option_strings, dest, nargs=0)
 

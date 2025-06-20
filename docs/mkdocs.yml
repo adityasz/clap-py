@@ -1,0 +1,93 @@
+# adapted from https://github.com/tinygrad/tinygrad/blob/master/mkdocs.yml
+
+site_name: clap-py docs
+site_url: https://adityasz.github.io/clap-py
+repo_url: https://github.com/adityasz/clap-py
+docs_dir: docs
+nav:
+  - Home:
+    - index.md
+    - Quickstart: quickstart.md
+    - API Reference:
+      - command: command.md
+      - subcommand: subcommand.md
+      - arg: arg.md
+      - group: group.md
+      - mutex_group: mutex_group.md
+      - ArgAction: ArgAction.md
+      - Styling: styling.md
+    - Internal:
+      - Models: models.md
+
+validation:
+  links:
+    anchors: warn
+
+theme:
+  name: material
+  features:
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.tooltips
+    - navigation.footer
+    - navigation.indexes
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.path
+    - search.highlight
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+  palette:
+    - media: "(prefers-color-scheme)"
+      accent: lime
+      primary: black
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      accent: lime
+      primary: black
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      accent: lime
+      primary: black
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+plugins:
+- search
+- mkdocstrings:
+    handlers:
+      python:
+        inventories:
+          - https://docs.python.org/3/objects.inv
+        paths: [../clap]
+        options:
+          docstring_options:
+            ignore_init_summary: true
+          docstring_section_style: list
+          merge_init_into_class: true
+          separate_signature: true
+          show_root_heading: true
+          show_signature_annotations: true
+          show_symbol_type_heading: true
+          show_symbol_type_toc: true
+          show_source: true
+          signature_crossrefs: true
+          summary: true
+
+markdown_extensions:
+  - pymdownx.superfences
+  - pymdownx.snippets:
+      base_path: ".."
+      restrict_base_path: false
+      dedent_subsections: true
+      check_paths: true
