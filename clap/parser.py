@@ -61,20 +61,25 @@ class DocstringExtractor(ast.NodeVisitor):
 
     def visit_ClassDef(self, node):
         for stmt_1, stmt_2 in zip(node.body[:-1], node.body[1:], strict=False):
-            if (
-                isinstance(stmt_1, ast.AnnAssign)
-                and isinstance(stmt_1.target, ast.Name)
-                and isinstance(stmt_2, ast.Expr)
+            # Class attributes do not have __doc__, but the interpreter does
+            # not strip away the docstrings either. So we can get them from
+            # the AST.
+            #
+            # >>> file: Path
+            # >>> """Path to the input file"""
+            if not (
+                isinstance(stmt_2, ast.Expr)
                 and isinstance(stmt_2.value, ast.Constant)
                 and isinstance(stmt_2.value.value, str)
             ):
+                continue
+            if isinstance(stmt_1, ast.AnnAssign) and isinstance(stmt_1.target, ast.Name):
                 self.docstrings[stmt_1.target.id] = stmt_2.value.value.strip()
-                # Class attributes do not have __doc__, but the interpreter does
-                # not strip away the docstrings either. So we can get them from
-                # the AST.
-                #
-                # >>> file: Path
-                # >>> """Path to the input file"""
+            if isinstance(stmt_1, ast.Assign) and isinstance(stmt_1.targets[0], ast.Name):
+                # for groups:
+                # g = group("Input options")  # this does not need an annotation
+                # """This group contains options for..."""
+                self.docstrings[stmt_1.targets[0].id] = stmt_2.value.value.strip()
 
 
 def extract_docstrings(cls: type) -> dict[str, str]:
