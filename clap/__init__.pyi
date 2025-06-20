@@ -11,12 +11,13 @@ from .models import (
     long,
     short,
 )
-from .styling import AnsiColor, ColorChoice, Styles
+from .styling import AnsiColor, ColorChoice, Style, Styles
 
 __all__ = [
     "AnsiColor",
     "ArgAction",
     "ColorChoice",
+    "Style",
     "Styles",
     "Parser",
     "arg",
