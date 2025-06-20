@@ -170,22 +170,22 @@ class Styles:
                     .usage(Style().bold().underline())
                     .placeholder(Style()))
 
-    def header(self, style: Style) -> Self:
+    def header(self, style: Style) -> "Styles":
         """General Heading style, e.g., `help_heading`."""
         self.header_style = style
         return self
 
-    def literal(self, style: Style) -> Self:
+    def literal(self, style: Style) -> "Styles":
         """Literal command-line syntax, e.g., `--help`."""
         self.literal_style = style
         return self
 
-    def usage(self, style: Style) -> Self:
+    def usage(self, style: Style) -> "Styles":
         """Usage heading."""
         self.usage_style = style
         return self
 
-    def placeholder(self, style: Style) -> Self:
+    def placeholder(self, style: Style) -> "Styles":
         """Descriptions within command-line syntax, e.g., `value_name`."""
         self.placeholder_style = style
         return self
