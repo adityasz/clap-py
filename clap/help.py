@@ -277,13 +277,14 @@ class HelpRenderer:
     def write_arg_group(self, title: str, about: str, args: list[Arg]):
         self.writer.push_str(self.style_header(f"{title}:"))
         self.writer.push_str("\n")
-        self.writer.push_str(
-            "\n".join(
-                "\n".join(textwrap.wrap(par, width=self.term_width))
-                for par in about.splitlines()
+        if about:
+            self.writer.push_str(
+                "\n".join(
+                    "\n".join(textwrap.wrap(par, width=self.term_width))
+                    for par in about.splitlines()
+                )
             )
-        )
-        self.writer.push_str("\n\n")
+            self.writer.push_str("\n\n")
 
         longest = 2
         for arg in args:
