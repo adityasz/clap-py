@@ -40,11 +40,12 @@ class ClapArgParser(argparse.ArgumentParser):
         kwargs["usage"] = self.help_renderer.format_usage()
         super().__init__(**kwargs, add_help=False)
 
-    def print_version(self, long: bool):
-        if long:
-            print(f"{self.command.name} {self.command.version}")
-        else:
+    def print_version(self, use_long: bool):
+        if use_long:
             version = self.command.long_version or self.command.version
+            print(f"{self.command.name} {version}")
+        else:
+            version = self.command.version or self.command.long_version
             print(f"{self.command.name} {version}")
         sys.exit(0)
 

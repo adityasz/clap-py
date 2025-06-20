@@ -37,9 +37,9 @@ class ArgAction(StrEnum):
             from .parser import ClapArgParser
             parser = cast(ClapArgParser, parser)
             if isinstance(option_string, str) and len(option_string) == 2:
-                parser.print_version(long=False)
+                parser.print_version(use_long=False)
             else:
-                parser.print_version(long=True)
+                parser.print_version(use_long=True)
 
     class Help(argparse.Action):
         def __init__(self, option_strings, dest, **kwargs):
