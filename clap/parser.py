@@ -24,7 +24,6 @@ from .models import (
     short,
     to_kebab_case,
 )
-from .styling import ColorChoice, Styles
 
 _SUBCOMMAND_MARKER = "__com.github.adityasz.clap_py.subcommand_marker__"
 _COMMAND_DATA = "__command_data__"
@@ -34,21 +33,11 @@ _VERSION_DEST = "0v"
 
 
 class ClapArgParser(argparse.ArgumentParser):
-    def __init__(
-        self,
-        command: Command,
-        color: ColorChoice,
-        style: Optional[Styles],
-        help_template: Optional[str],
-        **kwargs,
-    ):
+    def __init__(self, command: Command, **kwargs):
         self.command = command
-        self.color = color
-        self.style = style
-        self.help_template = help_template
-        self.help_renderer = HelpRenderer(command, color, help_template)
+        self.help_renderer = HelpRenderer(command)
         # override usage for argparse error messages
-        kwargs["usage"] = self.help_renderer.format_usage(self.command)
+        kwargs["usage"] = self.help_renderer.format_usage()
         super().__init__(**kwargs, add_help=False)
 
     def print_version(self, long: bool):
@@ -59,8 +48,9 @@ class ClapArgParser(argparse.ArgumentParser):
             print(f"{self.command.name} {version}")
         sys.exit(0)
 
-    def print_nice_help(self, long: bool):
-        print(self.help_renderer.render(long=long))
+    def print_nice_help(self, use_long: bool):
+        self.help_renderer.set_use_long(use_long)
+        self.help_renderer.render()
         sys.exit(0)
 
 
@@ -362,6 +352,14 @@ def configure_subcommands(
     command.subparser_dest = command_path + field_name
     for cmd in ty.subcommands:
         subcommand = create_command(cmd, command_path)
+        if subcommand.color is None:
+            subcommand.color = command.color
+        if subcommand.styles is None:
+            subcommand.styles = command.styles
+        if subcommand.help_template is None:
+            subcommand.help_template = command.help_template
+        if subcommand.max_term_width is None:
+            subcommand.max_term_width = command.max_term_width
         if command.propagate_version and not (subcommand.version or subcommand.long_version):
             subcommand.version = command.version
             subcommand.long_version = command.long_version
@@ -382,26 +380,26 @@ def create_command(cls: type, command_path: str = "") -> Command:
 
     for field_name in dir(cls):
         value = getattr(cls, field_name, None)
-        if isinstance(value, Group):
-            if value in command.groups:
+        if isinstance(group := value, Group):
+            if group in command.groups:
                 raise ValueError(
-                    f"A group with title '{value.title}' and the same description already exists."
+                    f"A group with title '{group.title}' and the same description already exists."
                 )
             if (docstring := docstrings.get(field_name)) is not None:
                 about, long_about = get_help_from_docstring(docstring)
-                if value.about is None:
-                    value.about = about
-                if value.long_about is None:
-                    value.about = long_about
-            command.groups[value] = []
-        if isinstance(value, Arg) and value.action in (
+                if group.about is None:
+                    group.about = about
+                if group.long_about is None:
+                    group.about = long_about
+            command.groups[group] = []
+        if isinstance(arg := value, Arg) and arg.action in (
             ArgAction.Help,
             ArgAction.HelpShort,
             ArgAction.HelpLong,
             ArgAction.Version,
         ):
             # no processing to be done
-            command.args[command_path + field_name] = value
+            command.args[command_path + field_name] = arg
 
     type_hints = get_type_hints(cls)
 
@@ -473,26 +471,15 @@ def configure_parser(parser: ClapArgParser, command: Command):
             dest=command.subparser_dest, required=command.subcommand_required
         )
         for subcommand in command.subcommands.values():
-            parser = subparsers.add_parser(
-                command=subcommand,
-                color=parser.color,
-                style=parser.style,
-                help_template=parser.help_template,
-                **subcommand.get_parser_kwargs(),
-            )
+            parser = subparsers.add_parser(command=subcommand, **subcommand.get_parser_kwargs())
             configure_parser(parser, subcommand)
 
 
 def create_parser(
     cls: type,
-    color: ColorChoice,
-    help_styles: Optional[Styles] = None,
-    help_template: Optional[str] = None,
 ):
     command = create_command(cls)
-    parser = ClapArgParser(
-        command, color, help_styles, help_template, **command.get_parser_kwargs()
-    )
+    parser = ClapArgParser(command, **command.get_parser_kwargs())
     configure_parser(parser, command)
     return parser
 

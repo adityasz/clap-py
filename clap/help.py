@@ -1,85 +1,110 @@
+import shutil
 import textwrap
-from collections.abc import Iterable
-from string import Template
-from typing import Optional, cast
+from dataclasses import dataclass
+from typing import Optional, Union, cast
 
 from .models import Arg, Command
 from .styling import ColorChoice, Styles, determine_color_usage
 
-DEFAULT_TEMPLATE = """\
-${before_help}${about_with_newline}
-${usage_heading} ${usage}
+INDENT = " " * 2
+TAB = " " * 8
+NEXT_LINE_INDENT = INDENT + TAB
 
-${all_args}${after_help}\
+DEFAULT_TEMPLATE = """\
+{before-help}{about-with-newline}
+{usage-heading} {usage}
+
+{all-args}{after-help}\
 """
 
 
-# TODO: refactor methods
+@dataclass(slots=True)
+class Writer:
+    s: str = ""
+
+    def push_str(self, s: str):
+        self.s += s
+
+    def strip(self):
+        self.s = self.s.strip()
+        self.push_str("\n")
+
+    def print(self):
+        print(self.s, end="")
+
+
 class HelpRenderer:
-    TAB = 8
-    SECTION_INDENT = 2
-    COL_SEP = 2
-
-    def __init__(
-        self,
-        command: Command,
-        color: ColorChoice,
-        template: Optional[str] = None,
-        style: Optional[Styles] = None,
-    ):
+    def __init__(self, command: Command):
         self.command = command
-        if template is None:
-            template = DEFAULT_TEMPLATE
-        self.template = Template(template)
-        self.original_style = style or Styles.styled()
-        self.set_color(color)
-        import shutil
-        self.width = min(shutil.get_terminal_size().columns, 100)
+        self.template = self.command.help_template or DEFAULT_TEMPLATE
+        self.original_styles = self.command.styles or Styles.styled()
+        self.set_color(self.command.color or ColorChoice.Auto)
+        self.writer = Writer()
+        self.term_width = shutil.get_terminal_size().columns
+        if w := command.max_term_width:
+            self.term_width = min(self.term_width, w)
+        self.use_long = False
 
-    # TODO: ColorChoice args should override help output color
+    # TODO: arg with type ColorChoice should override help output color also
     def set_color(self, color: ColorChoice):
         if determine_color_usage(color):
-            self.active_style = self.original_style
+            self.active_styles = self.original_styles
             self.reset_ansi = "\033[0m"
         else:
-            self.active_style = Styles()
+            self.active_styles = Styles()
             self.reset_ansi = ""
 
+    # TODO: when this library is no longer dependent on argparse, there wouldn't
+    # be a need for this function because `HelpRender` will be instantiated when
+    # printing help and `use_long` will be passed to the constructor
+    def set_use_long(self, use_long: bool):
+        self.use_long = use_long
+
     def style_header(self, text: str) -> str:
-        return f"{self.active_style.header_style}{text}{self.reset_ansi}"
+        return f"{self.active_styles.header_style}{text}{self.reset_ansi}"
 
     def style_literal(self, text: str) -> str:
-        return f"{self.active_style.literal_style}{text}{self.reset_ansi}"
+        return f"{self.active_styles.literal_style}{text}{self.reset_ansi}"
 
     def style_placeholder(self, text: str) -> str:
-        return f"{self.active_style.placeholder_style}{text}{self.reset_ansi}"
+        return f"{self.active_styles.placeholder_style}{text}{self.reset_ansi}"
 
     def style_usage(self, text: str) -> str:
-        return f"{self.active_style.usage_style}{text}{self.reset_ansi}"
+        return f"{self.active_styles.usage_style}{text}{self.reset_ansi}"
 
-    def render(self, long: bool) -> str:
-        ctx = self.build_context(long)
-        return self.template.substitute(ctx).strip()
+    def render(self):
+        self.write_templated_help()
+        self.writer.strip()
+        self.writer.print()
 
-    def build_context(self, long: bool) -> dict[str, str]:
-        if long:
-            before_help = self.command.before_long_help or self.command.before_help or ""
-        else:
-            before_help = self.command.before_help or ""
-        if long:
-            after_help = self.command.after_long_help or self.command.after_help or ""
-        else:
-            after_help = self.command.after_help or ""
-        return {
-            "before_help": before_help,
-            "about_with_newline": f"{self.command.about}\n" if self.command.about else "",
-            "usage_heading": self.style_header("Usage:"),
-            "usage": self.format_usage(self.command),
-            "all_args": self.format_all_args(long),
-            "after_help": after_help,
-        }
+    def write_templated_help(self):
+        cmd = self.command
+        for part in self.template.split("{")[1:]:
+            tag, rest = part.split("}", maxsplit=1)
+            match tag:
+                case "before-help":
+                    self.writer.push_str(
+                        self.get_about(cmd.before_help, cmd.before_long_help, False)
+                    )
+                case "about-with-newline":
+                    self.writer.push_str(self.get_about(cmd.about, cmd.long_about, False))
+                    self.writer.push_str("\n")
+                case "usage-heading":
+                    self.writer.push_str(self.style_header("Usage:"))
+                case "usage":
+                    self.writer.push_str(self.format_usage())
+                case "all-args":
+                    self.write_all_args()
+                case "after-help":
+                    self.writer.push_str(
+                        self.get_about(cmd.before_help, cmd.before_long_help, False)
+                    )
+            self.writer.push_str(rest)
 
-    def format_usage(self, command: Command, usage_prefix: str = "") -> str:
+    def format_usage(self, command: Optional[Command] = None, usage_prefix: str = "") -> str:
+        if command is None:
+            command = self.command
+
         if command.usage is not None:
             return command.usage
 
@@ -119,142 +144,183 @@ class HelpRenderer:
         command.usage = usage
         return usage
 
-    def format_section(
-        self,
-        title: str,
-        rows: list[tuple[str, str, int]],
-        max_arg_header_width: int
+    def get_about(
+        self, short: Optional[str], long: Optional[str], use_long_for_short: bool
     ) -> str:
-        lines: list[str] = [self.style_header(f"{title}:")]
-        if max_arg_header_width > 0.4 * self.width:
-            for row in rows:
-                arg_header, help_string, _ = row
-                lines.append(textwrap.indent(arg_header, " " * self.SECTION_INDENT))
-                indent = self.TAB + self.SECTION_INDENT
+        if self.use_long:
+            return long or short or ""
+        if use_long_for_short:
+            return short or long or ""
+        return short or ""
 
-                paragraphs = help_string.split('\n\n')
-                for i, paragraph in enumerate(paragraphs):
-                    lines.extend(
-                        textwrap.wrap(
-                            paragraph,
-                            width=self.width,
-                            initial_indent=" " * indent,
-                            subsequent_indent=" " * indent,
-                        )
+    def write_padding(self, padding: int):
+        self.writer.push_str(" " * padding)
+
+    def write_help(
+        self,
+        arg: Optional[Arg],
+        about: str,
+        spec_vals: list[str],
+        next_line_help: bool,
+        longest: int,
+    ):
+        if arg:
+            arg_header = ""
+            if arg.is_positional():
+                value_name = cast(str, arg.value_name)
+                arg_header = self.style_placeholder(value_name)
+                padding = longest - len(value_name)
+            else:
+                length = 2
+                if arg.short:
+                    arg_header += self.style_literal(cast(str, arg.short))
+                    if arg.long:
+                        arg_header += ", "
+                if arg.long:
+                    if not arg.short:
+                        arg_header = " " * 4
+                    length += 2 + len(cast(str, arg.long))
+                    arg_header += f"{self.style_literal(cast(str, arg.long))}"
+                if arg.value_name:
+                    length += 1 + len(arg.value_name)
+                    arg_header += f" {self.style_placeholder(arg.value_name)}"
+                padding = longest - length
+            self.writer.push_str(INDENT)
+            self.writer.push_str(arg_header)
+            if next_line_help:
+                self.writer.push_str("\n")
+            else:
+                self.write_padding(padding)
+
+        if next_line_help:
+            initial_indent = NEXT_LINE_INDENT
+            subsequent_indent = NEXT_LINE_INDENT
+            width = self.term_width - len(NEXT_LINE_INDENT)
+        else:
+            initial_indent = INDENT
+            subsequent_indent = INDENT + " " * longest + INDENT
+            width = self.term_width - 2 * len(INDENT) - longest
+
+        if not next_line_help and spec_vals:
+            about = f"{about} {" ".join(spec_vals)}"
+
+        self.writer.push_str(
+            "\n".join(
+                "\n".join(
+                    textwrap.wrap(
+                        par,
+                        width=width,
+                        initial_indent=initial_indent,
+                        subsequent_indent=subsequent_indent,
                     )
-                    if i < len(paragraphs) - 1:
-                        lines.append("")
-                lines.append("")
-        else:
-            for row in rows:
-                arg_header, help_string, arg_header_width = row
-                space = self.COL_SEP + max_arg_header_width - arg_header_width
+                )
+                for par in about.splitlines()
+            )
+        )
 
-                paragraphs = help_string.split('\n\n')
-                first_paragraph = True
+        if next_line_help:
+            if spec_vals:
+                self.writer.push_str("\n")
+                self.writer.push_str(f"\n{NEXT_LINE_INDENT}".join(spec_vals))
+            self.writer.push_str("\n")
+        self.writer.push_str("\n")
 
-                for paragraph in paragraphs:
-                    if first_paragraph:
-                        lines.extend(
-                            textwrap.wrap(
-                                f"{arg_header}{' ' * space}{paragraph}",
-                                width=self.width,
-                                initial_indent=" " * self.SECTION_INDENT,
-                                subsequent_indent=(
-                                    " "
-                                    * (self.SECTION_INDENT + max_arg_header_width + self.COL_SEP)
-                                ),
-                            )
-                        )
-                        first_paragraph = False
-                    else:
-                        lines.append("")
-                        lines.extend(
-                            textwrap.wrap(
-                                paragraph,
-                                width=self.width,
-                                initial_indent=" "
-                                * (self.SECTION_INDENT + max_arg_header_width + self.COL_SEP),
-                                subsequent_indent=" "
-                                * (self.SECTION_INDENT + max_arg_header_width + self.COL_SEP),
-                            )
-                        )
-        return "\n".join(lines)
-
-    def build_arg_header(self, arg: Arg) -> tuple[str, int]:
-        if arg.is_positional():
-            arg_header = cast(str, arg.value_name)
-            return arg_header, len(arg_header)
-        arg_header = ""
-        width = 0
-        if arg.short:
-            arg_header += f"{self.style_literal(cast(str, arg.short))}, "
-        else:
-            arg_header += f"{'':<4}"
-        width += 4
-        if long_flag := cast(Optional[str], arg.long):
-            arg_header += self.style_literal(long_flag)
-            width += len(long_flag)
-        if arg.value_name:
-            arg_header += f" {self.style_placeholder(arg.value_name)}"
-            width += 1 + len(arg.value_name)
-        return arg_header, width
-
-    def get_help_text(
-        self, short_help: Optional[str], long_help: Optional[str], long: bool
-    ) -> Optional[str]:
-        if long:
-            return long_help or short_help
-        return short_help or long_help
-
-    def build_arg_rows(self, args: list[Arg], long: bool) -> tuple[list, int]:
-        rows: list[tuple[str, str, int]] = []
-        max_width = 0
-
-        for arg in args:
-            arg_header, width = self.build_arg_header(arg)
-            max_width = max(width, max_width)
-
-            help_parts: list[str] = []
-            if help_text := self.get_help_text(arg.help, arg.long_help, long):
-                help_parts.append(help_text)
+    def spec_vals(self, thing: Union[Arg, Command]) -> list[str]:
+        if isinstance(arg := thing, Arg):
+            spec_vals = []
             if arg.default_value:
-                help_parts.append(f"[default: {arg.default_value}]")
+                spec_vals.append(f"[default: {arg.default_value}")
             if arg.choices:
-                help_parts.append(f"[possible values: {", ".join(arg.choices)}]")
+                spec_vals.append(f"[possible values: {", ".join(arg.choices)}]")
             if arg.aliases:
-                help_parts.append(f"[aliases: {", ".join(arg.aliases)}]")
+                spec_vals.append(f"[aliases: {", ".join(arg.aliases)}")
+            return spec_vals
+        else:
+            cmd = thing
+            if cmd.aliases:
+                return [f"[aliases: {", ".join(cmd.aliases)}]"]
+            return []
 
-            rows.append((arg_header, " ".join(help_parts), width))
+    def write_subcommands(self):
+        self.writer.push_str(self.style_header(f"{self.command.subcommand_help_heading}:"))
+        self.writer.push_str("\n")
+        subcommands = self.command.subcommands
 
-        return rows, max_width
+        longest = 1
+        for name, _ in subcommands.items():
+            longest = max(len(name), longest)
 
-    def format_subcommands(self, subcommands: Iterable[tuple[str, Command]], long: bool) -> str:
-        rows: list[tuple[str, str, int]] = []
-        max_name_width = 0
-        for subcommand_name, subcommand in subcommands:
-            help_parts: list[str] = []
-            if help_text := self.get_help_text(subcommand.about, subcommand.long_about, long):
-                help_parts.append(help_text)
-            if subcommand.aliases:
-                help_parts.append(f"[aliases: {", ".join(subcommand.aliases)}]")
-            max_name_width = max(max_name_width, len(subcommand.name))
-            rows.append((
-                self.style_literal(subcommand_name),
-                " ".join(help_parts),
-                len(subcommand_name),
-            ))
-        return self.format_section(self.command.subcommand_help_heading, rows, max_name_width)
+        next_line_help = any(
+            (lambda about, spec:
+                (taken := longest + 2 * len(INDENT)) <= self.term_width
+                and taken / self.term_width > 0.40
+                and taken + len(about + (" " + spec if about and spec else spec)) > self.term_width
+            )(subcommand.about or subcommand.long_about or "",
+              " ".join(self.spec_vals(subcommand)))
+            for subcommand in subcommands.values()
+        )
 
-    def format_all_args(self, long: bool) -> str:
-        output: list[str] = []
+        for name, subcommand in subcommands.items():
+            self.writer.push_str(INDENT)
+            self.writer.push_str(self.style_literal(name))
+            if not next_line_help:
+                self.write_padding(longest - len(name))
+            self.write_help(
+                None,
+                subcommand.about or subcommand.long_about or "",  # prefer about over long about
+                self.spec_vals(subcommand),
+                next_line_help,
+                longest,
+            )
+        self.writer.push_str("\n")
+
+    def write_arg_group(self, title: str, about: str, args: list[Arg]):
+        self.writer.push_str(self.style_header(f"{title}:"))
+        self.writer.push_str("\n")
+        self.writer.push_str(
+            "\n".join(
+                "\n".join(textwrap.wrap(par, width=self.term_width))
+                for par in about.splitlines()
+            )
+        )
+        self.writer.push_str("\n\n")
+
+        longest = 2
+        for arg in args:
+            if arg.is_positional():
+                longest = max(longest, len(cast(str, arg.value_name)))
+            else:
+                length = 2
+                if arg.long:
+                    length += 2 + len(cast(str, arg.long))
+                if arg.value_name:
+                    length += 1 + len(arg.value_name)
+                longest = max(longest, length)
+        next_line_help = any(
+            (lambda about, spec:
+                (taken := longest + 2 * len(INDENT)) <= self.term_width
+                and taken / self.term_width > 0.40
+                and taken + len(about + (" " + spec if about and spec else spec)) > self.term_width
+                or "\n" in about
+            )(self.get_about(arg.help, arg.long_help, True), " ".join(self.spec_vals(arg)))
+            for arg in args
+        )
+        for arg in args:
+            self.write_help(
+                arg,
+                self.get_about(arg.help, arg.long_help, True),
+                self.spec_vals(arg),
+                next_line_help,
+                longest,
+            )
+        self.writer.strip()
+
+    def write_all_args(self):
+        if self.command.contains_subcommands():
+            self.write_subcommands()
 
         arguments: list[Arg] = []
         options: list[Arg] = []
-
-        if self.command.contains_subcommands():
-            output.append(self.format_subcommands(self.command.subcommands.items(), long))
-
         for arg in self.command.args.values():
             if arg.group or arg.mutex:
                 continue
@@ -262,20 +328,16 @@ class HelpRenderer:
                 arguments.append(arg)
             else:
                 options.append(arg)
-
         if arguments:
-            output.append(self.format_section("Arguments", *self.build_arg_rows(arguments, long)))
+            self.write_arg_group("Arguments", "", arguments)
+            self.writer.push_str("\n")
         if options:
-            output.append(self.format_section("Options", *self.build_arg_rows(options, long)))
+            self.write_arg_group("Options", "", options)
+            self.writer.push_str("\n")
         for group, args in self.command.groups.items():
-            if long:
-                if group.long_about:
-                    output.append(group.long_about)
-                elif group.about:
-                    output.append(group.about)
+            if self.use_long:
+                about = group.long_about or group.about or ""
             else:
-                if group.about:
-                    output.append(group.about)
-            output.append(self.format_section(group.title, *self.build_arg_rows(args, long)))
-
-        return "\n\n".join(output)
+                about = group.about or ""
+            self.write_arg_group(group.title, about, args)
+            self.writer.push_str("\n")

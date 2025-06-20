@@ -1,10 +1,11 @@
 import sys
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
-from typing import Optional
+from typing import Optional, Self
 
 
 class ColorChoice(Enum):
+    """Represents the color preferences for help output."""
     Auto = auto()
     Always = auto()
     Never = auto()
@@ -29,7 +30,7 @@ class AnsiColor(IntEnum):
     BrightWhite = 97
 
 
-@dataclass
+@dataclass(slots=True)
 class Style:
     color: Optional[AnsiColor] = None
     is_bold: bool = False
@@ -72,7 +73,6 @@ class Style:
         return f"\033[{';'.join(codes)}m" if codes else ""
 
 
-@dataclass
 class Styles:
     def __init__(self):
         self.header_style = Style()
@@ -87,19 +87,19 @@ class Styles:
                     .usage(Style().bold().underline())
                     .placeholder(Style()))
 
-    def header(self, style: Style) -> "Styles":
+    def header(self, style: Style) -> Self:
         self.header_style = style
         return self
 
-    def literal(self, style: Style) -> "Styles":
+    def literal(self, style: Style) -> Self:
         self.literal_style = style
         return self
 
-    def usage(self, style: Style) -> "Styles":
+    def usage(self, style: Style) -> Self:
         self.usage_style = style
         return self
 
-    def placeholder(self, style: Style) -> "Styles":
+    def placeholder(self, style: Style) -> Self:
         self.placeholder_style = style
         return self
 

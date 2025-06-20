@@ -13,6 +13,8 @@ from typing import (
     cast,
 )
 
+from .styling import ColorChoice, Styles
+
 
 class AutoFlag(Enum):
     Short = auto()
@@ -47,9 +49,9 @@ class ArgAction(StrEnum):
             from .parser import ClapArgParser
             parser = cast(ClapArgParser, parser)
             if isinstance(option_string, str) and len(option_string) == 2:
-                parser.print_nice_help(long=False)
+                parser.print_nice_help(use_long=False)
             else:
-                parser.print_nice_help(long=True)
+                parser.print_nice_help(use_long=True)
 
     class HelpShort(argparse.Action):
         def __init__(self, option_strings, dest, **kwargs):
@@ -58,7 +60,7 @@ class ArgAction(StrEnum):
         def __call__(self, parser, namespace, values, option_string=None):
             from .parser import ClapArgParser
             parser = cast(ClapArgParser, parser)
-            parser.print_nice_help(long=False)
+            parser.print_nice_help(use_long=False)
 
     class HelpLong(argparse.Action):
         def __init__(self, option_strings, dest, **kwargs):
@@ -67,7 +69,7 @@ class ArgAction(StrEnum):
         def __call__(self, parser, namespace, values, option_string=None):
             from .parser import ClapArgParser
             parser = cast(ClapArgParser, parser)
-            parser.print_nice_help(long=True)
+            parser.print_nice_help(use_long=True)
 
 
 short = AutoFlag.Short
@@ -89,15 +91,15 @@ def to_kebab_case(name: str) -> str:
 
 
 class ArgType:
-    @dataclass
+    @dataclass(slots=True)
     class Base:
         ty: type
         optional: bool
 
-    @dataclass
+    @dataclass(slots=True)
     class SimpleType(Base): ...
 
-    @dataclass
+    @dataclass(slots=True)
     class Enum(Base):
         enum: type
         ty: type = field(init=False)
@@ -115,14 +117,14 @@ class ArgType:
             except ValueError:
                 raise TypeError("Cannot uniquely extract choices from this Enum.") from None
 
-    @dataclass
+    @dataclass(slots=True)
     class List(Base): ...
 
-    @dataclass
+    @dataclass(slots=True)
     class Tuple(Base):
         n: int
 
-    @dataclass
+    @dataclass(slots=True)
     class SubcommandDest(Base):
         subcommands: list[type]
         ty: type = field(init=False)
@@ -132,7 +134,7 @@ class ArgType:
             self.ty = type(None)
 
 
-@dataclass
+@dataclass(slots=True)
 class Group:
     title: str
     about: Optional[str] = None
@@ -156,7 +158,7 @@ class Group:
         return kwargs
 
 
-@dataclass
+@dataclass(slots=True)
 class MutexGroup:
     parent: Optional[Group] = None
     required: bool = False
@@ -165,7 +167,7 @@ class MutexGroup:
         return hash(id(self))
 
 
-@dataclass
+@dataclass(slots=True)
 class Arg:
     short: Optional[Union[AutoFlag, str]] = None
     """The short flag."""
@@ -256,7 +258,7 @@ class Arg:
         return kwargs
 
 
-@dataclass
+@dataclass(slots=True)
 class Command:
     name: str
     aliases: Sequence[str] = field(default_factory=list)
@@ -271,9 +273,19 @@ class Command:
     after_long_help: Optional[str] = None
     subcommand_help_heading: str = "Commands"
     subcommand_value_name: str = "COMMAND"
+    color: Optional[ColorChoice] = None
+    styles: Optional[Styles] = None
+    help_template: Optional[str] = None
+    max_term_width: Optional[int] = None
     propagate_version: bool = False
     disable_version_flag: bool = False
     disable_help_flag: bool = False
+    prefix_chars: str = "-"
+    fromfile_prefix_chars: Optional[str] = None
+    conflict_handler: Optional[str] = None
+    allow_abbrev: Optional[bool] = None
+    exit_on_error: Optional[bool] = None
+    deprecated: Optional[bool] = None
 
     args: dict[str, Arg] = field(default_factory=dict)
     groups: dict[Group, list[Arg]] = field(default_factory=dict)
@@ -286,13 +298,6 @@ class Command:
     subcommand_dest: Optional[str] = None
     subparser_dest: Optional[str] = None
     subcommand_required: bool = False
-
-    prefix_chars: str = "-"
-    fromfile_prefix_chars: Optional[str] = None
-    conflict_handler: Optional[str] = None
-    allow_abbrev: Optional[bool] = None
-    exit_on_error: Optional[bool] = None
-    deprecated: Optional[bool] = None
 
     def is_subcommand(self) -> bool:
         return self.subcommand_class is not None

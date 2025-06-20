@@ -11,11 +11,9 @@ $ pip install git+https://github.com/adityasz/clap-py.git
 ## Example
 
 ```python
-from pathlib import Path
-
 import clap
 from clap import arg, long, short
-
+from pathlib import Path
 
 @clap.command
 class Cli(clap.Parser):
@@ -26,7 +24,6 @@ class Cli(clap.Parser):
     verbose: bool = arg(short, long)
     """Enable verbose output"""
 
-
 args = Cli.parse_args()
 if args.verbose:
     print(f"Reading {args.input}...")
@@ -36,35 +33,30 @@ if args.verbose:
 
 ### Help generation from docstrings
 
-The same string works for documentation in the IDE and help output.
+Use the same string for the help output as well as documentation in the IDE.
 
 ### Subcommands
 
 ```python
+import clap
+from clap import arg, long, short
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Union
-
-import clap
-from clap import arg, long, short
-
 
 @dataclass
 @clap.subcommand
 class Add:
     file: Path
 
-
 @dataclass
 @clap.subcommand
 class List:
     directory: Path
 
-
 @clap.command
 class Cli(clap.Parser):
     command: Union[Add, List]
-
 
 args = Cli.parse_args()
 match args.command:
@@ -95,7 +87,6 @@ safety checks!).
 
 ```python
 import argparse
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--type", type=str)
 args = parser.parse_args()
@@ -107,10 +98,11 @@ print(args.typo)
 # no static analysis
 ```
 
-## Roadmap
+## TODO
 
-- [ ] `max_term_width`
 - [ ] Support more tags in the help template.
+- [ ] Find out the python equivalent of `anstyle` and `color_print::cstr!`
+      and support colored help strings (without breaking text wrapping)
 - [ ] Share arguments between (sub)commands using class inheritance.
 - [ ] Actually parse arguments intead of relying on `argparse`.
       This will improve error message greatly.

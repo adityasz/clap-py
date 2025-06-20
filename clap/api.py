@@ -3,9 +3,6 @@ import sys
 from collections.abc import Callable, Sequence
 from typing import Optional, Self, Union
 
-from clap.styling import Styles
-
-from .help import ColorChoice
 from .models import Arg, AutoFlag, Command, Group, MutexGroup
 from .parser import (
     _COMMAND_DATA,
@@ -33,9 +30,6 @@ def command[T](
     name: str = os.path.basename(sys.argv[0]),
     about: Optional[str] = None,
     long_about: Optional[str] = None,
-    color: ColorChoice = ColorChoice.Auto,
-    help_styles: Optional[Styles] = None,
-    help_template: Optional[str] = None,
     **kwargs,
 ) -> Union[type[T], Callable[[type[T]], type[T]]]:
     """Configure a class to parse command-line arguments.
@@ -56,8 +50,9 @@ def command[T](
         subcommand_help_heading: The help heading used for subcommands when printing help.
         subcommand_value_name: The value name used for subcommands when printing usage and help.
         color: When to color output.
-        help_styles: The styles for help output.
+        styles: The styles for help output.
         help_template: The help template to be used, overriding the default format.
+        max_term_width: The help output will wrap to `min(max_term_width, shutil.get_terminal_size())`.
         propagate_version: Whether to use the version of the current command for all subcommands.
         disable_version_flag: Disable the `-V` and `--version` flags.
         disable_help_flag: Disable the `-h` and `--help` flags.
@@ -91,7 +86,7 @@ def command[T](
                 kwargs["long_about"] = doc_long_about
         command = Command(**kwargs)
         setattr(cls, _COMMAND_DATA, command)
-        setattr(cls, _PARSER, create_parser(cls, color, help_styles, help_template))
+        setattr(cls, _PARSER, create_parser(cls))
 
         # delete default values of fields so that `@dataclass` does not complain
         # about mutable defaults (`Arg`)
@@ -141,9 +136,11 @@ def subcommand[T](
         before_long_help: Free-form help text for before auto-generated long help (`--help`).
         subcommand_help_heading: The help heading used for subcommands when printing help.
         subcommand_value_name: The value name used for subcommands when printing usage and help.
-        color: When to color output.
         help_styles: The styles for help output.
         help_template: The help template to be used, overriding the default format.
+        max_term_width: The help output will wrap to `min(max_term_width, shutil.get_terminal_size())`.
+        propagate_version: Whether to use the version of the current command for all subcommands.
+        disable_version_flag: Disable the `-V` and `--version` flags.
         disable_help_flag: Disable the `-h` and `--help` flags.
         prefix_chars: The set of characters that prefix optional arguments.
         fromfile_prefix_chars: The set of characters that prefix files from
