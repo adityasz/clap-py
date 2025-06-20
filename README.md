@@ -20,9 +20,9 @@ class Cli(clap.Parser):
     """A tiny script."""
 
     input: Path = arg(value_name="PATH")
-    """Path to the input file"""
+    """Path to the input file."""
     verbose: bool = arg(short, long)
-    """Enable verbose output"""
+    """Enable verbose output."""
 
 args = Cli.parse_args()
 if args.verbose:
