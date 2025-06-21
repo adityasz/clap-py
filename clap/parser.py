@@ -139,6 +139,8 @@ def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
     if type(type_hint) is type:
         if is_subcommand(type_hint):
             return ArgType.SubcommandDest(optional, [type_hint])
+        if type_hint is type(None):
+            raise TypeError
         return ArgType.SimpleType(type_hint, optional)
     if type(type_hint) is EnumType:
         return ArgType.Enum(optional, type_hint)
