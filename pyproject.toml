@@ -1,16 +1,20 @@
 [project]
 name = "clap-py"
+authors = [{name = "Aditya Singh", email = "1adityasingh@proton.me"}]
+maintainers = [{name = "Aditya Singh", email = "1adityasingh@proton.me"}]
 version = "0.5.0"
-description = "A declarative command-line argument parser."
+description = "A declarative and type-safe command-line argument parser."
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.13"
-dependencies = [
-    "mkdocs>=1.6.1",
-    "mkdocs-material>=9.6.14",
-    "mkdocstrings[python]>=0.29.1",
-    "packaging>=25.0",
-    "pymdown-extensions>=10.15",
-]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/adityasz/clap-py"
+Documentation = "https://adityasz.github.io/clap-py"
+Repository = "https://github.com/adityasz/clap-py.git"
+Issues = "https://github.com/adityasz/clap-py/issues"
+# TODO: Changelog
 
 [build-system]
 requires = ["setuptools>=79.0"]
@@ -21,3 +25,14 @@ packages = ["clap"]
 
 [tool.setuptools.package-dir]
 "" = "."
+
+[dependency-groups]
+dev = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.14",
+    "mkdocstrings[python]>=0.29.1",
+    "pymdown-extensions>=10.15",
+    "pyright>=1.1.402",
+    "pytest>=8.4.1",
+    "ruff>=0.12.0",
+]
