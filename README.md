@@ -70,7 +70,7 @@ if args.verbose:
   The `@dataclass` decorator is not required for subcommands to work; it is added
   for structural pattern matching in the `match`-`case`.
 
-- **Separate short and long help** with `-h` and `--help`. From the same docstring.
+- **Separate short and long help** with `-h` and `--help`.
 
 - **Customizable help output** with templates.
 
@@ -103,9 +103,11 @@ print(args.typo)
 # no static analysis
 ```
 
-## Acknowledgements
+## Contributing
 
-[clap-rs](https://github.com/clap-rs/clap). Most docstrings are lifted verbatim.
+PRs that fix bugs, add features from clap-rs, or complete the following TODOs
+are welcome. For adding other features, please create a discussion before
+starting. Thank you!
 
 ## TODO (v1.0)
 
@@ -126,3 +128,7 @@ print(args.typo)
       strings from a file (which is useful when arguments/help strings are
       referenced in multiple places).
 - [ ] Generate shell completions.
+
+## Acknowledgements
+
+[clap-rs](https://github.com/clap-rs/clap). Most docstrings are lifted verbatim.

@@ -1,6 +1,6 @@
 # clap-py
 
-Welcome to the docs for [clap-py](https://github.com/adityasz/clap-py).
+Welcome to the docs for [clap-py](https://github.com/adityasz/clap-py). `clap-py` is not 1.0 yet (see [TODOs](https://github.com/adityasz/clap-py?tab=readme-ov-file#todo)), but the API is stable.
 
 ## Installation
 
@@ -14,14 +14,6 @@ If you are using [uv](https://docs.astral.sh/uv/), you can do
 $ uv add git+https://github.com/adityasz/clap-py.git
 ```
 
-## Quick Start
+## clap-py Usage
 
-Check out the [Quickstart Guide](quickstart.md) for a step-by-step introduction.
-
-## API Reference
-
-- [**command**](command.md) - Configure a class to parse command-line arguments
-- [**subcommand**](subcommand.md) - Create subcommands for complex CLIs
-- [**arg**](arg.md) - Define command-line arguments with full customization
-- [**group**](group.md) - Organize arguments into logical groups
-- [**mutex_group**](mutex_group.md) - Create mutually exclusive argument groups
+Check out the [Quickstart Guide](quickstart.md).
