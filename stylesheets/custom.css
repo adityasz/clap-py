@@ -1,0 +1,3 @@
+.doc.doc-object.doc-function:has(.doc-overloads) > .doc-signature.highlight {
+    display: none;
+}
