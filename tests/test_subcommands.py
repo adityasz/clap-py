@@ -243,6 +243,43 @@ class TestSubcommandNamingAndAliases(unittest.TestCase):
 
 
 class TestSubcommandErrors(unittest.TestCase):
+    def test_subcommand_mixed_types(self):
+        with self.assertRaises(TypeError):
+            @clap.command
+            class _:
+                @clap.subcommand
+                class SubCmd:
+                    ...
+
+                cmd: Union[SubCmd, str]
+
+    def test_multiple_subcommand_destinations(self):
+        """Test error when multiple subcommand destinations are defined."""
+        with self.assertRaises(TypeError):
+            @clap.command
+            class _:
+                @clap.subcommand
+                class Sub1:
+                    pass
+
+                @clap.subcommand
+                class Sub2:
+                    pass
+
+                cmd1: Sub1
+                cmd2: Sub2
+
+    def test_subcommand_field_assignment(self):
+        """Test error when assigning value to subcommand field."""
+        with self.assertRaises(TypeError):
+            @clap.command
+            class _:
+                @clap.subcommand
+                class Sub:
+                    ...
+
+                cmd: Sub = "invalid"  # type: ignore
+
     def test_unknown_subcommand(self):
         @clap.subcommand
         class Valid:
@@ -297,6 +334,7 @@ class TestSubcommandIntegration(unittest.TestCase):
         @clap.subcommand
         class Action:
             target: str
+            verbose: bool = arg(short, long)
 
         @clap.command
         class Cli(clap.Parser):
@@ -305,6 +343,13 @@ class TestSubcommandIntegration(unittest.TestCase):
 
         args = Cli.parse_args(["--verbose", "action", "target-name"])
         self.assertTrue(args.verbose)
+        self.assertFalse(args.command.verbose)
+        self.assertIsInstance(args.command, Action)
+        self.assertEqual(args.command.target, "target-name")
+
+        args = Cli.parse_args(["--verbose", "action", "target-name", "--verbose"])
+        self.assertTrue(args.verbose)
+        self.assertTrue(args.command.verbose)
         self.assertIsInstance(args.command, Action)
         self.assertEqual(args.command.target, "target-name")
 
@@ -327,7 +372,7 @@ class TestSubcommandIntegration(unittest.TestCase):
         @clap.subcommand
         class Process:
             files: list[str] = arg(num_args="+")
-            exclude: Optional[list[str]] = arg(long, num_args="*")
+            exclude: list[str] = arg(long, num_args="*")
 
         @clap.command
         class Cli(clap.Parser):

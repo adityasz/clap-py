@@ -9,7 +9,7 @@ from clap import arg, long, short
 
 
 class TestBasicArgumentParsing(unittest.TestCase):
-    def test_positional_path_argument(self):
+    def test_positional(self):
         @clap.command
         class Cli(clap.Parser):
             file: Path
@@ -23,7 +23,7 @@ class TestBasicArgumentParsing(unittest.TestCase):
         with self.assertRaises(SystemExit):
             Cli.parse_args(["/tmp/test.txt", "extra.txt"])
 
-    def test_optional_positional_argument(self):
+    def test_optional_positional(self):
         @clap.command
         class Cli(clap.Parser):
             file: Optional[Path]

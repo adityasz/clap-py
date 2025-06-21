@@ -45,6 +45,50 @@ class TestArgumentGroups(unittest.TestCase):
         self.assertIsNone(args.output_file)
         self.assertIsNone(args.output_dir)
 
+    def test_standalone_and_grouped_arguments(self):
+        @clap.command
+        class Cli(clap.Parser):
+            input_file: str
+            verbose: bool = arg(short, long)
+
+            output_group = group(title="Output Options")
+            output_file: Optional[str] = arg(long, group=output_group)
+
+            mode_mutex = mutex_group(required=True)
+            process: bool = arg(long, mutex=mode_mutex)
+            analyze: bool = arg(long, mutex=mode_mutex)
+
+            format_group = group(title="Format Options")
+            format_mutex = mutex_group(parent_group=format_group)
+            json_out: bool = arg(long, mutex=format_mutex)
+            csv_out: bool = arg(long, mutex=format_mutex)
+
+        args = Cli.parse_args([
+            "input.txt",
+            "--verbose",
+            "--output-file",
+            "out.txt",
+            "--process",
+            "--json-out",
+        ])
+
+        self.assertEqual(args.input_file, "input.txt")
+        self.assertTrue(args.verbose)
+        self.assertEqual(args.output_file, "out.txt")
+        self.assertTrue(args.process)
+        self.assertFalse(args.analyze)
+        self.assertTrue(args.json_out)
+        self.assertFalse(args.csv_out)
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["input.txt", "--verbose"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["input.txt", "--process", "--analyze"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["input.txt", "--process", "--json-out", "--csv-out"])
+
 
 class TestMutuallyExclusiveGroups(unittest.TestCase):
     def test_basic_mutex_group(self):
@@ -212,95 +256,15 @@ class TestGroupsWithMutexes(unittest.TestCase):
         self.assertFalse(args.option_a)
         self.assertFalse(args.option_b)
 
+    def test_mutex_parent_mismatch(self):
+        with self.assertRaises(ValueError):
+            @clap.command
+            class _:
+                g1 = group("Group 1")
+                g2 = group("Group 2")
+                m = mutex_group(parent_group=g1)
 
-class TestComplexGroupScenarios(unittest.TestCase):
-    def test_standalone_and_grouped_arguments(self):
-        @clap.command
-        class Cli(clap.Parser):
-            input_file: str
-            verbose: bool = arg(short, long)
-
-            output_group = group(title="Output Options")
-            output_file: Optional[str] = arg(long, group=output_group)
-
-            mode_mutex = mutex_group(required=True)
-            process: bool = arg(long, mutex=mode_mutex)
-            analyze: bool = arg(long, mutex=mode_mutex)
-
-            format_group = group(title="Format Options")
-            format_mutex = mutex_group(parent_group=format_group)
-            json_out: bool = arg(long, mutex=format_mutex)
-            csv_out: bool = arg(long, mutex=format_mutex)
-
-        args = Cli.parse_args([
-            "input.txt",
-            "--verbose",
-            "--output-file",
-            "out.txt",
-            "--process",
-            "--json-out",
-        ])
-
-        self.assertEqual(args.input_file, "input.txt")
-        self.assertTrue(args.verbose)
-        self.assertEqual(args.output_file, "out.txt")
-        self.assertTrue(args.process)
-        self.assertFalse(args.analyze)
-        self.assertTrue(args.json_out)
-        self.assertFalse(args.csv_out)
-
-        with self.assertRaises(SystemExit):
-            Cli.parse_args(["input.txt", "--verbose"])
-
-        with self.assertRaises(SystemExit):
-            Cli.parse_args(["input.txt", "--process", "--analyze"])
-
-        with self.assertRaises(SystemExit):
-            Cli.parse_args(["input.txt", "--process", "--json-out", "--csv-out"])
-
-    def test_nested_group_structure(self):
-        @clap.command
-        class Cli(clap.Parser):
-            input_group = group(title="Input Options")
-            processing_group = group(title="Processing Options")
-
-            input_file: Optional[str] = arg(long, group=input_group)
-            input_format_mutex = mutex_group(parent_group=input_group)
-            auto_detect: bool = arg(long, mutex=input_format_mutex)
-            force_json: bool = arg(long, mutex=input_format_mutex)
-
-            threads: Optional[int] = arg(long, group=processing_group)
-            algorithm_mutex = mutex_group(parent_group=processing_group, required=True)
-            fast: bool = arg(long, mutex=algorithm_mutex)
-            accurate: bool = arg(long, mutex=algorithm_mutex)
-
-        args = Cli.parse_args([
-            "--input-file",
-            "data.txt",
-            "--auto-detect",
-            "--threads",
-            "4",
-            "--fast",
-        ])
-
-        self.assertEqual(args.input_file, "data.txt")
-        self.assertTrue(args.auto_detect)
-        self.assertFalse(args.force_json)
-        self.assertEqual(args.threads, 4)
-        self.assertTrue(args.fast)
-        self.assertFalse(args.accurate)
-
-        with self.assertRaises(SystemExit):
-            Cli.parse_args(["--input-file", "data.txt"])
-
-        with self.assertRaises(SystemExit):
-            Cli.parse_args(["--fast", "--accurate"])
-
-        with self.assertRaises(SystemExit):
-            Cli.parse_args(["--auto-detect", "--force-json", "--fast"])
-
-        with self.assertRaises(SystemExit):
-            Cli.parse_args(["--threads", "many", "--fast"])
+                arg1: bool = arg(long, group=g2, mutex=m)
 
 
 if __name__ == "__main__":

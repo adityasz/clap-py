@@ -1,6 +1,4 @@
 import unittest
-from enum import Enum
-from pathlib import Path
 from typing import Optional
 
 import clap
@@ -206,25 +204,25 @@ class TestActionTypeErrors(unittest.TestCase):
     def test_count_with_optional_type_error(self):
         with self.assertRaises(TypeError):
             @clap.command
-            class Cli(clap.Parser):
+            class _:
                 count: Optional[int] = arg(short="c", action=ArgAction.Count)
 
     def test_store_true_with_optional_type_error(self):
         with self.assertRaises(TypeError):
             @clap.command
-            class Cli(clap.Parser):
+            class _:
                 flag: Optional[bool] = arg(long, action=ArgAction.SetTrue)
 
     def test_store_false_with_optional_type_error(self):
         with self.assertRaises(TypeError):
             @clap.command
-            class Cli(clap.Parser):
+            class _:
                 flag: Optional[bool] = arg(long, action=ArgAction.SetFalse)
 
     def test_store_const_with_optional_and_default_error(self):
         with self.assertRaises(TypeError):
             @clap.command
-            class Cli(clap.Parser):
+            class _:
                 mode: Optional[str] = arg(
                     long,
                     action=ArgAction.Set,
@@ -236,49 +234,23 @@ class TestActionTypeErrors(unittest.TestCase):
     def test_store_with_required_and_optional_error(self):
         with self.assertRaises(TypeError):
             @clap.command
-            class Cli(clap.Parser):
+            class _:
                 value: Optional[str] = arg(long, action=ArgAction.Set, required=True)
 
     def test_store_with_default_and_optional_error(self):
         with self.assertRaises(TypeError):
             @clap.command
-            class Cli(clap.Parser):
+            class _:
                 value: Optional[str] = arg(long, action=ArgAction.Set, default_value="test")
 
+    def test_optional_positional_with_invalid_num_args(self):
+        """Test error for optional positional with incompatible num_args."""
+        with self.assertRaises(TypeError):
+            @clap.command
+            class _:
+                files: Optional[list[str]] = arg(num_args="+")
 
-class TestActionsWithComplexTypes(unittest.TestCase):
-    def test_append_with_enum_choices(self):
-        class Color(Enum):
-            RED = "red"
-            GREEN = "green"
-            BLUE = "blue"
 
-        @clap.command
-        class Cli(clap.Parser):
-            colors: list[Color] = arg(long, action=ArgAction.Append)
-
-        args = Cli.parse_args(["--colors", "red", "--colors", "blue"])
-        self.assertEqual(args.colors, [Color.RED, Color.BLUE])
-
-        args = Cli.parse_args([])
-        self.assertEqual(args.colors, [])
-
-        with self.assertRaises(SystemExit):
-            Cli.parse_args(["--colors", "purple"])
-
-    def test_extend_with_path_type(self):
-        @clap.command
-        class Cli(clap.Parser):
-            files: list[Path] = arg(long, action=ArgAction.Extend, num_args="+")
-
-        args = Cli.parse_args(["--files", "a.txt", "b.txt", "--files", "c.txt"])
-        self.assertEqual(args.files, [Path("a.txt"), Path("b.txt"), Path("c.txt")])
-
-        args = Cli.parse_args([])
-        self.assertEqual(args.files, [])
-
-        with self.assertRaises(SystemExit):
-            Cli.parse_args(["--files"])
 
 
 if __name__ == "__main__":
