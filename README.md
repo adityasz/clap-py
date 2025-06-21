@@ -36,6 +36,8 @@ if args.verbose:
     print(f"Reading {args.input}...")
 ```
 
+See [/examples](https://github.com/adityasz/clap-py/tree/master/examples) for more examples.
+
 ## Features
 
 - **Help generation from docstrings**
@@ -74,13 +76,7 @@ if args.verbose:
 
 - **Customizable help output** with templates.
 
-## Examples
-
-See examples in [/examples](https://github.com/adityasz/clap-py/tree/master/examples).
-
-## Docs
-
-See [/docs](https://github.com/adityasz/clap-py/tree/master/docs).
+See the [docs](https://adityasz.github.io/clap-py) for usage.
 
 ## Motivation
 
@@ -107,7 +103,7 @@ print(args.typo)
 
 PRs that fix bugs, add features from clap-rs, or complete the following TODOs
 are welcome. For adding other features, please create a discussion before
-starting. Thank you!
+creating a PR. Thank you!
 
 ## TODO (v1.0)
 
