@@ -407,6 +407,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#help" class="md-nav__link">
+    <span class="md-ellipsis">
+      Help
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -788,29 +797,40 @@
 <p>This guide is structured as a tutorial.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><strong>WIP</strong>.
-See <a href="https://github.com/adityasz/clap-py/tree/master/examples">examples</a>
+<p><strong>This guide is under development.</strong>
+In the meantime, see <a href="https://github.com/adityasz/clap-py/tree/master/examples">examples</a>
 and <a href="https://github.com/adityasz/clap-py/tree/master/tests">tests</a>.</p>
 </div>
 <h2 id="adding-arguments">Adding arguments</h2>
 <ul>
 <li>Each argument field must have a type annotation.</li>
-<li>Fields without type annotations are ignored.</li>
-<li>Flags need to be generated using <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;clap.arg&lt;/span&gt;" href="../arg/#clap.arg"><code>clap.arg</code></a>. If an arg does not have flags, it is
-  a positional argument.</li>
+<li>Fields without type annotations are ignored, unless it is a
+  <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.models.MutexGroup&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="../models/#clap.models.MutexGroup">(mutually exclusive)</a> <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.models.Group&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="../models/#clap.models.Group">group</a>.</li>
+<li>Flags need to be generated using <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;clap.arg&lt;/span&gt;" href="../arg/#clap.arg"><code>arg()</code></a>. If an arg does not have
+  flags, it is a positional argument.</li>
 <li>
 <p>To automatically generate flags, <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;clap.short&lt;/span&gt;
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
       &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="../arg/#clap.short"><code>clap.short</code></a> and <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;clap.long&lt;/span&gt;
+  &lt;/span&gt;" href="../arg/#clap.short"><code>short</code></a> and
+    <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;clap.long&lt;/span&gt;
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
       &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="../arg/#clap.long"><code>clap.long</code></a> can be used.
-    These are positional-only arguments to <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;clap.arg&lt;/span&gt;" href="../arg/#clap.arg"><code>clap.arg</code></a>:</p>
+  &lt;/span&gt;" href="../arg/#clap.long"><code>long</code></a> can be used:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">clap</span><span class="w"> </span><span class="kn">import</span> <span class="n">arg</span><span class="p">,</span> <span class="n">long</span><span class="p">,</span> <span class="n">short</span>
 
@@ -828,7 +848,7 @@ and <a href="https://github.com/adityasz/clap-py/tree/master/tests">tests</a>.</
 
 <span class="nd">@clap</span><span class="o">.</span><span class="n">command</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;This is the short help.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This is the short help (without the trailing period).</span>
 
 <span class="sd">    Any subsequent paragraphs are ignored in the short help. The long help</span>
 <span class="sd">    contains the entire docstring.&quot;&quot;&quot;</span>
@@ -838,6 +858,11 @@ and <a href="https://github.com/adityasz/clap-py/tree/master/tests">tests</a>.</
 </code></pre></div>
 <p>Docstrings are processed just like
 <a href="https://docs.rs/clap/latest/clap/_derive/index.html#doc-comments"><code>clap-rs</code></a>.</p>
+<h2 id="help">Help</h2>
+<p>Depending on the help flag, short (<code>-h</code>) or long (<code>--help</code>) help is output. See <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.ArgAction&lt;/span&gt;" href="../actions/#clap.ArgAction"><code>ArgAction</code></a>. A custom template can be used (TODO: docs), and styles can be customized using <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.styling.Styles&lt;/span&gt;" href="../styling/#clap.styling.Styles"><code>Styles</code></a>.</p>
+<p>Here's the help output for
+<a href="https://github.com/adityasz/clap-py/tree/master/examples/typst.py">typst.py</a>:</p>
+<p>TODO: ANSI -&gt; HTML</p>
 
 
 

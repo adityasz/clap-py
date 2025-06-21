@@ -1,3 +1,53 @@
+/* To hide redundant signatures */
 .doc.doc-object.doc-function:has(.doc-overloads) > .doc-signature.highlight {
     display: none;
+}
+
+/* Help output styling */
+.md-help-output {
+    margin: 1rem 0;
+    border-radius: 0.1rem;
+    font-family: var(--md-code-font);
+    overflow: hidden;
+}
+
+.md-help-output pre {
+    background: var(--md-code-bg-color) !important;
+    color: var(--md-code-fg-color) !important;
+    margin: 0;
+    padding: 0.8rem 1rem;
+    font-size: 0.85em;
+    line-height: 1.4;
+    overflow-x: auto;
+    border-radius: 0.1rem;
+}
+
+[data-md-color-scheme="default"] .md-help-output pre {
+    --terminal-bg: #f8f8f8;
+    --terminal-fg: #37474f;
+    --terminal-green: #388e3c;
+    --terminal-blue: #1976d2;
+    --terminal-yellow: #f57c00;
+}
+
+[data-md-color-scheme="slate"] .md-help-output pre {
+    --terminal-bg: #2e3440;
+    --terminal-fg: #d8dee9;
+    --terminal-green: #a3be8c;
+    --terminal-blue: #81a1c1;
+    --terminal-yellow: #ebcb8b;
+}
+
+/* Override Rich's inline styles with theme colors */
+.md-help-output span[style*="color"] {
+    color: var(--terminal-fg) !important;
+}
+
+.md-help-output span[style*="bold"] {
+    font-weight: 600;
+    color: var(--terminal-green) !important;
+}
+
+.md-help-output span[style*="#6AC174"] {
+    color: var(--terminal-green) !important;
 }
