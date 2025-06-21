@@ -107,16 +107,22 @@ print(args.typo)
 
 [clap-rs](https://github.com/clap-rs/clap). Most docstrings are lifted verbatim.
 
-## TODO
+## TODO (v1.0)
 
 - [ ] Support more tags in the help template.
-- [ ] Find out the python equivalent of `anstyle` and `color_print::cstr!`
-      and support colored help strings (without breaking text wrapping).
+- [ ] In long help, show description of possible values when the enum has
+      docstrings.
 - [ ] Share arguments between (sub)commands using class inheritance.
+
+## Future work (beyond v1.0)
+
+- [ ] Find out the python equivalent of `anstyle` and `color_print::cstr!`
+      and support styled help strings that wrap properly and are formatted
+      depending on output file.
+- [ ] Actually parse arguments intead of relying on `argparse`.
+      This will improve error message greatly.
 - [ ] Add a clap-like builder API to add arguments procedurally (after defining
       some arguments in a class). One use case can be to load arguments and help
       strings from a file (which is useful when arguments/help strings are
       referenced in multiple places).
-- [ ] Actually parse arguments intead of relying on `argparse`.
-      This will improve error message greatly.
 - [ ] Generate shell completions.
