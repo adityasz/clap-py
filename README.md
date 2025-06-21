@@ -103,6 +103,10 @@ print(args.typo)
 # no static analysis
 ```
 
+## Acknowledgements
+
+[clap-rs](https://github.com/clap-rs/clap). Most docstrings are lifted verbatim.
+
 ## TODO
 
 - [ ] Support more tags in the help template.

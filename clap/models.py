@@ -18,7 +18,9 @@ from .styling import ColorChoice, Styles
 
 class AutoFlag(Enum):
     Short = auto()
+    """Generate short from the first character in the case-converted field name."""
     Long = auto()
+    """Generate long from the case-converted field name."""
 
 
 class ArgAction(StrEnum):
@@ -40,7 +42,7 @@ class ArgAction(StrEnum):
     ```
     """
     SetTrue = "store_true"
-    """When encountered, act as if `"True"` was encountered on the command-line.
+    """When encountered, act as if [`True`][] was encountered on the command-line.
 
     Example:
 
@@ -60,7 +62,7 @@ class ArgAction(StrEnum):
     ```
     """
     SetFalse = "store_false"
-    """When encountered, act as if `"False"` was encountered on the command-line.
+    """When encountered, act as if [`False`][] was encountered on the command-line.
 
     Example:
 
@@ -80,7 +82,7 @@ class ArgAction(StrEnum):
     ```
     """
     Append = "append"
-    """When encountered, store the associated value(s) in a `list`.
+    """When encountered, store the associated value(s) in a [`list`][].
 
     Example:
 
@@ -100,7 +102,7 @@ class ArgAction(StrEnum):
     ```
     """
     Extend = "extend"
-    """When encountered, extend a `list` with the associated values.
+    """When encountered, extend a [`list`][] with the associated values.
 
     Example:
 
@@ -120,7 +122,7 @@ class ArgAction(StrEnum):
     ```
     """
     Count = "count"
-    """When encountered, increment an `int` counter starting from `0`.
+    """When encountered, increment an [`int`][] counter starting from `0`.
 
     Example:
 

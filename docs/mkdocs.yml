@@ -12,16 +12,22 @@ nav:
       - command: command.md
       - subcommand: subcommand.md
       - arg: arg.md
+      - Actions: actions.md
+      - Parser: parser.md
       - group: group.md
       - mutex_group: mutex_group.md
-      - ArgAction: ArgAction.md
       - Styling: styling.md
     - Internal:
       - Models: models.md
 
 validation:
-  links:
-    anchors: warn
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+extra_css:
+  - stylesheets/custom.css
 
 theme:
   name: material
@@ -85,6 +91,7 @@ plugins:
           summary: true
 
 markdown_extensions:
+  - admonition
   - pymdownx.superfences
   - pymdownx.snippets:
       base_path: ".."

@@ -1,7 +1,7 @@
 import sys
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
-from typing import Optional, Self
+from typing import Optional
 
 
 class ColorChoice(Enum):
@@ -50,7 +50,11 @@ class ColorChoice(Enum):
 class AnsiColor(IntEnum):
     """Available 4-bit ANSI color palette codes.
 
-    The user’s terminal defines the meaning of the each palette code.
+    The user's terminal defines the meaning of the each palette code.
+
+    TODO:
+        Background colors not implemented. Enum values will be changed when that
+        is implemented.
     """
     Black = 30
     """Black: #0 (foreground code `30`, background code `40`)."""
@@ -171,7 +175,7 @@ class Styles:
                     .placeholder(Style()))
 
     def header(self, style: Style) -> "Styles":
-        """General Heading style, e.g., `help_heading`."""
+        """General heading style, e.g., `Commands`."""
         self.header_style = style
         return self
 

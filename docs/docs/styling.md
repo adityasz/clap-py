@@ -6,14 +6,12 @@ Control the appearance and colors of your CLI help output.
 
 ::: clap.styling.ColorChoice
     options:
-      docstring_section_style: list
       members: true
 
 ## AnsiColor
 
 ::: clap.styling.AnsiColor
     options:
-      docstring_section_style: list
       members: true
 
 ## Style
@@ -26,4 +24,4 @@ Control the appearance and colors of your CLI help output.
 
 ## Functions
 
-::: clap.styling.determine_color_usage 
+::: clap.styling.determine_color_usage

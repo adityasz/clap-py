@@ -7,5 +7,7 @@
 ::: clap.models.MutexGroup
 
 ::: clap.models.AutoFlag
+    option:
+      members: true
 
 ::: clap.models.Command

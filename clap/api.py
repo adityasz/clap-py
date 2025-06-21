@@ -21,9 +21,10 @@ _PARSER = "__parser__"
 class Parser:
     """A base class for static type checking.
 
-    Classes decorated with `@clap.command` will have a `parse_args` method
-    injected at runtime. Inheriting from `Parser` provides this method signature
-    to static type checkers, avoiding errors and enabling autocompletion in
+    Classes decorated with [`@clap.command`][clap.command] will have a
+    [`parse_args`][clap.Parser.parse_args] method injected at runtime.
+    Inheriting from [`Parser`][clap.Parser] provides this method signature to
+    static type checkers, avoiding errors and enabling autocompletion in
     editors.
 
     This class is not strictly required for functionality.
@@ -42,7 +43,7 @@ class Parser:
     """
     @classmethod
     def parse_args(cls: type[Self], args: Optional[Sequence[str]] = None) -> Self:
-        """Parse from sys.ar, exit on error."""
+        """Parse from [`sys.argv`][], exit on error."""
         ...
 
 
@@ -247,6 +248,28 @@ def subcommand[T](
             abbreviation is unambiguous.
         exit_on_error: Whether `ArgumentParser` exits with error info when an error occurs.
         deprecated: Whether this subcommand is deprecated.
+
+    Example:
+
+    ```python
+    import clap
+    from typing import Union
+
+    @clap.subcommand(aliases=("w", "wat"))
+    class Watch:
+        \"""Watches an input file and recompiles on changes.\"""
+        ...
+
+    @clap.subcommand
+    class Init:
+        \"""Initializes a new project from a template.\"""
+        ...
+
+    @clap.command(name="typst")
+    class Cli(clap.Parser):
+        command: Union[Watch, Init]
+        ...
+    ```
     """
     def wrap(cls: type[T]) -> type[T]:
         nonlocal about, long_about, name
@@ -418,7 +441,12 @@ def arg[U](
     )
 
 
-def group(title: str, **kwargs) -> Group:
+def group(
+    title: str,
+    about: Optional[str] = None,
+    long_about: Optional[str] = None,
+    conflict_handler: Optional[str] = None,
+) -> Group:
     """Create an argument group for organizing related arguments in the help output.
 
     Args:
@@ -446,7 +474,9 @@ def group(title: str, **kwargs) -> Group:
     assert isinstance(title, str)
     return Group(
         title=title,
-        **kwargs
+        about=about,
+        long_about=long_about,
+        conflict_handler=conflict_handler
     )
 
 

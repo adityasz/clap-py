@@ -73,7 +73,7 @@ def command(
     before_long_help: Optional[str] = ...,
     subcommand_help_heading: str = ...,
     subcommand_value_name: str = ...,
-    color: Optional[ColorChoice] = ColorChoice.Auto,
+    color: ColorChoice = ColorChoice.Auto,
     help_styles: Optional[Styles] = ...,
     help_template: Optional[str] = ...,
     max_term_width: Optional[int] = ...,

@@ -1,3 +1,3 @@
 # command
 
-::: clap.command 
+::: clap.command
