@@ -4,18 +4,18 @@ This guide is structured as a tutorial.
 
 !!! note
 
-    **WIP**.
-    See [examples](https://github.com/adityasz/clap-py/tree/master/examples)
+    **This guide is under development.**
+    In the meantime, see [examples](https://github.com/adityasz/clap-py/tree/master/examples)
     and [tests](https://github.com/adityasz/clap-py/tree/master/tests).
 
 ## Adding arguments
 
 - Each argument field must have a type annotation.
 - Fields without type annotations are ignored.
-- Flags need to be generated using [`clap.arg`][]. If an arg does not have flags, it is
+- Flags need to be generated using [`arg()`][clap.arg]. If an arg does not have flags, it is
   a positional argument.
-  - To automatically generate flags, [`clap.short`][] and [`clap.long`][] can be used.
-    These are positional-only arguments to [`clap.arg`][]:
+  - To automatically generate flags, [`short`][clap.short] and [`long`][clap.long] can be used.
+    These are positional-only arguments to [`arg()`][clap.arg]:
 
     ```python
     import clap

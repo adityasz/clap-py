@@ -53,8 +53,8 @@ class AnsiColor(IntEnum):
     The user's terminal defines the meaning of the each palette code.
 
     TODO:
-        Background colors not implemented. Enum values will be changed when that
-        is implemented.
+        Background colors not implemented.
+        Enum values will be changed when that is implemented.
     """
     Black = 30
     """Black: #0 (foreground code `30`, background code `40`)."""
@@ -158,7 +158,17 @@ class Style:
 
 
 class Styles:
-    """Terminal styling definitions."""
+    """Terminal styling definitions.
+
+    Example:
+
+    ```python
+    from clap import AnsiColor, Style, Styles
+
+    styles = (Styles().header(Style().bold().underline())
+                  .literal(Style().fg_color(AnsiColor.Green).bold()))
+    ```
+    """
 
     def __init__(self):
         self.header_style = Style()

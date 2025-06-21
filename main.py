@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import clap
-from clap import arg, long, short
+from clap import AnsiColor, Style, Styles, arg, long, short
 
 
 @clap.command
@@ -19,3 +19,6 @@ class Cli(clap.Parser):
 
 
 args = Cli.parse_args()
+
+styles = (Styles().header(Style().bold().underline())
+             .literal(Style().fg_color(AnsiColor.Green).bold()))
