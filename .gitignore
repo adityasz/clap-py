@@ -1,12 +1,9 @@
-# Python-generated files
 __pycache__/
 *.py[oc]
 build/
 dist/
 wheels/
+/docs/site
 *.egg-info
-
-# Virtual environments
 .venv
-
 .idea
