@@ -1,8 +1,8 @@
 from collections.abc import Callable, Sequence
-from typing import Any, Optional, TypeVar, Union, overload
+from typing import Any, Optional, TypeVar, Union, dataclass_transform, overload
 
 from .api import Parser, mutex_group
-from .models import (
+from .core import (
     ArgAction,
     AutoFlag,
     Group,
@@ -56,9 +56,11 @@ def arg[U](
 ) -> Any: ...
 
 @overload
+@dataclass_transform()
 def command[T](cls: type[T], /) -> type[T]: ...
 
 @overload
+@dataclass_transform()
 def command(
     *,
     name: str = ...,
@@ -88,9 +90,11 @@ def command(
 ) -> Callable[[type[T]], type[T]]: ...
 
 @overload
+@dataclass_transform()
 def subcommand[T](cls: type[T], /) -> type[T]: ...
 
 @overload
+@dataclass_transform()
 def subcommand[T](
     *,
     name: str = ...,

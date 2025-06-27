@@ -263,10 +263,26 @@ class ArgType:
 
 @dataclass(slots=True)
 class Group:
+    """Family of related [arguments][clap.core.Arg]."""
     title: str
+    """The title for the argument group in the help output."""
     about: Optional[str] = None
+    """The group's description for the short help (`-h`).
+
+    If [`Group.long_about`][clap.Group.long_about] is not specified,
+    this message will be displayed for `--help`.
+    """
     long_about: Optional[str] = None
+    """The group's description for the long help (`--help`).
+
+    If not set, [`Group.about`][clap.Group.about] will be used for long help in
+    addition to short help (`-h`).
+    """
     conflict_handler: Optional[str] = None
+    """The strategy for resolving conflicting optionals within this group.
+
+    This is forwarded to [argparse][].
+    """
 
     def __hash__(self):
         return hash(id(self))

@@ -2,7 +2,6 @@
 Adapted from https://github.com/clap-rs/clap/blob/master/examples/git-derive.rs
 """
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Union
 
@@ -19,7 +18,7 @@ class Clone:
 class Diff:
     base: Optional[str] = arg(value_name="COMMIT")
     head: Optional[str] = arg(value_name="COMMIT")
-    path: Optional[str]  # what's `argparse`'s equivalent of last=true?
+    path: Optional[str] = arg()  # what's `argparse`'s equivalent of last=true?
     color: ColorChoice = arg(
         long,
         value_name="WHEN",
@@ -42,7 +41,6 @@ class Add:
 @clap.subcommand
 class Stash:
     @clap.subcommand
-    @dataclass
     class Push:
         message: Optional[str]
 
@@ -73,9 +71,9 @@ def main():
     args = Cli.parse_args()
 
     match args.command:
-        case Clone(remote=remote):
+        case Clone(remote):
             print(f"Cloning {remote}")
-        case Diff(base=base, head=head, path=path, color=color):
+        case Diff(base, head, path, color):
             if path is None:
                 path = head
                 head = None
@@ -86,20 +84,20 @@ def main():
             head = head if head is not None else "worktree"
             path = path if path is not None else ""
             print(f"Diffing {base}..{head} {path} (color={color})")
-        case Push(remote=remote):
+        case Push(remote):
             print(f"Pushing to {remote}")
-        case Add(paths=paths):
+        case Add(paths):
             print(f"Adding {" ".join(str(path) for path in paths)}")
-        case Stash(command=command, message=message):
+        case Stash(command, message):
             command = command or Stash.Push(message)
             match command:
-                case Stash.Push(message=msg):
+                case Stash.Push(msg):
                     print(f"Pushing {msg}")
-                case Stash.Pop(stash=stash):
+                case Stash.Pop(stash):
                     print(f"Popping {stash}")
-                case Stash.Apply(stash=stash):
+                case Stash.Apply(stash):
                     print(f"Applying {stash}")
-        case External(args=args):
+        case External(args):
             print(f"Calling out to {args[0]} with {args[1]}")
 
 

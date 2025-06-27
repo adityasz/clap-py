@@ -3,7 +3,7 @@ import unittest
 from textwrap import dedent
 from typing import Union
 
-from clap.models import Arg
+from clap.core import Arg
 from clap.parser import (
     DocstringExtractor,
     get_help_from_docstring,
@@ -138,7 +138,7 @@ class TestValueNameGeneration(unittest.TestCase):
         self.assertEqual(arg_obj.value_name, "<COORD> <COORD> <COORD>")
 
     def test_set_value_name_no_action_clears_value_name(self):
-        from clap.models import ArgAction
+        from clap.core import ArgAction
         arg_obj = Arg(action=ArgAction.SetTrue)
         set_value_name(arg_obj, "flag")
         self.assertIsNone(arg_obj.value_name)

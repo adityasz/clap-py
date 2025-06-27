@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 from typing import Optional, Union
@@ -14,7 +13,6 @@ class OutputFormat(Enum):
     HTML = auto()
 
 
-@dataclass
 @clap.subcommand(aliases=("w"))
 class Watch:
     """Watches an input file and recompiles on changes."""
@@ -39,7 +37,6 @@ class Watch:
     """Number of parallel jobs spawned during compilation. Defaults to number of CPUs."""
 
 
-@dataclass
 @clap.subcommand
 class Init:
     """Initializes a new project from a template."""

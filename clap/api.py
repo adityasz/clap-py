@@ -1,9 +1,10 @@
 import os
 import sys
 from collections.abc import Callable, Sequence
-from typing import Optional, Self, Union
+from dataclasses import dataclass
+from typing import Optional, Self, Union, dataclass_transform
 
-from .models import Arg, ArgAction, AutoFlag, Command, Group, MutexGroup, NargsType
+from .core import Arg, ArgAction, AutoFlag, Command, Group, MutexGroup, NargsType, to_kebab_case
 from .parser import (
     _COMMAND_DATA,
     _SUBCOMMAND_DEFAULTS,
@@ -11,7 +12,6 @@ from .parser import (
     apply_parsed_args,
     create_parser,
     get_help_from_docstring,
-    to_kebab_case,
 )
 from .styling import ColorChoice, Styles
 
@@ -47,6 +47,7 @@ class Parser:
         ...
 
 
+@dataclass_transform()
 def command[T](
     cls: Optional[type[T]] = None,
     /,
@@ -158,14 +159,17 @@ def command[T](
             allow_abbrev=allow_abbrev,
             exit_on_error=exit_on_error,
         )
+
         setattr(cls, _COMMAND_DATA, command)
         setattr(cls, _PARSER, create_parser(cls))
 
-        # delete default values of fields so that `@dataclass` does not complain
+        # delete default values of fields so that `dataclass` does not complain
         # about mutable defaults (`Arg`)
         for name, _ in cls.__annotations__.items():
             if hasattr(cls, name):
                 delattr(cls, name)
+
+        dataclass(cls, slots=True)
 
         @classmethod
         def parse_args(cls: type[T], args: Optional[list[str]] = None) -> T:
@@ -184,6 +188,7 @@ def command[T](
     return wrap(cls)
 
 
+@dataclass_transform()
 def subcommand[T](
     cls: Optional[type[T]] = None,
     /,
@@ -273,7 +278,6 @@ def subcommand[T](
     """
     def wrap(cls: type[T]) -> type[T]:
         nonlocal about, long_about, name
-        setattr(cls, _SUBCOMMAND_MARKER, True)
         if name is None:
             name = to_kebab_case(cls.__name__)
         if cls.__doc__ is not None:
@@ -310,9 +314,10 @@ def subcommand[T](
             exit_on_error=exit_on_error,
             deprecated=deprecated
         )
+        setattr(cls, _SUBCOMMAND_MARKER, True)
         setattr(cls, _COMMAND_DATA, command)
 
-        # delete default values of fields so that `@dataclass` does not complain
+        # delete default values of fields so that `dataclass` does not complain
         # about mutable defaults (`Arg`)
         attrs = {}
         for name, _ in cls.__annotations__.items():
@@ -320,6 +325,8 @@ def subcommand[T](
                 attrs[name] = attr
                 delattr(cls, name)
         setattr(cls, _SUBCOMMAND_DEFAULTS, attrs)
+
+        dataclass(cls, slots=True)
 
         return cls
 

@@ -4,7 +4,7 @@ from typing import Optional
 
 import clap
 from clap import ColorChoice, arg, long, short
-from clap.models import to_kebab_case
+from clap.core import to_kebab_case
 
 
 class Priority(Enum):

@@ -12,7 +12,7 @@ This guide is structured as a tutorial.
 
 - Each argument field must have a type annotation.
 - Fields without type annotations are ignored, unless it is a
-  [(mutually exclusive)][clap.models.MutexGroup] [group][clap.models.Group].
+  [(mutually exclusive)][clap.core.MutexGroup] [group][clap.core.Group].
 - Flags need to be generated using [`arg()`][clap.arg]. If an arg does not have
   flags, it is a positional argument.
   - To automatically generate flags, [`short`][clap.short] and

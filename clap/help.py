@@ -3,7 +3,7 @@ import textwrap
 from dataclasses import dataclass
 from typing import Optional, Union, cast
 
-from .models import Arg, Command
+from .core import Arg, Command
 from .styling import ColorChoice, Styles, determine_color_usage
 
 INDENT = " " * 2

@@ -47,12 +47,10 @@ See [/examples](https://github.com/adityasz/clap-py/tree/master/examples) for mo
 - **Subcommands**
 
   ```python
-  @dataclass
   @clap.subcommand
   class Add:
       file: Path
 
-  @dataclass
   @clap.subcommand
   class List:
       directory: Path
@@ -69,12 +67,9 @@ See [/examples](https://github.com/adityasz/clap-py/tree/master/examples) for mo
           print(f"Listing {directory}...")
   ```
 
-  The `@dataclass` decorator is not required for subcommands to work; it is added
-  for structural pattern matching in the `match`-`case`.
-
 - **Separate short and long help** with `-h` and `--help`.
 
-- **Customizable help output** with templates.
+- **Customize help output** with templates and [styles](https://adityasz.github.io/clap-py/styling/).
 
 See the [docs](https://adityasz.github.io/clap-py) for usage.
 
