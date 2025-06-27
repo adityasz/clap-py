@@ -4,5 +4,11 @@
     "command": "pytest",
     "use_new_terminal": false,
     "hide": "on_success"
+  },
+  {
+    "label": "Serve docs",
+    "command": "mkdocs serve --config-file docs/mkdocs.yml --watch clap",
+    "use_new_terminal": false,
+    "hide": "on_success"
   }
 ]
