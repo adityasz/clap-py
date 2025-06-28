@@ -69,7 +69,7 @@ See [/examples](https://github.com/adityasz/clap-py/tree/master/examples) for mo
 
 - **Separate short and long help** with `-h` and `--help`.
 
-- **Customize help output** with templates and [styles](https://adityasz.github.io/clap-py/styling/).
+- **Customize help output** with templates and [styles](https://adityasz.github.io/clap-py/styling/#clap.styling.Styles).
 
 See the [docs](https://adityasz.github.io/clap-py) for usage.
 
