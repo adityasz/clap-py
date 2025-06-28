@@ -68,7 +68,8 @@ for more examples.
           print(f"Listing {directory}...")
   ```
 
-- **Separate short and long help** with `-h` and `--help`.
+- **Separate short and long help** with `-h` and `--help`. See example output
+  [here](https://adityasz.github.io/clap-py/quickstart/#help).
 
 - **Customize help output** with
   [templates](https://adityasz.github.io/clap-py/help/#clap.help.HelpTemplate)
@@ -111,7 +112,7 @@ creating a PR. Thank you!
 ## TODO (v1.0)
 
 - [x] Support more tags in the help template.
-- [ ] Support background colors in
+- [x] Support background colors in
       [`AnsiColor`](https://adityasz.github.io/clap-py/styling/#ansicolor).
 - [ ] In long help, show description of possible values when the enum has
       docstrings.

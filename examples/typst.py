@@ -1,9 +1,10 @@
+import sys
 from enum import Enum, auto
 from pathlib import Path
 from typing import Optional, Union
 
 import clap
-from clap import arg, long, short
+from clap import AnsiColor, ColorChoice, Style, arg, long, short
 
 
 class OutputFormat(Enum):
@@ -56,19 +57,36 @@ class Cli(clap.Parser):
 
     cert: Optional[str] = arg(long)
     """Path to a custom CA certificate to use when making network requests."""
+    color: ColorChoice = arg(long, default_value=ColorChoice.Auto)
+    """Whether to use color. When set to `auto` if the terminal to supports it."""
 
 
 def main():
     args = Cli.parse_args()
 
+    if args.color == ColorChoice.Always or (
+        args.color == ColorChoice.Auto and sys.stdout.isatty()
+    ):
+        verb = Style().fg_color(AnsiColor.Green).bold()
+        info = Style().fg_color(AnsiColor.Blue).bold()
+    else:
+        verb = info = Style()
+
     if cert := args.cert:
-        print(f"Using {cert} as the CA certificate")
+        print(f"Using {info}'{cert}'{info:#} as the CA certificate\n")
 
     match args.command:
         case Watch(input):
-            print(f"Watching {input}...")
+            print(
+                f"{verb}watching{verb:#} {input}\n"
+                f"{verb}writing to{verb:#} {input.with_suffix(".pdf")}\n\n"
+                f"[01:45:47] compiled successfully in 1 picosecond (because typst is way too fast)"
+            )
         case Init(template):
-            print(f"{template} is a cool template!")
+            print(
+                f"{info}'{template}'{info:#} "
+                f"is a cool template!"
+            )
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Optional, Union, cast
 
 from .core import Arg, Command
-from .styling import ColorChoice, Styles, determine_color_usage
+from .styling import ColorChoice, Style, Styles, determine_color_usage
 
 # So people can write help_template: HelpTemplate = ...
 # and get docs in the IDE for HelpTemplate
@@ -79,10 +79,8 @@ class HelpRenderer:
     def set_color(self, color: ColorChoice):
         if determine_color_usage(color):
             self.active_styles = self.original_styles
-            self.reset_ansi = "\033[0m"
         else:
             self.active_styles = Styles()
-            self.reset_ansi = ""
 
     # TODO: when this library is no longer dependent on argparse, there wouldn't
     # be a need for this function because `HelpRender` will be instantiated when
@@ -90,17 +88,20 @@ class HelpRenderer:
     def set_use_long(self, use_long: bool):
         self.use_long = use_long
 
+    def style_text(self, text: str, style: Style) -> str:
+        return f"{style}{text}{style:#}"
+
     def style_header(self, text: str) -> str:
-        return f"{self.active_styles.header_style}{text}{self.reset_ansi}"
+        return self.style_text(text, self.active_styles.header_style)
 
     def style_literal(self, text: str) -> str:
-        return f"{self.active_styles.literal_style}{text}{self.reset_ansi}"
+        return self.style_text(text, self.active_styles.literal_style)
 
     def style_placeholder(self, text: str) -> str:
-        return f"{self.active_styles.placeholder_style}{text}{self.reset_ansi}"
+        return self.style_text(text, self.active_styles.placeholder_style)
 
     def style_usage(self, text: str) -> str:
-        return f"{self.active_styles.usage_style}{text}{self.reset_ansi}"
+        return self.style_text(text, self.active_styles.usage_style)
 
     def render(self):
         self.write_templated_help()
