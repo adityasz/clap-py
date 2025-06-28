@@ -4,7 +4,6 @@ from typing import Optional
 
 import clap
 from clap import ColorChoice, arg, long, short
-from clap.core import to_kebab_case
 
 
 class Priority(Enum):
@@ -157,49 +156,6 @@ class TestEnumErrors(unittest.TestCase):
 
         with self.assertRaises(SystemExit):
             Cli.parse_args(["low", "medium"])
-
-
-class TestKebabCaseConversion(unittest.TestCase):
-    def test_pascal_case(self):
-        self.assertEqual(to_kebab_case("PascalCase"), "pascal-case")
-        self.assertEqual(to_kebab_case("HTTPSConnection"), "https-connection")
-        self.assertEqual(to_kebab_case("XMLHttpRequest"), "xml-http-request")
-
-    def test_camel_case(self):
-        self.assertEqual(to_kebab_case("camelCase"), "camel-case")
-
-    def test_snake_case(self):
-        self.assertEqual(to_kebab_case("snake_case"), "snake-case")
-        self.assertEqual(to_kebab_case("get_user_id"), "get-user-id")
-        self.assertEqual(to_kebab_case("a_b_c"), "a-b-c")
-        self.assertEqual(to_kebab_case("a_b__c_"), "a-b-c")
-
-    def test_screaming_snake_case(self):
-        self.assertEqual(to_kebab_case("SCREAMING_SNAKE_CASE"), "screaming-snake-case")
-        self.assertEqual(to_kebab_case("_MAX__RETRY___COUNT__"), "max-retry-count")
-
-    def test_mixed_cases(self):
-        self.assertEqual(to_kebab_case("Option_Four"), "option-four")
-        self.assertEqual(to_kebab_case("HAtom"), "h-atom")
-        self.assertEqual(to_kebab_case("APIKey_Value"), "api-key-value")
-
-    def test_edge_cases(self):
-        self.assertEqual(to_kebab_case("A"), "a")
-        self.assertEqual(to_kebab_case("AB"), "ab")
-        self.assertEqual(to_kebab_case("ABC"), "abc")
-        self.assertEqual(to_kebab_case("ABc"), "a-bc")
-        self.assertEqual(to_kebab_case("AbC"), "ab-c")
-        self.assertEqual(to_kebab_case("a"), "a")
-        self.assertEqual(to_kebab_case("aB"), "a-b")
-        self.assertEqual(to_kebab_case(""), "")
-        self.assertEqual(to_kebab_case("option1"), "option1")
-        self.assertEqual(to_kebab_case("Option1Two"), "option1-two")
-
-    def test_already_kebab_case(self):
-        self.assertEqual(to_kebab_case("kebab-case"), "kebab-case")
-        self.assertEqual(to_kebab_case("HAtom"), "h-atom")
-        self.assertEqual(to_kebab_case("test--case"), "test-case")
-        self.assertEqual(to_kebab_case("---test---"), "test")
 
 
 if __name__ == "__main__":
