@@ -871,8 +871,8 @@ If <code>None</code>, the group will be added directly to the parser.</p>
 <span class="nd">@clap</span><span class="o">.</span><span class="n">command</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
     <span class="n">loglevel</span> <span class="o">=</span> <span class="n">mutex_group</span><span class="p">()</span>
-    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">,</span> <span class="n">mutex</span><span class="o">=</span><span class="s2">&quot;loglevel&quot;</span><span class="p">)</span>
-    <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">,</span> <span class="n">mutex</span><span class="o">=</span><span class="s2">&quot;loglevel&quot;</span><span class="p">)</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">,</span> <span class="n">mutex</span><span class="o">=</span><span class="n">loglevel</span><span class="p">)</span>
+    <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">,</span> <span class="n">mutex</span><span class="o">=</span><span class="n">loglevel</span><span class="p">)</span>
 </code></pre></div>
 
 
@@ -930,8 +930,8 @@ If <code>None</code>, the group will be added directly to the parser.</p>
 <span class="sd">    @clap.command</span>
 <span class="sd">    class Cli(clap.Parser):</span>
 <span class="sd">        loglevel = mutex_group()</span>
-<span class="sd">        verbose: bool = arg(long, mutex=&quot;loglevel&quot;)</span>
-<span class="sd">        quiet: bool = arg(long, mutex=&quot;loglevel&quot;)</span>
+<span class="sd">        verbose: bool = arg(long, mutex=loglevel)</span>
+<span class="sd">        quiet: bool = arg(long, mutex=loglevel)</span>
 <span class="sd">    ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">MutexGroup</span><span class="p">(</span><span class="n">parent</span><span class="o">=</span><span class="n">parent_group</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="n">required</span><span class="p">)</span>
