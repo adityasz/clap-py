@@ -12,6 +12,7 @@ import re
 import subprocess
 from io import StringIO
 
+from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
 from rich.console import Console
 from rich.text import Text
@@ -20,6 +21,10 @@ TERM_WIDTH = 100
 
 
 class InsertStdoutPlugin(BasePlugin):
+    config_scheme = (
+        ('root', config_options.Type(str, default='.')),
+    )
+
     def on_page_markdown(self, markdown: str, **_) -> str:
         def replace_stdout_marker(match):
             command = match.group(1).strip()
@@ -38,6 +43,7 @@ class InsertStdoutPlugin(BasePlugin):
             text=True,
             check=False,
             env=env,
+            cwd=self.config["root"]
         )
         assert result.returncode == 0
 

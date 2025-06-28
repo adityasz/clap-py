@@ -7,7 +7,7 @@
   },
   {
     "label": "Serve docs",
-    "command": "mkdocs serve --config-file docs/mkdocs.yml --watch clap",
+    "command": "cd docs && mkdocs serve --watch ../clap",  // run from /docs
     "use_new_terminal": false,
     "hide": "on_success"
   }
