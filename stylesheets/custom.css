@@ -1,3 +1,20 @@
 .doc.doc-object.doc-function:has(.doc-overloads) > .doc-signature.highlight {
     display: none;
 }
+
+.stdout {
+    background-color: var(--md-code-bg-color);
+    color: var(--md-code-fg-color);
+    font-family: monospace; /* Ideally, people should set a nice monospace font in their browser settings. Their fault if it looks ugly. */
+
+    /* Are there variables for these: */
+    border-radius: 2px;
+    font-size: 0.85em;
+    margin: 1em 0;
+    padding: 0;
+    white-space: pre;
+}
+
+.stdout code {
+    font-size: inherit !important;
+}

@@ -884,15 +884,73 @@ and <a href="https://github.com/adityasz/clap-py/tree/master/tests">tests</a>.</
 <p>Docstrings are processed just like
 <a href="https://docs.rs/clap/latest/clap/_derive/index.html#doc-comments"><code>clap-rs</code></a>.</p>
 <h2 id="help">Help</h2>
-<p>Depending on the help flag, short (<code>-h</code>) or long (<code>--help</code>) help is output. See <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.ArgAction&lt;/span&gt;" href="../actions/#clap.ArgAction"><code>ArgAction</code></a>. A custom <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;clap.help.HelpTemplate&lt;/span&gt;
+<p>See <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Help&lt;/span&gt;" href="../actions/#clap.ArgAction.Help"><code>ArgAction.Help</code></a>,
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;HelpLong&lt;/span&gt;" href="../actions/#clap.ArgAction.HelpLong"><code>ArgAction.HelpLong</code></a>, and
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;HelpShort&lt;/span&gt;" href="../actions/#clap.ArgAction.HelpShort"><code>ArgAction.HelpShort</code></a>.</p>
+<p>A custom <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;clap.help.HelpTemplate&lt;/span&gt;
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
       &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="../help/#clap.help.HelpTemplate">template</a> can be used, and styles can be customized using <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.styling.Styles&lt;/span&gt;" href="../styling/#clap.styling.Styles"><code>Styles</code></a>.</p>
+  &lt;/span&gt;" href="../help/#clap.help.HelpTemplate">template</a> can be used, and styles can be customized
+using <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.styling.Styles&lt;/span&gt;" href="../styling/#clap.styling.Styles"><code>Styles</code></a>.</p>
 <p>Here's the help output for
-<a href="https://github.com/adityasz/clap-py/tree/master/examples/typst.py">typst.py</a>:</p>
-<p>TODO: ANSI -&gt; HTML</p>
+<a href="https://github.com/adityasz/clap-py/tree/master/examples/typst.py"><code>examples/typst.py</code></a>:</p>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python examples/typst.py --help
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">typst</span> [OPTIONS] &lt;COMMAND&gt;
+
+<span style="font-weight: bold; text-decoration: underline">Commands:</span>
+  <span style="font-weight: bold">watch</span>  Watches an input file and recompiles on changes [aliases: w]
+  <span style="font-weight: bold">init</span>   Initializes a new project from a template
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+      <span style="font-weight: bold">--cert</span> &lt;CERT&gt;  Path to a custom CA certificate to use when making network requests
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>         Print help</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python examples/typst.py watch -h
+Watches an input file and recompiles on changes
+
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">typst</span> [OPTIONS] <span style="font-weight: bold">watch</span> [OPTIONS] &lt;INPUT&gt; [OUTPUT]
+
+<span style="font-weight: bold; text-decoration: underline">Arguments:</span>
+  &lt;INPUT&gt;   Path to input Typst file. Use `-` to read input from stdin
+  [OUTPUT]  Path to output file (PDF, PNG, SVG, or HTML). Use `-` to write output to stdout
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+  <span style="font-weight: bold">-f</span>, <span style="font-weight: bold">--format</span> &lt;FORMAT&gt;      The format of the output file, inferred from the extension by default
+                             [possible values: pdf, png, svg, html]
+      <span style="font-weight: bold">--ignore-system-fonts</span>  Ensures system fonts won&#x27;t be searched, unless explicitly included
+                             via `--font-path`
+  <span style="font-weight: bold">-j</span>, <span style="font-weight: bold">--jobs</span> &lt;JOBS&gt;          Number of parallel jobs spawned during compilation. Defaults to
+                             number of CPUs
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>                 Print help</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python examples/typst.py watch --help
+Watches an input file and recompiles on changes
+
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">typst</span> [OPTIONS] <span style="font-weight: bold">watch</span> [OPTIONS] &lt;INPUT&gt; [OUTPUT]
+
+<span style="font-weight: bold; text-decoration: underline">Arguments:</span>
+  &lt;INPUT&gt;
+          Path to input Typst file. Use `-` to read input from stdin
+
+  [OUTPUT]
+          Path to output file (PDF, PNG, SVG, or HTML). Use `-` to write output to stdout.
+
+          For output formats emitting one file per page (PNG &amp; SVG), a page number
+          template must be present if the source document renders to multiple pages. Use
+          `{p}` for page numbers, `{0p}` for zero padded page numbers and `{t}` for page
+          count. For example, `page-{0p}-of-{t}.png` creates `page-01-of-10.png`,
+          `page-02-of-10.png`, and so on.
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+  <span style="font-weight: bold">-f</span>, <span style="font-weight: bold">--format</span> &lt;FORMAT&gt;      The format of the output file, inferred from the extension by default
+                             [possible values: pdf, png, svg, html]
+      <span style="font-weight: bold">--ignore-system-fonts</span>  Ensures system fonts won&#x27;t be searched, unless explicitly included
+                             via `--font-path`
+  <span style="font-weight: bold">-j</span>, <span style="font-weight: bold">--jobs</span> &lt;JOBS&gt;          Number of parallel jobs spawned during compilation. Defaults to
+                             number of CPUs
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>                 Print help</code></pre></div>
 
 
 
