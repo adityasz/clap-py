@@ -251,9 +251,17 @@ def set_default_and_required(arg: Arg):
             if arg.default_value is not None and optional_type_hint:
                 raise TypeError("An argument with a default value can never be None.")
             if arg.default_value is None:
-                arg.required = not optional_type_hint
+                if not optional_type_hint:
+                    if arg.num_args not in ("?", "*"):
+                        arg.required = True
+                    else:
+                        arg.required = False
+                        if isinstance(arg.ty, ArgType.List):
+                            arg.default_value = []
+                else:
+                    arg.required = False
                 if arg.is_positional():
-                    if not arg.required:
+                    if optional_type_hint:
                         if arg.num_args is not None and arg.num_args != "?":
                             raise TypeError(
                                 "A positional argument with 'num_args != ?' can never be None; "

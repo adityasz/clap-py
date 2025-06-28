@@ -7,7 +7,7 @@ from clap import arg, long
 
 
 class TestListArguments(unittest.TestCase):
-    def test_list_with_nargs_star(self):
+    def test_positional_with_nargs_star(self):
         @clap.command
         class Cli(clap.Parser):
             files: list[str] = arg(num_args="*")
@@ -16,6 +16,20 @@ class TestListArguments(unittest.TestCase):
         self.assertEqual(args.files, [])
 
         args = Cli.parse_args(["file1.txt", "file2.txt", "file3.txt"])
+        self.assertEqual(args.files, ["file1.txt", "file2.txt", "file3.txt"])
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["--unknown", "file1.txt"])
+
+    def test_option_with_nargs_star(self):
+        @clap.command
+        class Cli(clap.Parser):
+            files: list[str] = arg(long, num_args="*")
+
+        args = Cli.parse_args([])
+        self.assertEqual(args.files, [])
+
+        args = Cli.parse_args(["--files", "file1.txt", "file2.txt", "file3.txt"])
         self.assertEqual(args.files, ["file1.txt", "file2.txt", "file3.txt"])
 
         with self.assertRaises(SystemExit):
