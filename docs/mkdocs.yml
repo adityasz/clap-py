@@ -13,12 +13,13 @@ nav:
       - subcommand: subcommand.md
       - arg: arg.md
       - Actions: actions.md
+      - Help Template: help.md
       - Parser: parser.md
       - group: group.md
       - mutex_group: mutex_group.md
       - Styling: styling.md
     - Internal:
-      - Models: models.md
+      - Core: core.md
 
 validation:
   omitted_files: warn

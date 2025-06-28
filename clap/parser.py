@@ -13,7 +13,6 @@ from typing import (
     get_type_hints,
 )
 
-from .help import HelpRenderer
 from .core import (
     Arg,
     ArgAction,
@@ -24,6 +23,7 @@ from .core import (
     short,
     to_kebab_case,
 )
+from .help import HelpRenderer
 
 _SUBCOMMAND_MARKER = "__com.github.adityasz.clap_py.subcommand_marker__"
 _COMMAND_DATA = "__command_data__"
@@ -360,17 +360,7 @@ def configure_subcommands(
     command.subparser_dest = command_path + field_name
     for cmd in ty.subcommands:
         subcommand = create_command(cmd, command_path)
-        if subcommand.color is None:
-            subcommand.color = command.color
-        if subcommand.styles is None:
-            subcommand.styles = command.styles
-        if subcommand.help_template is None:
-            subcommand.help_template = command.help_template
-        if subcommand.max_term_width is None:
-            subcommand.max_term_width = command.max_term_width
-        if command.propagate_version and not (subcommand.version or subcommand.long_version):
-            subcommand.version = command.version
-            subcommand.long_version = command.long_version
+        command.propagate_subcommand(subcommand)
         name = subcommand.name
         command.subcommands[name] = subcommand
 

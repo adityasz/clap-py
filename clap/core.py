@@ -18,9 +18,15 @@ from .styling import ColorChoice, Styles
 
 class AutoFlag(Enum):
     Short = auto()
-    """Generate short from the first character in the case-converted field name."""
+    """Generate short from the first character in the case-converted field name.
+
+    Alias: [`short`][clap.short].
+    """
     Long = auto()
-    """Generate long from the case-converted field name."""
+    """Generate long from the case-converted field name.
+
+    Alias: [`long`][clap.long].
+    """
 
 
 class ArgAction(StrEnum):
@@ -165,10 +171,10 @@ class ArgAction(StrEnum):
         Depending on the flag, `long_help` may be shown.
         """
 
-        def __init__(self, option_strings, dest, **kwargs):
+        def __init__(self, option_strings: Sequence[str], dest: str, **_):
             super().__init__(option_strings, dest, nargs=0)
 
-        def __call__(self, parser, namespace, values, option_string=None):
+        def __call__(self, parser, _, __, option_string: Optional[str] = None):
             from .parser import ClapArgParser
             parser = cast(ClapArgParser, parser)
             if isinstance(option_string, str) and len(option_string) == 2:
@@ -179,24 +185,22 @@ class ArgAction(StrEnum):
     class HelpShort(argparse.Action):
         """When encountered, display short help information."""
 
-        def __init__(self, option_strings, dest, **kwargs):
+        def __init__(self, option_strings: Sequence[str], dest: str, **_):
             super().__init__(option_strings, dest, nargs=0)
 
-        def __call__(self, parser, namespace, values, option_string=None):
+        def __call__(self, parser, _, __, ___: Optional[str] = None):
             from .parser import ClapArgParser
-            parser = cast(ClapArgParser, parser)
-            parser.print_nice_help(use_long=False)
+            cast(ClapArgParser, parser).print_nice_help(use_long=False)
 
     class HelpLong(argparse.Action):
         """When encountered, display long help information."""
 
-        def __init__(self, option_strings, dest, **kwargs):
+        def __init__(self, option_strings: Sequence[str], dest: str, **_):
             super().__init__(option_strings, dest, nargs=0)
 
-        def __call__(self, parser, namespace, values, option_string=None):
+        def __call__(self, parser, _, __, ___: Optional[str] = None):
             from .parser import ClapArgParser
-            parser = cast(ClapArgParser, parser)
-            parser.print_nice_help(use_long=True)
+            cast(ClapArgParser, parser).print_nice_help(use_long=True)
 
 
 short = AutoFlag.Short
@@ -406,6 +410,7 @@ class Command:
     name: str
     aliases: Sequence[str] = field(default_factory=list)
     usage: Optional[str] = None
+    author: Optional[str] = None
     version: Optional[str] = None
     long_version: Optional[str] = None
     about: Optional[str] = None
@@ -444,6 +449,15 @@ class Command:
 
     def is_subcommand(self) -> bool:
         return self.subcommand_class is not None
+
+    def propagate_subcommand(self, sc: Self):
+        sc.color = sc.color or self.color
+        sc.styles = sc.styles or self.styles
+        sc.help_template = sc.help_template or self.help_template
+        sc.max_term_width = sc.max_term_width or self.max_term_width
+        if self.propagate_version and not (sc.version or sc.long_version):
+            sc.version = self.version
+            sc.long_version = self.long_version
 
     def contains_subcommands(self) -> bool:
         return self.subcommand_dest is not None

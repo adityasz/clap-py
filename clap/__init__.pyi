@@ -11,12 +11,16 @@ from .core import (
     long,
     short,
 )
+from .help import HelpTemplate
 from .styling import AnsiColor, ColorChoice, Style, Styles
 
 __all__ = [
     "AnsiColor",
     "ArgAction",
     "ColorChoice",
+    "Group",
+    "MutexGroup",
+    "HelpTemplate",
     "Style",
     "Styles",
     "Parser",

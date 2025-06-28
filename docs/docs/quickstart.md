@@ -12,7 +12,7 @@ This guide is structured as a tutorial.
 
 - Each argument field must have a type annotation.
 - Fields without type annotations are ignored, unless it is a
-  [(mutually exclusive)][clap.core.MutexGroup] [group][clap.core.Group].
+  [(mutually exclusive)][clap.MutexGroup] [group][clap.Group].
 - Flags need to be generated using [`arg()`][clap.arg]. If an arg does not have
   flags, it is a positional argument.
   - To automatically generate flags, [`short`][clap.short] and
@@ -42,7 +42,7 @@ class Cli(clap.Parser):
     contains the entire docstring."""
 
     input: str
-    """The same holds for args."""
+    """Ellipsis are kept in the short help..."""
 ```
 
 Docstrings are processed just like
@@ -50,7 +50,7 @@ Docstrings are processed just like
 
 ## Help
 
-Depending on the help flag, short (`-h`) or long (`--help`) help is output. See [`ArgAction`][clap.ArgAction]. A custom template can be used (TODO: docs), and styles can be customized using [`Styles`][clap.Styles].
+Depending on the help flag, short (`-h`) or long (`--help`) help is output. See [`ArgAction`][clap.ArgAction]. A custom [template][clap.HelpTemplate] can be used, and styles can be customized using [`Styles`][clap.Styles].
 
 Here's the help output for
 [typst.py](https://github.com/adityasz/clap-py/tree/master/examples/typst.py):

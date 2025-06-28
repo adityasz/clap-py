@@ -56,6 +56,7 @@ def command[T](
     version: Optional[str] = None,
     long_version: Optional[str] = None,
     usage: Optional[str] = None,
+    author: Optional[str] = None,
     about: Optional[str] = None,
     long_about: Optional[str] = None,
     before_help: Optional[str] = None,
@@ -86,6 +87,7 @@ def command[T](
         long_version: Sets the version for the long version (`--version`) and help messages.
         usage: The string describing the program usage. The default is
             generated from arguments added to parser.
+        author: Sets the author(s) for the help message. A custom `help_template` is needed for author to show up.
         about: The program's description for the short help (`-h`).
         long_about: The program's description for the long help (`--help`).
         after_help: Free-form help text for after auto-generated short help (`-h`).
@@ -136,6 +138,7 @@ def command[T](
         command = Command(
             name=name,
             usage=usage,
+            author=author,
             version=version,
             long_version=long_version,
             about=about,

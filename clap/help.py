@@ -6,16 +6,46 @@ from typing import Optional, Union, cast
 from .core import Arg, Command
 from .styling import ColorChoice, Styles, determine_color_usage
 
+# So people can write help_template: HelpTemplate = ...
+# and get docs in the IDE for HelpTemplate
+HelpTemplate = str
+r"""Tags are given inside curly brackets.
+
+Valid tags are:
+
+- `{name}`                - Display name for the (sub-)command.
+- `{version}`             - Version number.
+- `{author}`              - Author information.
+- `{author-with-newline}` - Author followed by `\n`.
+- `{author-section}`      - Author preceded and followed by `\n`.
+- `{about}`               - General description (from `about` or `long_about`).
+- `{about-with-newline}`  - About followed by `\n`.
+- `{about-section}`       - About preceded and followed by `\n`.
+- `{usage-heading}`       - Automatically generated usage heading.
+- `{usage}`               - Automatically generated or given usage string.
+- `{all-args}`            - Help for all arguments (options, flags, positional
+                            arguments, and subcommands) including titles.
+- `{options}`             - Help for options.
+- `{positionals}`         - Help for positional arguments.
+- `{subcommands}`         - Help for subcommands.
+- `{tab}`                 - Standard tab size used within clap.
+- `{after-help}`          - Help from `after_help` or `after_long_help`.
+- `{before-help}`         - Help from `before_help` or `before_long_help`.
+
+[`DEFAULT_TEMPLATE`][clap.help.DEFAULT_TEMPLATE] is the default help template.
+"""
+
 INDENT = " " * 2
 TAB = " " * 8
 NEXT_LINE_INDENT = INDENT + TAB
 
-DEFAULT_TEMPLATE = """\
+DEFAULT_TEMPLATE: HelpTemplate = """\
 {before-help}{about-with-newline}
 {usage-heading} {usage}
 
 {all-args}{after-help}\
 """
+"""This is the default help template."""
 
 
 @dataclass(slots=True)
@@ -82,10 +112,24 @@ class HelpRenderer:
         for part in self.template.split("{")[1:]:
             tag, rest = part.split("}", maxsplit=1)
             match tag:
+                case "author":
+                    self.write_author(False, False)
+                case "author-with-newline":
+                    self.write_author(False, True)
+                case "author-section":
+                    self.write_author(True, True)
+                case "name":
+                    self.writer.push_str(cmd.name)
                 case "before-help":
                     self.writer.push_str(
                         self.get_about(cmd.before_help, cmd.before_long_help, False)
                     )
+                case "after-help":
+                    self.writer.push_str(
+                        self.get_about(cmd.before_help, cmd.before_long_help, False)
+                    )
+                case "about":
+                    self.writer.push_str(self.get_about(cmd.about, cmd.long_about, False))
                 case "about-with-newline":
                     self.writer.push_str(self.get_about(cmd.about, cmd.long_about, False))
                     self.writer.push_str("\n")
@@ -95,10 +139,16 @@ class HelpRenderer:
                     self.writer.push_str(self.format_usage())
                 case "all-args":
                     self.write_all_args()
-                case "after-help":
-                    self.writer.push_str(
-                        self.get_about(cmd.before_help, cmd.before_long_help, False)
-                    )
+                case "tab":
+                    self.writer.push_str(TAB)
+                case "version":
+                    self.writer.push_str(self.get_about(cmd.version, cmd.long_version, True))
+                case "options":
+                    self.write_arg_group("Options", "", self.get_options())
+                case "positionals":
+                    self.write_arg_group("Arguments", "", self.get_positionals())
+                case "subcommands":
+                    self.write_subcommands()
             self.writer.push_str(rest)
 
     def format_usage(self, command: Optional[Command] = None, usage_prefix: str = "") -> str:
@@ -275,6 +325,9 @@ class HelpRenderer:
         self.writer.push_str("\n")
 
     def write_arg_group(self, title: str, about: str, args: list[Arg]):
+        if not args:
+            return
+
         self.writer.push_str(self.style_header(f"{title}:"))
         self.writer.push_str("\n")
         if about:
@@ -316,6 +369,14 @@ class HelpRenderer:
             )
         self.writer.strip()
 
+    def write_author(self, before_newline: bool, after_newline: bool):
+        if self.command.author is not None:
+            if before_newline:
+                self.writer.push_str("\n")
+            self.writer.push_str(self.command.author)
+            if after_newline:
+                self.writer.push_str("\n")
+
     def write_all_args(self):
         if self.command.contains_subcommands():
             self.write_subcommands()
@@ -342,3 +403,21 @@ class HelpRenderer:
                 about = group.about or ""
             self.write_arg_group(group.title, about, args)
             self.writer.push_str("\n")
+
+    def get_positionals(self) -> list[Arg]:
+        positionals: list[Arg] = []
+        for arg in self.command.args.values():
+            if arg.group or arg.mutex:
+                continue
+            if arg.is_positional():
+                positionals.append(arg)
+        return positionals
+
+    def get_options(self) -> list[Arg]:
+        options: list[Arg] = []
+        for arg in self.command.args.values():
+            if arg.group or arg.mutex:
+                continue
+            if not arg.is_positional():
+                options.append(arg)
+        return options
