@@ -514,8 +514,8 @@ def mutex_group(
     @clap.command
     class Cli(clap.Parser):
         loglevel = mutex_group()
-        verbose: bool = arg(long, mutex="loglevel")
-        quiet: bool = arg(long, mutex="loglevel")
+        verbose: bool = arg(long, mutex=loglevel)
+        quiet: bool = arg(long, mutex=loglevel)
     ```
     """
     return MutexGroup(parent=parent_group, required=required)
