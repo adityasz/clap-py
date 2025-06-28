@@ -2,7 +2,7 @@
 
 Welcome to the docs for [clap-py](https://github.com/adityasz/clap-py).
 `clap-py` is not 1.0 yet (see
-[TODOs](https://github.com/adityasz/clap-py?tab=readme-ov-file#todo)), but there
+[TODOs](https://github.com/adityasz/clap-py?tab=readme-ov-file#todo-v10)), but there
 probably wouldn't be any significant changes to the API.
 
 ## Installation
