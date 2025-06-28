@@ -373,15 +373,17 @@ def configure_subcommands(
     # the output (argparse.Namespace)
     command.subparser_dest = command_path + field_name
     for cmd in ty.subcommands:
-        subcommand = create_command(cmd, command_path)
-        command.propagate_subcommand(subcommand)
+        subcommand = create_command(cmd, command_path, command)
         name = subcommand.name
         command.subcommands[name] = subcommand
 
 
-def create_command(cls: type, command_path: str = "") -> Command:
+def create_command(cls: type, command_path: str = "", parent: Optional[Command] = None) -> Command:
     command: Command = getattr(cls, _COMMAND_DATA)
     docstrings: dict[str, str] = extract_docstrings(cls)
+
+    if parent:
+        parent.propagate_subcommand(command)
 
     if getattr(cls, _SUBCOMMAND_MARKER, False):
         command_path += command.name + "."
