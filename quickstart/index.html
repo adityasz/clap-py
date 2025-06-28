@@ -450,6 +450,8 @@
       
         
       
+        
+      
     
     
     
@@ -567,6 +569,29 @@
   
   <span class="md-ellipsis">
     Actions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../help/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Help Template
     
   </span>
   
@@ -854,12 +879,17 @@ and <a href="https://github.com/adityasz/clap-py/tree/master/tests">tests</a>.</
 <span class="sd">    contains the entire docstring.&quot;&quot;&quot;</span>
 
     <span class="nb">input</span><span class="p">:</span> <span class="nb">str</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The same holds for args.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ellipsis are kept in the short help...&quot;&quot;&quot;</span>
 </code></pre></div>
 <p>Docstrings are processed just like
 <a href="https://docs.rs/clap/latest/clap/_derive/index.html#doc-comments"><code>clap-rs</code></a>.</p>
 <h2 id="help">Help</h2>
-<p>Depending on the help flag, short (<code>-h</code>) or long (<code>--help</code>) help is output. See <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.ArgAction&lt;/span&gt;" href="../actions/#clap.ArgAction"><code>ArgAction</code></a>. A custom template can be used (TODO: docs), and styles can be customized using <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.styling.Styles&lt;/span&gt;" href="../styling/#clap.styling.Styles"><code>Styles</code></a>.</p>
+<p>Depending on the help flag, short (<code>-h</code>) or long (<code>--help</code>) help is output. See <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.ArgAction&lt;/span&gt;" href="../actions/#clap.ArgAction"><code>ArgAction</code></a>. A custom <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;clap.help.HelpTemplate&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="../help/#clap.help.HelpTemplate">template</a> can be used, and styles can be customized using <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.styling.Styles&lt;/span&gt;" href="../styling/#clap.styling.Styles"><code>Styles</code></a>.</p>
 <p>Here's the help output for
 <a href="https://github.com/adityasz/clap-py/tree/master/examples/typst.py">typst.py</a>:</p>
 <p>TODO: ANSI -&gt; HTML</p>

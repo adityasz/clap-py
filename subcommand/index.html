@@ -383,6 +383,8 @@
       
         
       
+        
+      
     
     
     
@@ -549,6 +551,29 @@
   
   <span class="md-ellipsis">
     Actions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../help/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Help Template
     
   </span>
   
@@ -1155,10 +1180,7 @@ abbreviation is unambiguous.</p>
 
             <details class="quote">
               <summary>Source code in <code>clap/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">191</span>
-<span class="normal">192</span>
-<span class="normal">193</span>
-<span class="normal">194</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">194</span>
 <span class="normal">195</span>
 <span class="normal">196</span>
 <span class="normal">197</span>
@@ -1299,7 +1321,10 @@ abbreviation is unambiguous.</p>
 <span class="normal">332</span>
 <span class="normal">333</span>
 <span class="normal">334</span>
-<span class="normal">335</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass_transform</span><span class="p">()</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass_transform</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">subcommand</span><span class="p">[</span><span class="n">T</span><span class="p">](</span>
     <span class="bp">cls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">/</span><span class="p">,</span>

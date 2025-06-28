@@ -383,6 +383,8 @@
       
         
       
+        
+      
     
     
     
@@ -567,6 +569,29 @@
   
   <span class="md-ellipsis">
     Actions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../help/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Help Template
     
   </span>
   
@@ -1051,10 +1076,7 @@ present but no value is specified.</p>
 
             <details class="quote">
               <summary>Source code in <code>clap/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">338</span>
-<span class="normal">339</span>
-<span class="normal">340</span>
-<span class="normal">341</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">341</span>
 <span class="normal">342</span>
 <span class="normal">343</span>
 <span class="normal">344</span>
@@ -1161,7 +1183,10 @@ present but no value is specified.</p>
 <span class="normal">445</span>
 <span class="normal">446</span>
 <span class="normal">447</span>
-<span class="normal">448</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">arg</span><span class="p">[</span><span class="n">U</span><span class="p">](</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">arg</span><span class="p">[</span><span class="n">U</span><span class="p">](</span>
     <span class="n">short_or_long</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AutoFlag</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">long_or_short</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AutoFlag</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">/</span><span class="p">,</span>

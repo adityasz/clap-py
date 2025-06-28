@@ -383,6 +383,8 @@
       
         
       
+        
+      
     
     
     
@@ -498,6 +500,29 @@
   
   <span class="md-ellipsis">
     Actions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../help/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Help Template
     
   </span>
   
@@ -853,10 +878,7 @@ If <code>None</code>, the group will be added directly to the parser.</p>
 
             <details class="quote">
               <summary>Source code in <code>clap/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">490</span>
-<span class="normal">491</span>
-<span class="normal">492</span>
-<span class="normal">493</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">493</span>
 <span class="normal">494</span>
 <span class="normal">495</span>
 <span class="normal">496</span>
@@ -881,7 +903,10 @@ If <code>None</code>, the group will be added directly to the parser.</p>
 <span class="normal">515</span>
 <span class="normal">516</span>
 <span class="normal">517</span>
-<span class="normal">518</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">mutex_group</span><span class="p">(</span>
+<span class="normal">518</span>
+<span class="normal">519</span>
+<span class="normal">520</span>
+<span class="normal">521</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">mutex_group</span><span class="p">(</span>
     <span class="n">parent_group</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Group</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">required</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MutexGroup</span><span class="p">:</span>
