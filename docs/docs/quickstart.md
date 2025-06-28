@@ -50,9 +50,18 @@ Docstrings are processed just like
 
 ## Help
 
-Depending on the help flag, short (`-h`) or long (`--help`) help is output. See [`ArgAction`][clap.ArgAction]. A custom [template][clap.HelpTemplate] can be used, and styles can be customized using [`Styles`][clap.Styles].
+See [`ArgAction.Help`][clap.ArgAction.Help],
+[`ArgAction.HelpLong`][clap.ArgAction.HelpLong], and
+[`ArgAction.HelpShort`][clap.ArgAction.HelpShort].
+
+A custom [template][clap.HelpTemplate] can be used, and styles can be customized
+using [`Styles`][clap.Styles].
 
 Here's the help output for
-[typst.py](https://github.com/adityasz/clap-py/tree/master/examples/typst.py):
+[`examples/typst.py`](https://github.com/adityasz/clap-py/tree/master/examples/typst.py):
 
-TODO: ANSI -> HTML
+<~-- stdout[python examples/typst.py --help] -->
+
+<~-- stdout[python examples/typst.py watch -h] -->
+
+<~-- stdout[python examples/typst.py watch --help] -->

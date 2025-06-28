@@ -50,7 +50,7 @@ class Init:
     """Custom path to local packages, defaults to system-dependent location."""
 
 
-@clap.command(name="typst")
+@clap.command(name="typst", color=clap.ColorChoice.Always)
 class Cli(clap.Parser):
     command: Union[Watch, Init]
 

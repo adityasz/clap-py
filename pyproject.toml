@@ -34,5 +34,9 @@ dev = [
     "pymdown-extensions>=10.15",
     "pyright>=1.1.402",
     "pytest>=8.4.1",
+    "rich>=14.0.0",
     "ruff>=0.12.0",
 ]
+
+[project.entry-points."mkdocs.plugins"]
+insert_stdout = "docs.plugins.insert_stdout:InsertStdoutPlugin"
