@@ -131,6 +131,20 @@ class TestBasicArgumentParsing(unittest.TestCase):
     def test_argument_with_default_value(self):
         @clap.command
         class Cli(clap.Parser):
+            asdf: int = arg(default_value=42)
+
+        args = Cli.parse_args([])
+        self.assertEqual(args.asdf, 42)
+
+        args = Cli.parse_args(["100"])
+        self.assertEqual(args.asdf, 100)
+
+        with self.assertRaises(SystemExit):
+            Cli.parse_args(["string"])
+
+    def test_option_with_default_value(self):
+        @clap.command
+        class Cli(clap.Parser):
             asdf: int = arg(long, default_value=42)
 
         args = Cli.parse_args([])

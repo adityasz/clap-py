@@ -91,7 +91,7 @@ class TestTupleArguments(unittest.TestCase):
     def test_tuple_nargs_mismatch_error(self):
         with self.assertRaises(TypeError):
             @clap.command
-            class Cli(clap.Parser):
+            class _:
                 point: tuple[int, int] = arg(num_args=3)
 
     def test_optional_tuple(self):

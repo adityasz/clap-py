@@ -248,8 +248,14 @@ def set_default_and_required(arg: Arg):
                 if arg.required and optional_type_hint:
                     raise TypeError("An argument with 'required=True' can never be None.")
                 return
-            if arg.default_value is not None and optional_type_hint:
-                raise TypeError("An argument with a default value can never be None.")
+            if arg.default_value is not None:
+                if optional_type_hint:
+                    raise TypeError("An argument with a default value can never be None.")
+                if arg.is_positional():
+                    arg.num_args = "?"
+                    arg.required = None
+                else:
+                    arg.required = False
             if arg.default_value is None:
                 if not optional_type_hint:
                     if arg.num_args not in ("?", "*"):
