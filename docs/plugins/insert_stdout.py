@@ -8,9 +8,13 @@ guide and see if it makes sense (right now, it does).
 """
 
 import os
+import pty
 import re
+import select
 import subprocess
+from contextlib import suppress
 from io import StringIO
+from typing import Optional
 
 from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
@@ -21,32 +25,63 @@ TERM_WIDTH = 100
 
 
 class InsertStdoutPlugin(BasePlugin):
-    config_scheme = (
-        ('root', config_options.Type(str, default='.')),
-    )
+    config_scheme = (("root", config_options.Type(str, default=".")),)
 
     def on_page_markdown(self, markdown: str, **_) -> str:
         def replace_stdout_marker(match):
             command = match.group(1).strip()
-            return self.execute_command(command)
+            return self.get_stdout_as_html(command)
 
         pattern = r"<~--\s*stdout\[(.*?)\]\s*-->"
         return re.sub(pattern, replace_stdout_marker, markdown)
 
-    def execute_command(self, command: str) -> str:
+    def read_pty_output(self, master_fd: int, process: subprocess.Popen) -> bytes:
+        return_code = process.wait()
+        assert return_code == 0
+
+        output = b""
+        with suppress(OSError):
+            while True:
+                ready, _, _ = select.select([master_fd], [], [], 0)
+                if not ready:
+                    break
+                chunk = os.read(master_fd, 4096)
+                if not chunk:
+                    break
+                output += chunk
+
+        return output
+
+    def cleanup_fds(self, master_fd: Optional[int] = None, slave_fd: Optional[int] = None) -> None:
+        if slave_fd is not None:
+            with suppress(OSError):
+                os.close(slave_fd)
+
+        if master_fd is not None:
+            with suppress(OSError):
+                os.close(master_fd)
+
+    def get_stdout_as_html(self, command: str) -> str:
         env = os.environ.copy()
         env["COLUMNS"] = str(TERM_WIDTH)
+        master_fd, slave_fd = pty.openpty()
 
-        result = subprocess.run(
-            command.split(),
-            capture_output=True,
-            text=True,
-            check=False,
-            env=env,
-            cwd=self.config["root"]
-        )
-        assert result.returncode == 0
+        try:
+            process = subprocess.Popen(
+                command.split(),
+                stdout=slave_fd,
+                stdin=subprocess.DEVNULL,
+                env=env,
+                cwd=self.config["root"],
+            )
+            self.cleanup_fds(master_fd=None, slave_fd=slave_fd)
+            output = self.read_pty_output(master_fd, process)
+            stdout_text = output.decode("utf-8", errors="replace")
+            return self.ansi_to_html(command, stdout_text)
+        finally:
+            self.cleanup_fds(master_fd, slave_fd=None)
 
+    def ansi_to_html(self, command: str, stdout: str) -> str:
         console = Console(
             file=StringIO(),
             record=True,
@@ -58,12 +93,9 @@ class InsertStdoutPlugin(BasePlugin):
         prompt.append("adityasz@github:clap-py$ ", style="bold")
         console.print(prompt, end="")
         console.print(command)
-        output_text = Text.from_ansi(result.stdout)
-        console.print(output_text, end="")
+        console.print(Text.from_ansi(stdout), end="")
 
         html = console.export_html(inline_styles=True)
-
-        # Extract just the content from the <code> tag, without any style sheets
         content_match = re.search(r"<code[^>]*>(.*?)</code>", html, re.DOTALL)
         assert content_match is not None
         code_content = content_match.group(1)
