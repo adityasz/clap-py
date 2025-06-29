@@ -247,7 +247,25 @@ class ArgType:
 
 @dataclass(slots=True)
 class Group:
-    """Family of related [arguments][clap.core.Arg]."""
+    """Family of related [arguments][clap.core.Arg].
+
+    Example:
+
+    ```python
+    from pathlib import Path
+
+    import clap
+    from clap import Group, arg
+
+    @clap.command
+    class Cli(clap.Parser):
+        output_options = Group("Output Options")
+        \"""Configure output settings.\"""
+        output_dir: Path = arg(long="output", group=output_options, value_name="DIR")
+        \"""Path to output directory\"""
+    ```
+    """
+
     title: str
     """The title for the argument group in the help output."""
     about: Optional[str] = None
@@ -287,8 +305,32 @@ class Group:
 
 @dataclass(slots=True)
 class MutexGroup:
+    """Create a mutually exclusive group of arguments.
+
+    It will be ensured that only one of the arguments in the mutually
+    exclusive group is present on the command line. This is useful for
+    options that conflict with each other, such as `--verbose` and `--quiet`.
+
+    Example:
+
+    ```python
+    import clap
+    from clap import MutexGroup
+
+    @clap.command
+    class Cli(clap.Parser):
+        loglevel = MutexGroup()
+        verbose: bool = arg(long, mutex=loglevel)
+        quiet: bool = arg(long, mutex=loglevel)
+    ```
+    """
     parent: Optional[Group] = None
+    """The parent argument group to add this mutually exclusive group to.
+
+    If `None`, the group will be added directly to the parser.
+    """
     required: bool = False
+    """Whether at least one of the mutually exclusive arguments must be present."""
 
     def __hash__(self):
         return hash(id(self))

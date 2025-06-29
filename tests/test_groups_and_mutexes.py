@@ -4,7 +4,7 @@ import unittest
 from typing import Optional
 
 import clap
-from clap import arg, group, long, mutex_group, short
+from clap import Group, MutexGroup, arg, long, short
 
 
 class TestArgumentGroups(unittest.TestCase):
@@ -12,7 +12,7 @@ class TestArgumentGroups(unittest.TestCase):
         @clap.command
         class Cli(clap.Parser):
             input_file: str
-            debug_group = group(title="Debug Options")
+            debug_group = Group(title="Debug Options")
             verbose: bool = arg(short, long, group=debug_group)
             debug: bool = arg(short, long, group=debug_group)
 
@@ -24,8 +24,8 @@ class TestArgumentGroups(unittest.TestCase):
     def test_multiple_groups(self):
         @clap.command
         class Cli(clap.Parser):
-            input_group = group(title="Input Options")
-            output_group = group(title="Output Options")
+            input_group = Group(title="Input Options")
+            output_group = Group(title="Output Options")
 
             input_file: Optional[str] = arg(long, group=input_group)
             input_dir: Optional[str] = arg(long, group=input_group)
@@ -51,15 +51,15 @@ class TestArgumentGroups(unittest.TestCase):
             input_file: str
             verbose: bool = arg(short, long)
 
-            output_group = group(title="Output Options")
+            output_group = Group(title="Output Options")
             output_file: Optional[str] = arg(long, group=output_group)
 
-            mode_mutex = mutex_group(required=True)
+            mode_mutex = MutexGroup(required=True)
             process: bool = arg(long, mutex=mode_mutex)
             analyze: bool = arg(long, mutex=mode_mutex)
 
-            format_group = group(title="Format Options")
-            format_mutex = mutex_group(parent_group=format_group)
+            format_group = Group(title="Format Options")
+            format_mutex = MutexGroup(parent=format_group)
             json_out: bool = arg(long, mutex=format_mutex)
             csv_out: bool = arg(long, mutex=format_mutex)
 
@@ -94,7 +94,7 @@ class TestMutuallyExclusiveGroups(unittest.TestCase):
     def test_basic_mutex_group(self):
         @clap.command
         class Cli(clap.Parser):
-            mode_mutex = mutex_group(required=True)
+            mode_mutex = MutexGroup(required=True)
 
             create: bool = arg(long, mutex=mode_mutex)
             update: bool = arg(long, mutex=mode_mutex)
@@ -122,7 +122,7 @@ class TestMutuallyExclusiveGroups(unittest.TestCase):
     def test_optional_mutex_group(self):
         @clap.command
         class Cli(clap.Parser):
-            mode_mutex = mutex_group(required=False)
+            mode_mutex = MutexGroup(required=False)
 
             create: bool = arg(long, mutex=mode_mutex)
             update: bool = arg(long, mutex=mode_mutex)
@@ -137,7 +137,7 @@ class TestMutuallyExclusiveGroups(unittest.TestCase):
     def test_mutex_with_values(self):
         @clap.command
         class Cli(clap.Parser):
-            source_mutex = mutex_group(required=True)
+            source_mutex = MutexGroup(required=True)
 
             file: Optional[str] = arg(long, mutex=source_mutex)
             url: Optional[str] = arg(long, mutex=source_mutex)
@@ -167,8 +167,8 @@ class TestGroupsWithMutexes(unittest.TestCase):
     def test_mutex_within_group(self):
         @clap.command
         class Cli(clap.Parser):
-            config_group = group(title="Configuration Options")
-            format_mutex = mutex_group(parent_group=config_group, required=True)
+            config_group = Group(title="Configuration Options")
+            format_mutex = MutexGroup(parent=config_group, required=True)
 
             config_file: Optional[str] = arg(long, group=config_group)
 
@@ -194,10 +194,10 @@ class TestGroupsWithMutexes(unittest.TestCase):
     def test_multiple_mutexes_in_group(self):
         @clap.command
         class Cli(clap.Parser):
-            network_group = group(title="Network Options")
+            network_group = Group(title="Network Options")
 
-            protocol_mutex = mutex_group(parent_group=network_group, required=True)
-            auth_mutex = mutex_group(parent_group=network_group, required=False)
+            protocol_mutex = MutexGroup(parent=network_group, required=True)
+            auth_mutex = MutexGroup(parent=network_group, required=False)
 
             http: bool = arg(long, mutex=protocol_mutex)
             https: bool = arg(long, mutex=protocol_mutex)
@@ -239,8 +239,8 @@ class TestGroupsWithMutexes(unittest.TestCase):
     def test_group_and_mutex_conflict_within_parent(self):
         @clap.command
         class Cli(clap.Parser):
-            parent_group = group(title="Parent Group")
-            child_mutex = mutex_group(parent_group=parent_group)
+            parent_group = Group(title="Parent Group")
+            child_mutex = MutexGroup(parent=parent_group)
 
             option_a: bool = arg(long, mutex=child_mutex)
             option_b: bool = arg(long, mutex=child_mutex)
@@ -260,9 +260,9 @@ class TestGroupsWithMutexes(unittest.TestCase):
         with self.assertRaises(ValueError):
             @clap.command
             class _:
-                g1 = group("Group 1")
-                g2 = group("Group 2")
-                m = mutex_group(parent_group=g1)
+                g1 = Group("Group 1")
+                g2 = Group("Group 2")
+                m = MutexGroup(parent=g1)
 
                 arg1: bool = arg(long, group=g2, mutex=m)
 

@@ -38,7 +38,7 @@ class TestDocstringExtraction(unittest.TestCase):
         """Test DocstringExtractor with assigned fields (groups)."""
         source = '''
         class TestClass:
-            group1 = group("Input options")
+            group1 = Group("Input options")
             """Group 1 description"""
             field2 = arg(long)
         '''

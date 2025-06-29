@@ -1,3 +1,3 @@
-# mutex_group
+# MutexGroup
 
-::: clap.mutex_group 
+::: clap.MutexGroup

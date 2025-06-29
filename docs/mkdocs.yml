@@ -15,8 +15,8 @@ nav:
       - Actions: actions.md
       - Help Template: help.md
       - Parser: parser.md
-      - group: group.md
-      - mutex_group: mutex_group.md
+      - Group: group.md
+      - MutexGroup: mutex_group.md
       - Styling: styling.md
     - Internal:
       - Core: core.md

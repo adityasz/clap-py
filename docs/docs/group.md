@@ -1,3 +1,3 @@
-# group
+# Group
 
-::: clap.group 
+::: clap.Group

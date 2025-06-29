@@ -1,7 +1,7 @@
 from collections.abc import Callable, Sequence
 from typing import Any, Optional, TypeVar, Union, dataclass_transform, overload
 
-from .api import Parser, mutex_group
+from .api import Parser
 from .core import (
     ArgAction,
     AutoFlag,
@@ -26,7 +26,6 @@ __all__ = [
     "Parser",
     "arg",
     "command",
-    "mutex_group",
     "subcommand",
     "short",
     "long"
