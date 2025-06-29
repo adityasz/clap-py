@@ -566,7 +566,7 @@
   
   
   <span class="md-ellipsis">
-    group
+    Group
     
   </span>
   
@@ -589,7 +589,7 @@
   
   
   <span class="md-ellipsis">
-    mutex_group
+    MutexGroup
     
   </span>
   
@@ -859,6 +859,30 @@
       <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;MutexGroup
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label=" MutexGroup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#clap.core.MutexGroup.parent" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;parent
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clap.core.MutexGroup.required" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;required
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1345,6 +1369,19 @@
   &lt;span class=&quot;doc doc-labels&quot;&gt;
       &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
   &lt;/span&gt;" href="#clap.core.Arg">arguments</a>.</p>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">clap</span><span class="w"> </span><span class="kn">import</span> <span class="n">Group</span><span class="p">,</span> <span class="n">arg</span>
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
+    <span class="n">output_options</span> <span class="o">=</span> <span class="n">Group</span><span class="p">(</span><span class="s2">&quot;Output Options&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configure output settings.&quot;&quot;&quot;</span>
+    <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="o">=</span><span class="s2">&quot;output&quot;</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="n">output_options</span><span class="p">,</span> <span class="n">value_name</span><span class="o">=</span><span class="s2">&quot;DIR&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Path to output directory&quot;&quot;&quot;</span>
+</code></pre></div>
 
 
 
@@ -1453,7 +1490,7 @@
   &lt;span class=&quot;doc doc-labels&quot;&gt;
       &lt;small class=&quot;doc doc-label doc-label-class-attribute&quot;&gt;&lt;code&gt;class-attribute&lt;/code&gt;&lt;/small&gt;
       &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="#clap.core.Group.long_about"><code>Group.long_about</code></a> is not specified,
+  &lt;/span&gt;" href="../group/#clap.Group.long_about"><code>Group.long_about</code></a> is not specified,
 this message will be displayed for <code>--help</code>.</p>
 
     </div>
@@ -1512,7 +1549,7 @@ this message will be displayed for <code>--help</code>.</p>
   &lt;span class=&quot;doc doc-labels&quot;&gt;
       &lt;small class=&quot;doc doc-label doc-label-class-attribute&quot;&gt;&lt;code&gt;class-attribute&lt;/code&gt;&lt;/small&gt;
       &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="#clap.core.Group.about"><code>Group.about</code></a> will be used for long help in
+  &lt;/span&gt;" href="../group/#clap.Group.about"><code>Group.about</code></a> will be used for long help in
 addition to short help (<code>-h</code>).</p>
 
     </div>
@@ -1579,6 +1616,20 @@ addition to short help (<code>-h</code>).</p>
     <div class="doc doc-contents first">
 
 
+        <p>Create a mutually exclusive group of arguments.</p>
+<p>It will be ensured that only one of the arguments in the mutually
+exclusive group is present on the command line. This is useful for
+options that conflict with each other, such as <code>--verbose</code> and <code>--quiet</code>.</p>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">clap</span><span class="w"> </span><span class="kn">import</span> <span class="n">MutexGroup</span>
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
+    <span class="n">loglevel</span> <span class="o">=</span> <span class="n">MutexGroup</span><span class="p">()</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">,</span> <span class="n">mutex</span><span class="o">=</span><span class="n">loglevel</span><span class="p">)</span>
+    <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">,</span> <span class="n">mutex</span><span class="o">=</span><span class="n">loglevel</span><span class="p">)</span>
+</code></pre></div>
 
 
 
@@ -1588,6 +1639,45 @@ addition to short help (<code>-h</code>).</p>
 
 
 
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;parent&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-class-attribute&quot;&gt;&lt;code&gt;class-attribute&lt;/code&gt;&lt;/small&gt;
+      &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;clap.core.MutexGroup.parent&lt;/code&gt;)" href="#clap.core.MutexGroup.parent">parent</a></code></b>
+              (<code><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Optional&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.core.Group&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="#clap.core.Group">Group</a>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>The parent argument group to add this mutually exclusive group to.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;required&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-class-attribute&quot;&gt;&lt;code&gt;class-attribute&lt;/code&gt;&lt;/small&gt;
+      &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt; (&lt;code&gt;clap.core.MutexGroup.required&lt;/code&gt;)" href="#clap.core.MutexGroup.required">required</a></code></b>
+              (<code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>Whether at least one of the mutually exclusive arguments must be present.</p>
+          </div>
+        </li>
+    </ul>
 
 
 
@@ -1599,6 +1689,62 @@ addition to short help (<code>-h</code>).</p>
 
 
 
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="clap.core.MutexGroup.parent" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">parent</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">parent</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="&lt;code&gt;typing.Optional&lt;/code&gt;" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.core.Group&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="#clap.core.Group">Group</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The parent argument group to add this mutually exclusive group to.</p>
+<p>If <code>None</code>, the group will be added directly to the parser.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="clap.core.MutexGroup.required" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">required</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">required</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Whether at least one of the mutually exclusive arguments must be present.</p>
+
+    </div>
+
+</div>
 
 
 

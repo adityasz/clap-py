@@ -390,11 +390,131 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#adding-arguments" class="md-nav__link">
+  <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
-      Adding arguments
+      Quick Start
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-the-parser" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuring the Parser
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding Arguments
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding Arguments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positionals" class="md-nav__link">
+    <span class="md-ellipsis">
+      Positionals
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Options
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Flags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optional
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#defaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      Defaults
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subcommands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Subcommands
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enumerated-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enumerated values
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#argument-relations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Argument Relations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Validation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -408,9 +528,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#help" class="md-nav__link">
+  <a href="#help-output" class="md-nav__link">
     <span class="md-ellipsis">
-      Help
+      Help Output
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sharp-edges" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sharp edges
     </span>
   </a>
   
@@ -637,7 +766,7 @@
   
   
   <span class="md-ellipsis">
-    group
+    Group
     
   </span>
   
@@ -660,7 +789,7 @@
   
   
   <span class="md-ellipsis">
-    mutex_group
+    MutexGroup
     
   </span>
   
@@ -819,71 +948,836 @@
 
 
 <h1 id="quickstart-guide">Quickstart Guide</h1>
-<p>This guide is structured as a tutorial.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p><strong>This guide is under development.</strong>
-In the meantime, see <a href="https://github.com/adityasz/clap-py/tree/master/examples">examples</a>
-and <a href="https://github.com/adityasz/clap-py/tree/master/tests">tests</a>.</p>
-</div>
-<h2 id="adding-arguments">Adding arguments</h2>
+<p>This guide is structured as a tutorial that will walk you through creating
+command-line applications with <a href="https://github.com/adityasz/clap-py">clap-py</a>.</p>
+<p>It was adapted from the excellent
+<a href="https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html">tutorial</a> for
+<a href="https://github.com/clap-rs/clap">clap-rs</a> using <a href="https://www.anthropic.com/news/claude-4">Claude 4.0
+Sonnet</a> in
+<a href="https://www.cursor.com/">Cursor</a> (and some manual cleaning by hand). Most text
+is lifted verbatim.</p>
+<h2 id="quick-start">Quick Start</h2>
+<p>You can create an application declaratively with a class and some decorators.</p>
+<p>Here is a preview of the type of application you can make:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">clap</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArgAction</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">long</span><span class="p">,</span> <span class="n">short</span>
+
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">subcommand</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Test</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Does testing things.&quot;&quot;&quot;</span>
+
+    <span class="n">list_flag</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">short</span><span class="p">,</span> <span class="n">long</span><span class="o">=</span><span class="s2">&quot;list&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lists test values.&quot;&quot;&quot;</span>
+
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A simple to use, efficient, and full-featured Command Line Argument Parser.&quot;&quot;&quot;</span>
+
+    <span class="n">command</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Test</span><span class="p">]</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optional name to operate on.&quot;&quot;&quot;</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">short</span><span class="p">,</span> <span class="n">long</span><span class="p">,</span> <span class="n">value_name</span><span class="o">=</span><span class="s2">&quot;FILE&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sets a custom config file.&quot;&quot;&quot;</span>
+    <span class="n">debug</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">short</span><span class="p">,</span> <span class="n">long</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="n">ArgAction</span><span class="o">.</span><span class="n">Count</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Turn debugging information on.&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="c1"># You can check the value provided by positional arguments, or option arguments</span>
+    <span class="k">if</span> <span class="n">cli</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Value for name: </span><span class="si">{</span><span class="n">cli</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">cli</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Value for config: </span><span class="si">{</span><span class="n">cli</span><span class="o">.</span><span class="n">config</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># You can see how many times a particular flag or argument occurred</span>
+    <span class="c1"># Note, only flags can have multiple occurrences</span>
+    <span class="k">match</span> <span class="n">cli</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+        <span class="k">case</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Debug mode is off&quot;</span><span class="p">)</span>
+        <span class="k">case</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Debug mode is kind of on&quot;</span><span class="p">)</span>
+        <span class="k">case</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Debug mode is on&quot;</span><span class="p">)</span>
+        <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Don&#39;t be crazy&quot;</span><span class="p">)</span>
+
+    <span class="c1"># You can check for the existence of subcommands, and if found use their</span>
+    <span class="c1"># matches just as you would the top level cmd</span>
+    <span class="k">match</span> <span class="n">cli</span><span class="o">.</span><span class="n">command</span><span class="p">:</span>
+        <span class="k">case</span> <span class="n">Test</span><span class="p">(</span><span class="n">list_flag</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">list_flag</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Printing testing lists...&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Not printing testing lists...&quot;</span><span class="p">)</span>
+        <span class="k">case</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="c1"># Continued program logic goes here...</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/01_quick.py --help
+A simple to use, efficient, and full-featured Command Line Argument Parser
+
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">01_quick.py</span> [OPTIONS] [NAME] [COMMAND]
+
+<span style="font-weight: bold; text-decoration: underline">Commands:</span>
+  <span style="font-weight: bold">test</span>  Does testing things
+
+<span style="font-weight: bold; text-decoration: underline">Arguments:</span>
+  [NAME]  Optional name to operate on
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+  <span style="font-weight: bold">-c</span>, <span style="font-weight: bold">--config</span> &lt;FILE&gt;  Sets a custom config file
+  <span style="font-weight: bold">-d</span>, <span style="font-weight: bold">--debug</span>...       Turn debugging information on
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>           Print help
+  <span style="font-weight: bold">-V</span>, <span style="font-weight: bold">--version</span>        Print version</code></pre></div>
+
+<p>By default, the program does nothing:</p>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/01_quick.py
+Debug mode is off</code></pre></div>
+
+<p>But you can mix and match the various features:</p>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/01_quick.py -dd test
+Debug mode is on
+Not printing testing lists...</code></pre></div>
+
+<p><strong>See also:</strong></p>
 <ul>
-<li>Each argument field must have a type annotation.</li>
-<li>Fields without type annotations are ignored, unless it is a
-  <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.core.MutexGroup&lt;/span&gt;
+<li>The <a href="https://github.com/adityasz/clap-py/tree/master/tests">tests</a> for more
+  usage examples.</li>
+<li>The <a href="https://github.com/adityasz/clap-py/tree/master/examples">examples</a> for
+  more application-focused examples.</li>
+</ul>
+<h2 id="configuring-the-parser">Configuring the Parser</h2>
+<p>You use the <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;clap.command&lt;/span&gt;" href="../command/#clap.command"><code>@clap.command</code></a> decorator to start building a parser.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">clap</span><span class="w"> </span><span class="kn">import</span> <span class="n">arg</span><span class="p">,</span> <span class="n">long</span>
+
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;MyApp&quot;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Does awesome things.&quot;&quot;&quot;</span>
+
+    <span class="n">two</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">)</span>
+    <span class="n">one</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;two: </span><span class="si">{</span><span class="n">cli</span><span class="o">.</span><span class="n">two</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;one: </span><span class="si">{</span><span class="n">cli</span><span class="o">.</span><span class="n">one</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/02_apps.py --help
+Does awesome things
+
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">MyApp</span> [OPTIONS] <span style="font-weight: bold">--two</span> &lt;TWO&gt; <span style="font-weight: bold">--one</span> &lt;ONE&gt;
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+      <span style="font-weight: bold">--two</span> &lt;TWO&gt;
+      <span style="font-weight: bold">--one</span> &lt;ONE&gt;
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>       Print help
+  <span style="font-weight: bold">-V</span>, <span style="font-weight: bold">--version</span>    Print version</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/02_apps.py --version
+MyApp 1.0</code></pre></div>
+
+<h2 id="adding-arguments">Adding Arguments</h2>
+<ol>
+<li><a href="#positionals">Positionals</a></li>
+<li><a href="#options">Options</a></li>
+<li><a href="#flags">Flags</a></li>
+<li><a href="#optional">Optional</a></li>
+<li><a href="#defaults">Defaults</a></li>
+<li><a href="#subcommands">Subcommands</a></li>
+</ol>
+<p>Arguments are inferred from the fields of your class.</p>
+<h3 id="positionals">Positionals</h3>
+<p>By default, class fields define positional arguments:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
+
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;name: </span><span class="si">{</span><span class="n">cli</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_03_positional.py --help
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">03_03_positional.py</span> [OPTIONS] &lt;NAME&gt;
+
+<span style="font-weight: bold; text-decoration: underline">Arguments:</span>
+  &lt;NAME&gt;
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>     Print help
+  <span style="font-weight: bold">-V</span>, <span style="font-weight: bold">--version</span>  Print version</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_03_positional.py bob
+name: bob</code></pre></div>
+
+<p>Note that the default <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.ArgAction&lt;/span&gt;" href="../actions/#clap.ArgAction"><code>ArgAction</code></a> is
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;Set&lt;/span&gt;
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="../core/#clap.core.MutexGroup">(mutually exclusive)</a> <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.core.Group&lt;/span&gt;
+      &lt;small class=&quot;doc doc-label doc-label-class-attribute&quot;&gt;&lt;code&gt;class-attribute&lt;/code&gt;&lt;/small&gt;
+      &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="../actions/#clap.ArgAction.Set"><code>Set</code></a>. To accept multiple values, use a <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list"><code>list</code></a> type:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
 
 
-  &lt;span class=&quot;doc doc-labels&quot;&gt;
-      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="../core/#clap.core.Group">group</a>.</li>
-<li>Flags need to be generated using <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;clap.arg&lt;/span&gt;" href="../arg/#clap.arg"><code>arg()</code></a>. If an arg does not have
-  flags, it is a positional argument.</li>
-<li>
-<p>To automatically generate flags, <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;clap.short&lt;/span&gt;
+<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;name: </span><span class="si">{</span><span class="n">cli</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_03_positional_mult.py --help
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">03_03_positional_mult.py</span> [OPTIONS] [&lt;NAME&gt;...]
+
+<span style="font-weight: bold; text-decoration: underline">Arguments:</span>
+  [&lt;NAME&gt;...]
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>     Print help
+  <span style="font-weight: bold">-V</span>, <span style="font-weight: bold">--version</span>  Print version</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_03_positional_mult.py
+name: []</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_03_positional_mult.py bob
+name: [&#x27;bob&#x27;]</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_03_positional_mult.py bob john
+name: [&#x27;bob&#x27;, &#x27;john&#x27;]</code></pre></div>
+
+<h3 id="options">Options</h3>
+<p>You can name your arguments with a flag:</p>
+<ul>
+<li>Intent of the value is clearer</li>
+<li>Order doesn't matter</li>
+</ul>
+<p>To specify the flags for an argument, you can use <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;clap.arg&lt;/span&gt;" href="../arg/#clap.arg"><code>arg()</code></a> on a
+field:</p>
+<ul>
+<li>To automatically generate flags, <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;clap.short&lt;/span&gt;
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
       &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
   &lt;/span&gt;" href="../arg/#clap.short"><code>short</code></a> and
-    <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;clap.long&lt;/span&gt;
+  <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;clap.long&lt;/span&gt;
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
       &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
-  &lt;/span&gt;" href="../arg/#clap.long"><code>long</code></a> can be used:</p>
+  &lt;/span&gt;" href="../arg/#clap.long"><code>long</code></a> can be used: <code>arg(short, long)</code>.<ul>
+<li><code>arg(short=True, long=True)</code> can also be used.</li>
+</ul>
+</li>
+<li>To specify the flags manually:<ul>
+<li><code>arg(short="n", long="name")</code>.</li>
+</ul>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;clap.arg&lt;/span&gt;" href="../arg/#clap.arg"><code>arg()</code></a> takes up to two
+<a href="https://peps.python.org/pep-0570/">positional-only</a> paramters of type
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.core.AutoFlag&lt;/span&gt;" href="../core/#clap.core.AutoFlag"><code>AutoFlag</code></a>, and <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;clap.short&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="../arg/#clap.short"><code>short</code></a> and
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;clap.long&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-module-attribute&quot;&gt;&lt;code&gt;module-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="../arg/#clap.long"><code>long</code></a> are aliases for
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;Short&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-class-attribute&quot;&gt;&lt;code&gt;class-attribute&lt;/code&gt;&lt;/small&gt;
+      &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="../core/#clap.core.AutoFlag.Short"><code>AutoFlag.Short</code></a> and
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;Long&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-class-attribute&quot;&gt;&lt;code&gt;class-attribute&lt;/code&gt;&lt;/small&gt;
+      &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="../core/#clap.core.AutoFlag.Long"><code>AutoFlag.Long</code></a>. These are used to automatically
+generate flags.</p>
+<p>It also takes <a href="https://peps.python.org/pep-3102/">keyword-only</a> arguments
+named <code>short</code> and <code>long</code>. These are used for manually specifying the flags.</p>
+</div>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">clap</span><span class="w"> </span><span class="kn">import</span> <span class="n">arg</span><span class="p">,</span> <span class="n">long</span><span class="p">,</span> <span class="n">short</span>
 
-<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">:</span>
-    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">short</span><span class="p">,</span> <span class="n">long</span><span class="p">)</span>
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">short</span><span class="p">,</span> <span class="n">long</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;name: </span><span class="si">{</span><span class="n">cli</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
 </code></pre></div>
-</li>
-<li>
-<p><code>arg(short=True, long=True)</code> can also be used.</p>
-</li>
-</ul>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_02_option.py --help
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">03_02_option.py</span> [OPTIONS] <span style="font-weight: bold">--name</span> &lt;NAME&gt;
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+  <span style="font-weight: bold">-n</span>, <span style="font-weight: bold">--name</span> &lt;NAME&gt;
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>         Print help
+  <span style="font-weight: bold">-V</span>, <span style="font-weight: bold">--version</span>      Print version</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_02_option.py --name bob
+name: bob</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_02_option.py --<span style="color: #808000; text-decoration-color: #808000">name</span>=<span style="color: #800080; text-decoration-color: #800080">bob</span>
+name: bob</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_02_option.py -n bob
+name: bob</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_02_option.py -<span style="color: #808000; text-decoration-color: #808000">n</span>=<span style="color: #800080; text-decoration-color: #800080">bob</span>
+name: bob</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_02_option.py -nbob
+name: bob</code></pre></div>
+
+<p>Note that the default <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.ArgAction&lt;/span&gt;" href="../actions/#clap.ArgAction"><code>ArgAction</code></a> is
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;Set&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-class-attribute&quot;&gt;&lt;code&gt;class-attribute&lt;/code&gt;&lt;/small&gt;
+      &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="../actions/#clap.ArgAction.Set"><code>Set</code></a>. To accept multiple occurrences, override the action
+with <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;Append&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-class-attribute&quot;&gt;&lt;code&gt;class-attribute&lt;/code&gt;&lt;/small&gt;
+      &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="../actions/#clap.ArgAction.Append"><code>Append</code></a> via <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list"><code>list</code></a>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">clap</span><span class="w"> </span><span class="kn">import</span> <span class="n">arg</span><span class="p">,</span> <span class="n">long</span><span class="p">,</span> <span class="n">short</span>
+
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">short</span><span class="p">,</span> <span class="n">long</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;name: </span><span class="si">{</span><span class="n">cli</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_02_option_mult.py --help
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">03_02_option_mult.py</span> [OPTIONS]
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+  <span style="font-weight: bold">-n</span>, <span style="font-weight: bold">--name</span> &lt;NAME&gt;
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>         Print help
+  <span style="font-weight: bold">-V</span>, <span style="font-weight: bold">--version</span>      Print version</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_02_option_mult.py
+name: []</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_02_option_mult.py --name bob
+name: [&#x27;bob&#x27;]</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_02_option_mult.py --name bob --name john
+name: [&#x27;bob&#x27;, &#x27;john&#x27;]</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_02_option_mult.py --name bob --<span style="color: #808000; text-decoration-color: #808000">name</span>=<span style="color: #800080; text-decoration-color: #800080">john</span> -n tom -<span style="color: #808000; text-decoration-color: #808000">n</span>=<span style="color: #800080; text-decoration-color: #800080">chris</span> -nsteve
+name: [&#x27;bob&#x27;, &#x27;john&#x27;, &#x27;tom&#x27;, &#x27;chris&#x27;, &#x27;steve&#x27;]</code></pre></div>
+
+<h3 id="flags">Flags</h3>
+<p>Flags can also be switches that can be on/off:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">clap</span><span class="w"> </span><span class="kn">import</span> <span class="n">arg</span><span class="p">,</span> <span class="n">long</span><span class="p">,</span> <span class="n">short</span>
+
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">short</span><span class="p">,</span> <span class="n">long</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;verbose: </span><span class="si">{</span><span class="n">cli</span><span class="o">.</span><span class="n">verbose</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_01_flag_bool.py --help
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">03_01_flag_bool.py</span> [OPTIONS]
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+  <span style="font-weight: bold">-v</span>, <span style="font-weight: bold">--verbose</span>
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>     Print help
+  <span style="font-weight: bold">-V</span>, <span style="font-weight: bold">--version</span>  Print version</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_01_flag_bool.py
+verbose: False</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_01_flag_bool.py --verbose
+verbose: True</code></pre></div>
+
+<p>Note that the default <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.ArgAction&lt;/span&gt;" href="../actions/#clap.ArgAction"><code>ArgAction</code></a> for a <code>bool</code> field is
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;SetTrue&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-class-attribute&quot;&gt;&lt;code&gt;class-attribute&lt;/code&gt;&lt;/small&gt;
+      &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="../actions/#clap.ArgAction.SetTrue"><code>SetTrue</code></a>. To accept multiple flags, override the
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;clap.arg&lt;/span&gt;" href="../arg/#clap.arg">action</a> with <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-attribute&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-attribute-name&quot;&gt;Count&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-class-attribute&quot;&gt;&lt;code&gt;class-attribute&lt;/code&gt;&lt;/small&gt;
+      &lt;small class=&quot;doc doc-label doc-label-instance-attribute&quot;&gt;&lt;code&gt;instance-attribute&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="../actions/#clap.ArgAction.Count"><code>Count</code></a>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">clap</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArgAction</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">long</span><span class="p">,</span> <span class="n">short</span>
+
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">short</span><span class="p">,</span> <span class="n">long</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="n">ArgAction</span><span class="o">.</span><span class="n">Count</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;verbose: </span><span class="si">{</span><span class="n">cli</span><span class="o">.</span><span class="n">verbose</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_01_flag_count.py --help
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">03_01_flag_count.py</span> [OPTIONS]
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+  <span style="font-weight: bold">-v</span>, <span style="font-weight: bold">--verbose</span>...
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>        Print help
+  <span style="font-weight: bold">-V</span>, <span style="font-weight: bold">--version</span>     Print version</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_01_flag_count.py
+verbose: 0</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_01_flag_count.py --verbose
+verbose: 1</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_01_flag_count.py --verbose --verbose
+verbose: 2</code></pre></div>
+
+<h3 id="optional">Optional</h3>
+<p>By default, arguments are assumed to be required. To make an argument optional,
+wrap the field's type in <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/typing.html#typing.Optional"><code>Optional</code></a>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
+
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;name: </span><span class="si">{</span><span class="n">cli</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_06_optional.py --help
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">03_06_optional.py</span> [OPTIONS] [NAME]
+
+<span style="font-weight: bold; text-decoration: underline">Arguments:</span>
+  [NAME]
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>     Print help
+  <span style="font-weight: bold">-V</span>, <span style="font-weight: bold">--version</span>  Print version</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_06_optional.py
+name: None</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_06_optional.py bob
+name: bob</code></pre></div>
+
+<h3 id="defaults">Defaults</h3>
+<p>We've previously showed that arguments can be required or optional. When
+optional, you work with an <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/typing.html#typing.Optional"><code>Optional</code></a> and can use <code>or</code> or
+provide a default value. Alternatively, you can set <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;clap.arg&lt;/span&gt;" href="../arg/#clap.arg"><code>default_value</code></a>.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">clap</span><span class="w"> </span><span class="kn">import</span> <span class="n">arg</span>
+
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
+    <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">default_value</span><span class="o">=</span><span class="mi">2020</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;port: </span><span class="si">{</span><span class="n">cli</span><span class="o">.</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_05_default_values.py --help
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">03_05_default_values.py</span> [OPTIONS] [PORT]
+
+<span style="font-weight: bold; text-decoration: underline">Arguments:</span>
+  [PORT]   [default: 2020]
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>     Print help
+  <span style="font-weight: bold">-V</span>, <span style="font-weight: bold">--version</span>  Print version</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_05_default_values.py
+port: 2020</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_05_default_values.py <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">22</span>
+port: 22</code></pre></div>
+
+<h3 id="subcommands">Subcommands</h3>
+<p>Subcommands are created with <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;clap.subcommand&lt;/span&gt;" href="../subcommand/#clap.subcommand"><code>@clap.subcommand</code></a> and added via
+a type annotation to a field that will contain the parsed result. If there
+are multiple subcommands, use <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/typing.html#typing.Union"><code>Union</code></a>. Each instance of a
+subcommand can have its own version, author(s), arguments, and even its own
+subcommands.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
+
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">subcommand</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Add</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adds files to myapp.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span> <span class="n">propagate_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
+    <span class="n">command</span><span class="p">:</span> <span class="n">Add</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="c1"># You can check for the existence of subcommands, and if found use their</span>
+    <span class="c1"># matches just as you would the top level cmd</span>
+    <span class="k">match</span> <span class="n">cli</span><span class="o">.</span><span class="n">command</span><span class="p">:</span>
+        <span class="k">case</span> <span class="n">Add</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;myapp add&#39; was used, name is: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_04_subcommands.py --help
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">03_04_subcommands.py</span> [OPTIONS] &lt;COMMAND&gt;
+
+<span style="font-weight: bold; text-decoration: underline">Commands:</span>
+  <span style="font-weight: bold">add</span>  Adds files to myapp
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>     Print help
+  <span style="font-weight: bold">-V</span>, <span style="font-weight: bold">--version</span>  Print version</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_04_subcommands.py add --help
+Adds files to myapp
+
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">03_04_subcommands.py</span> [OPTIONS] <span style="font-weight: bold">add</span> [OPTIONS] [NAME]
+
+<span style="font-weight: bold; text-decoration: underline">Arguments:</span>
+  [NAME]
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>     Print help
+  <span style="font-weight: bold">-V</span>, <span style="font-weight: bold">--version</span>  Print version</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_04_subcommands.py add bob
+&#x27;myapp add&#x27; was used, name is: bob</code></pre></div>
+
+<p>To make a subcommand optional, wrap it in an <code>Optional</code> (e.g. <code>command: Optional[Add]</code>).</p>
+<p>Since we specified <code>propagate_version=True</code>, the <code>--version</code> flag is available in all subcommands:</p>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_04_subcommands.py --version
+03_04_subcommands.py 1.0</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/03_04_subcommands.py add --version
+add 1.0</code></pre></div>
+
+<h2 id="validation">Validation</h2>
+<ol>
+<li><a href="#enumerated-values">Enumerated values</a></li>
+<li><a href="#argument-relations">Argument Relations</a></li>
+<li><a href="#custom-validation">Custom Validation</a></li>
+</ol>
+<p>An appropriate default parser/validator will be selected for the field's type.</p>
+<h3 id="enumerated-values">Enumerated values</h3>
+<p>For arguments with specific values you want to test for, you can use Python's <code>Enum</code>. This allows you to specify the valid values for that argument. If the user does not use one of those specific values, they will receive a graceful exit with error message informing them of the mistake, and what the possible valid values are.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Mode</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;TODO: Help strings are not yet printed for enum values in the long help output.</span>
+
+<span class="sd">    See TODOs in README.md.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">Fast</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run swiftly.&quot;&quot;&quot;</span>
+    <span class="n">Slow</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Crawl slowly but steadily.</span>
+
+<span class="sd">    This paragraph is ignored because there is no long help text for possible values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="n">Mode</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;What mode to run the program in.&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="k">match</span> <span class="n">cli</span><span class="o">.</span><span class="n">mode</span><span class="p">:</span>
+        <span class="k">case</span> <span class="n">Mode</span><span class="o">.</span><span class="n">Fast</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hare&quot;</span><span class="p">)</span>
+        <span class="k">case</span> <span class="n">Mode</span><span class="o">.</span><span class="n">Slow</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Tortoise&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/04_01_enum.py --help
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">04_01_enum.py</span> [OPTIONS] &lt;MODE&gt;
+
+<span style="font-weight: bold; text-decoration: underline">Arguments:</span>
+  &lt;MODE&gt;  What mode to run the program in [possible values: fast, slow]
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>     Print help
+  <span style="font-weight: bold">-V</span>, <span style="font-weight: bold">--version</span>  Print version</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/04_01_enum.py -h
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">04_01_enum.py</span> [OPTIONS] &lt;MODE&gt;
+
+<span style="font-weight: bold; text-decoration: underline">Arguments:</span>
+  &lt;MODE&gt;  What mode to run the program in [possible values: fast, slow]
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>     Print help
+  <span style="font-weight: bold">-V</span>, <span style="font-weight: bold">--version</span>  Print version</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/04_01_enum.py fast
+Hare</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/04_01_enum.py slow
+Tortoise</code></pre></div>
+
+<h3 id="argument-relations">Argument Relations</h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Advanced argument relations and dependencies like <code>requires</code> and <code>conflicts_with</code> are not yet implemented in clap-py. You can use <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.Group&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="../group/#clap.Group"><code>Group</code></a> and <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.MutexGroup&lt;/span&gt;
+
+
+  &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-dataclass&quot;&gt;&lt;code&gt;dataclass&lt;/code&gt;&lt;/small&gt;
+  &lt;/span&gt;" href="../mutex_group/#clap.MutexGroup"><code>MutexGroup</code></a> for basic grouping and mutual exclusion.</p>
+</div>
+<h3 id="custom-validation">Custom Validation</h3>
+<p>As a last resort, you can create custom validation logic in your application after parsing:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">clap</span><span class="w"> </span><span class="kn">import</span> <span class="n">arg</span><span class="p">,</span> <span class="n">long</span><span class="p">,</span> <span class="n">short</span>
+
+
+<span class="nd">@clap</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
+    <span class="n">input_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Some regular input.&quot;&quot;&quot;</span>
+
+    <span class="n">set_ver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">,</span> <span class="n">value_name</span><span class="o">=</span><span class="s2">&quot;VER&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set version manually.&quot;&quot;&quot;</span>
+
+    <span class="n">major</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Auto inc major.&quot;&quot;&quot;</span>
+
+    <span class="n">minor</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Auto inc minor.&quot;&quot;&quot;</span>
+
+    <span class="n">patch</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Auto inc patch.&quot;&quot;&quot;</span>
+
+    <span class="n">spec_in</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Some special input argument.&quot;&quot;&quot;</span>
+
+    <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">short</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="c1"># Let&#39;s assume the old version 1.2.3</span>
+    <span class="n">major</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">minor</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">patch</span> <span class="o">=</span> <span class="mi">3</span>
+
+    <span class="c1"># See if --set-ver was used to set the version manually</span>
+    <span class="k">if</span> <span class="n">cli</span><span class="o">.</span><span class="n">set_ver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cli</span><span class="o">.</span><span class="n">major</span> <span class="ow">or</span> <span class="n">cli</span><span class="o">.</span><span class="n">minor</span> <span class="ow">or</span> <span class="n">cli</span><span class="o">.</span><span class="n">patch</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;error: Can&#39;t do relative and absolute version change&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="n">cli</span><span class="o">.</span><span class="n">set_ver</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Increment the one requested (in a real program, we&#39;d reset the lower numbers)</span>
+        <span class="n">flags_set</span> <span class="o">=</span> <span class="p">[</span><span class="n">cli</span><span class="o">.</span><span class="n">major</span><span class="p">,</span> <span class="n">cli</span><span class="o">.</span><span class="n">minor</span><span class="p">,</span> <span class="n">cli</span><span class="o">.</span><span class="n">patch</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">flags_set</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;error: Can only modify one version field&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">cli</span><span class="o">.</span><span class="n">major</span><span class="p">:</span>
+            <span class="n">major</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">cli</span><span class="o">.</span><span class="n">minor</span><span class="p">:</span>
+            <span class="n">minor</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">cli</span><span class="o">.</span><span class="n">patch</span><span class="p">:</span>
+            <span class="n">patch</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">&quot;error: Must specify one of --set-ver, --major, --minor, or --patch&quot;</span><span class="p">,</span>
+                <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">version</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">major</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">minor</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">patch</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Version: </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check for usage of -c</span>
+    <span class="k">if</span> <span class="n">cli</span><span class="o">.</span><span class="n">config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">input_file</span> <span class="o">=</span> <span class="n">cli</span><span class="o">.</span><span class="n">input_file</span> <span class="ow">or</span> <span class="n">cli</span><span class="o">.</span><span class="n">spec_in</span>
+        <span class="k">if</span> <span class="n">input_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">&quot;error: INPUT_FILE or --spec-in is required when using --config&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span>
+            <span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Doing work using input </span><span class="si">{</span><span class="n">input_file</span><span class="si">}</span><span class="s2"> and config </span><span class="si">{</span><span class="n">cli</span><span class="o">.</span><span class="n">config</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/04_04_custom.py --help
+<span style="font-weight: bold; text-decoration: underline">Usage:</span> <span style="font-weight: bold">04_04_custom.py</span> [OPTIONS] [INPUT_FILE]
+
+<span style="font-weight: bold; text-decoration: underline">Arguments:</span>
+  [INPUT_FILE]  Some regular input
+
+<span style="font-weight: bold; text-decoration: underline">Options:</span>
+      <span style="font-weight: bold">--set-ver</span> &lt;VER&gt;      Set version manually
+      <span style="font-weight: bold">--major</span>              Auto inc major
+      <span style="font-weight: bold">--minor</span>              Auto inc minor
+      <span style="font-weight: bold">--patch</span>              Auto inc patch
+      <span style="font-weight: bold">--spec-in</span> &lt;SPEC_IN&gt;  Some special input argument
+  <span style="font-weight: bold">-c</span> &lt;CONFIG&gt;            
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>               Print help
+  <span style="font-weight: bold">-V</span>, <span style="font-weight: bold">--version</span>            Print version</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/04_04_custom.py --major
+Version: 2.2.3</code></pre></div>
+
+<div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python docs/docs/quickstart/04_04_custom.py --major -c config.toml --spec-in input.txt
+Version: 2.2.3
+Doing work using input input.txt and config config.toml</code></pre></div>
+
 <h2 id="docstrings">Docstrings</h2>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">clap</span>
 
 <span class="nd">@clap</span><span class="o">.</span><span class="n">command</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;This is the short help (without the trailing period).</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This is the short about (without the trailing period).</span>
 
-<span class="sd">    Any subsequent paragraphs are ignored in the short help. The long help</span>
-<span class="sd">    contains the entire docstring.&quot;&quot;&quot;</span>
+<span class="sd">    Any subsequent paragraphs are ignored in the short about. The long about</span>
+<span class="sd">    contains the entire docstring.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">input</span><span class="p">:</span> <span class="nb">str</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ellipsis are kept in the short help...&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Help messages are generated in a similar way.</span>
+<span class="sd">    Ellipsis are kept in the short help...</span>
+
+<span class="sd">    Paragraphs are separated by at least two newlines.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 </code></pre></div>
 <p>Docstrings are processed just like
 <a href="https://docs.rs/clap/latest/clap/_derive/index.html#doc-comments"><code>clap-rs</code></a>.</p>
-<h2 id="help">Help</h2>
+<h2 id="help-output">Help Output</h2>
 <p>See <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Help&lt;/span&gt;" href="../actions/#clap.ArgAction.Help"><code>ArgAction.Help</code></a>,
 <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;HelpLong&lt;/span&gt;" href="../actions/#clap.ArgAction.HelpLong"><code>ArgAction.HelpLong</code></a>, and
 <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;HelpShort&lt;/span&gt;" href="../actions/#clap.ArgAction.HelpShort"><code>ArgAction.HelpShort</code></a>.</p>
@@ -904,8 +1798,10 @@ using <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symb
   <span style="font-weight: bold">init</span>   Initializes a new project from a template
 
 <span style="font-weight: bold; text-decoration: underline">Options:</span>
-      <span style="font-weight: bold">--cert</span> &lt;CERT&gt;  Path to a custom CA certificate to use when making network requests
-  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>         Print help</code></pre></div>
+      <span style="font-weight: bold">--cert</span> &lt;CERT&gt;    Path to a custom CA certificate to use when making network requests
+      <span style="font-weight: bold">--color</span> &lt;COLOR&gt;  Whether to use color. When set to `auto` if the terminal to supports it
+                       [default: auto] [possible values: auto, always, never]
+  <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>           Print help</code></pre></div>
 
 <div class="stdout"><pre><code><span style="font-weight: bold">adityasz@github:clap-py$ </span>python examples/typst.py watch -h
 Watches an input file and recompiles on changes
@@ -951,6 +1847,31 @@ Watches an input file and recompiles on changes
   <span style="font-weight: bold">-j</span>, <span style="font-weight: bold">--jobs</span> &lt;JOBS&gt;          Number of parallel jobs spawned during compilation. Defaults to
                              number of CPUs
   <span style="font-weight: bold">-h</span>, <span style="font-weight: bold">--help</span>                 Print help</code></pre></div>
+
+<h2 id="sharp-edges">Sharp edges</h2>
+<p>The decorators <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;clap.command&lt;/span&gt;" href="../command/#clap.command"><code>@clap.command</code></a> and
+<a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;clap.subcommand&lt;/span&gt;" href="../subcommand/#clap.subcommand"><code>@clap.subcommand</code></a> are decorated with
+<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/typing.html#typing.dataclass_transform"><code>@dataclass_transform</code></a> to tell type-checkers that
+they provide <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass"><code>dataclass</code></a> like functionality (for
+example, pattern matching with positionals in <code>match</code>-<code>case</code>).</p>
+<p>This also brings some dataclass limitations: If fields without default values
+appear after fields with default values, the type-checker complains. There are
+no runtime implications, but to satisfy the type-checkers, the following
+(reasonable) workarounds can be used:</p>
+<ul>
+<li>For positionals where you don't need to modify the default behavior, you can
+  simply assign <code>arg()</code> if there are fields with default values above.</li>
+<li>For a field that contains the subcommand, nothing can be assigned.
+  So, keep this as the first field. (The order only matters for positionals;
+  the subcommand is always parsed after all the positionals and options.)</li>
+</ul>
+<p><strong>See also:</strong></p>
+<ul>
+<li><a href="https://adityasz.github.io/clap-py/">API Reference</a> for complete
+  documentation.</li>
+<li><a href="https://github.com/adityasz/clap-py/tree/master/examples">Examples</a> for
+  application-focused examples.</li>
+</ul>
 
 
 
