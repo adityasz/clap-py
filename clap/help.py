@@ -283,11 +283,11 @@ class HelpRenderer:
         if isinstance(arg := thing, Arg):
             spec_vals = []
             if arg.default_value:
-                spec_vals.append(f"[default: {arg.default_value}")
+                spec_vals.append(f"[default: {arg.default_value}]")
             if arg.choices:
                 spec_vals.append(f"[possible values: {", ".join(arg.choices)}]")
             if arg.aliases:
-                spec_vals.append(f"[aliases: {", ".join(arg.aliases)}")
+                spec_vals.append(f"[aliases: {", ".join(arg.aliases)}]")
             return spec_vals
         else:
             cmd = thing
