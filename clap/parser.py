@@ -205,11 +205,24 @@ def set_type_dependent_kwargs(arg: Arg):
                     if member == arg.default_value:
                         arg.default_value = choice  # set default to a string for help message
                         break
-        case ArgType.List(t):
+        case ArgType.List(t, optional):
             if arg.action is None:
-                arg.action = ArgAction.Set
-            if arg.num_args is None and arg.action in (ArgAction.Set, ArgAction.Extend):
-                arg.num_args = "*"
+                if not arg.is_positional():
+                    arg.action = ArgAction.Append
+                    return
+                if arg.num_args is None:
+                    arg.num_args = "*"
+                if optional:
+                    match arg.num_args:
+                        case 0 | "?": ...
+                        case "*": ...
+                        case "+":
+                            arg.num_args = "*"
+                        case _:
+                            raise TypeError(
+                                "argparse limitation: Please use `num_args='*'` "
+                                "with manual validation."
+                            )
         case ArgType.Tuple(t, _, n):
             if arg.action is None:
                 arg.action = ArgAction.Set
@@ -230,9 +243,6 @@ def set_default_and_required(arg: Arg):
 
     match arg.action:
         case ArgAction.Append:
-            if not optional_type_hint and not arg.default_value:
-                arg.default_value = []
-        case ArgAction.Extend:
             if not optional_type_hint and not arg.default_value:
                 arg.default_value = []
         case ArgAction.Count:
@@ -268,12 +278,6 @@ def set_default_and_required(arg: Arg):
                     arg.required = False
                 if arg.is_positional():
                     if optional_type_hint:
-                        if arg.num_args is not None and arg.num_args != "?":
-                            raise TypeError(
-                                "A positional argument with 'num_args != ?' can never be None; "
-                                "an empty list is returned when no argument is provided with "
-                                "'num_args' is 0 or *."
-                            )
                         arg.num_args = "?"
                     arg.required = None
         case ArgAction.SetFalse:
@@ -303,7 +307,7 @@ def set_value_name(arg: Arg, field_name: str):
             arg.value_name = " ".join(f"<{arg.value_name}>" for _ in range(n))
         case None:
             match arg.action:
-                case ArgAction.Set | ArgAction.Append | ArgAction.Extend:
+                case ArgAction.Set | ArgAction.Append:
                     arg.value_name = f"<{arg.value_name}>"
                 case _:
                     arg.value_name = None
@@ -489,9 +493,7 @@ def configure_parser(parser: ClapArgParser, command: Command):
             configure_parser(parser, subcommand)
 
 
-def create_parser(
-    cls: type,
-):
+def create_parser(cls: type):
     command = create_command(cls)
     parser = ClapArgParser(command, **command.get_parser_kwargs())
     configure_parser(parser, command)
@@ -509,6 +511,12 @@ def apply_parsed_args(args: dict[str, Any], instance: Any):
             if attr_name == command.subcommand_dest:
                 continue
             match command.args[attr_name].ty:
+                case ArgType.List(_, optional):
+                    if optional and command.args[attr_name].is_positional():
+                        if value == []:
+                            value = None
+                        if isinstance(value, list) and all(v is None for v in value):
+                            value = None
                 case ArgType.Tuple():
                     if value is not None:
                         value = tuple(value)

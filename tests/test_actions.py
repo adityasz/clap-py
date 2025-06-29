@@ -6,6 +6,21 @@ from clap import ArgAction, arg, long, short
 
 
 class TestActions(unittest.TestCase):
+    def test_optional_positional_with_num_args_plus(self):
+        """Test error for optional positional with incompatible num_args."""
+        @clap.command
+        class Cli(clap.Parser):
+            files: Optional[list[str]] = arg(num_args="+")
+
+        args = Cli.parse_args([])
+        self.assertEqual(args.files, None)
+
+        args = Cli.parse_args(["one"])
+        self.assertEqual(args.files, ["one"])
+
+        args = Cli.parse_args(["one", "two"])
+        self.assertEqual(args.files, ["one", "two"])
+
     def test_store_const_action(self):
         @clap.command
         class Cli(clap.Parser):
@@ -115,7 +130,7 @@ class TestActions(unittest.TestCase):
     def test_extend_action(self):
         @clap.command
         class Cli(clap.Parser):
-            items: list[str] = arg(long, action=ArgAction.Extend, num_args="+")
+            items: list[str] = arg(long, num_args="+")
 
         args = Cli.parse_args([])
         self.assertEqual(args.items, [])
@@ -242,15 +257,6 @@ class TestActionTypeErrors(unittest.TestCase):
             @clap.command
             class _:
                 value: Optional[str] = arg(long, action=ArgAction.Set, default_value="test")
-
-    def test_optional_positional_with_invalid_num_args(self):
-        """Test error for optional positional with incompatible num_args."""
-        with self.assertRaises(TypeError):
-            @clap.command
-            class _:
-                files: Optional[list[str]] = arg(num_args="+")
-
-
 
 
 if __name__ == "__main__":

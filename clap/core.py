@@ -107,26 +107,6 @@ class ArgAction(StrEnum):
     assert args.files == []
     ```
     """
-    Extend = "extend"
-    """When encountered, extend a [`list`][] with the associated values.
-
-    Example:
-
-    ```python
-    import clap
-    from clap import ArgAction, long
-
-    @clap.command
-    class Cli(clap.Parser):
-        items: list[str] = arg(long, action=ArgAction.Extend, num_args='+')
-
-    args = Cli.parse_args(["--items", "a", "b", "--items", "c", "d"])
-    assert args.items == ["a", "b", "c", "d"]
-
-    args = Cli.parse_args([])
-    assert args.items == []
-    ```
-    """
     Count = "count"
     """When encountered, increment an [`int`][] counter starting from `0`.
 
@@ -385,10 +365,15 @@ class Arg:
 
         kwargs["action"] = self.action
 
-        if self.num_args == 0 and self.action == ArgAction.Append:
-            kwargs["action"] = "append_const"
-            kwargs.pop("type")
-            kwargs.pop("nargs")
+        if self.action == ArgAction.Append:
+            match self.num_args:
+                case None: ...
+                case 0:
+                    kwargs["action"] = "append_const"
+                    kwargs.pop("type")
+                    kwargs.pop("nargs")
+                case _:
+                    kwargs["action"] = "extend"
 
         if self.num_args == 0 and self.action == ArgAction.Set:
             kwargs["action"] = "store_const"

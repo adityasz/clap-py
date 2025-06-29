@@ -3,7 +3,7 @@ import textwrap
 from dataclasses import dataclass
 from typing import Optional, Union, cast
 
-from .core import Arg, Command
+from .core import Arg, ArgAction, Command
 from .styling import ColorChoice, Style, Styles, determine_color_usage
 
 # So people can write help_template: HelpTemplate = ...
@@ -232,6 +232,9 @@ class HelpRenderer:
                         arg_header = " " * 4
                     length += 2 + len(cast(str, arg.long))
                     arg_header += f"{self.style_literal(cast(str, arg.long))}"
+                    if arg.action == ArgAction.Count:
+                        length += 3
+                        arg_header += "..."
                 if arg.value_name:
                     length += 1 + len(arg.value_name)
                     arg_header += f" {self.style_placeholder(arg.value_name)}"
@@ -348,6 +351,8 @@ class HelpRenderer:
                 length = 2
                 if arg.long:
                     length += 2 + len(cast(str, arg.long))
+                if arg.action == ArgAction.Count:
+                    length += 3  # for the trailing ellipsis
                 if arg.value_name:
                     length += 1 + len(arg.value_name)
                 longest = max(longest, length)
