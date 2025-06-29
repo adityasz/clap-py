@@ -1,5 +1,5 @@
 [project]
-name = "clap-py"
+name = "py-clap"
 authors = [{name = "Aditya Singh", email = "1adityasingh@proton.me"}]
 maintainers = [{name = "Aditya Singh", email = "1adityasingh@proton.me"}]
 version = "0.6.0"
