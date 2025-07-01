@@ -87,7 +87,8 @@ def command[T](
         long_version: Sets the version for the long version (`--version`) and help messages.
         usage: The string describing the program usage. The default is
             generated from arguments added to parser.
-        author: Sets the author(s) for the help message. A custom `help_template` is needed for author to show up.
+        author: Sets the author(s) for the help message. A custom `help_template` is needed for
+            author to show up.
         about: The program's description for the short help (`-h`).
         long_about: The program's description for the long help (`--help`).
         after_help: Free-form help text for after auto-generated short help (`-h`).
@@ -99,7 +100,8 @@ def command[T](
         color: When to color output.
         styles: The styles for help output.
         help_template: The help template to be used, overriding the default format.
-        max_term_width: The help output will wrap to `min(max_term_width, shutil.get_terminal_size())`.
+        max_term_width: The help output will wrap to
+            `min(max_term_width, shutil.get_terminal_size())`.
         propagate_version: Whether to use the version of the current command for all subcommands.
         disable_version_flag: Disable the `-V` and `--version` flags.
         disable_help_flag: Disable the `-h` and `--help` flags.
@@ -244,7 +246,8 @@ def subcommand[T](
         color: When to color output.
         styles: The styles for help output.
         help_template: The help template to be used, overriding the default format.
-        max_term_width: The help output will wrap to `min(max_term_width, shutil.get_terminal_size())`.
+        max_term_width: The help output will wrap to
+            `min(max_term_width, shutil.get_terminal_size())`.
         propagate_version: Whether to use the version of the current command for all subcommands.
         disable_version_flag: Disable the `-V` and `--version` flags.
         disable_help_flag: Disable the `-h` and `--help` flags.

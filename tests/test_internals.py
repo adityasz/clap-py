@@ -31,7 +31,8 @@ class TestDocstringExtraction(unittest.TestCase):
         extractor.visit(tree)
 
         self.assertEqual(extractor.docstrings["field1"], "Field 1 docstring")
-        self.assertEqual(extractor.docstrings["field2"], "Field 2 docstring.\n\n    Multi-line description here.")
+        self.assertEqual(extractor.docstrings["field2"],
+                         "Field 2 docstring.\n\n    Multi-line description here.")
         self.assertNotIn("field3", extractor.docstrings)
 
     def test_group_docs(self):
@@ -65,7 +66,10 @@ class TestDocstringExtraction(unittest.TestCase):
         Third paragraph here."""
         short_help, long_help = get_help_from_docstring(docstring)
         self.assertEqual(short_help, "First paragraph with period")
-        expected_long = "First paragraph with period.\n\nSecond paragraph with more details. This continues the second paragraph.\n\nThird paragraph here."
+        expected_long = (
+            "First paragraph with period.\n\n"
+            "Second paragraph with more details. This continues the second paragraph.\n\n"
+            "Third paragraph here.")
         self.assertEqual(long_help, expected_long)
 
     def test_empty(self):

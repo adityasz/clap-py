@@ -1,5 +1,9 @@
 # clap-py
 
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+![CI](https://github.com/adityasz/clap-py/actions/workflows/ci.yml/badge.svg)
+
 A declarative and type-safe argument parser for Python, inspired by
 [clap-rs](https://github.com/clap-rs/clap).
 
