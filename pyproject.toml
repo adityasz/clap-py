@@ -17,14 +17,12 @@ Issues = "https://github.com/adityasz/clap-py/issues"
 # TODO: Changelog
 
 [build-system]
-requires = ["setuptools>=79.0"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.7.19"]
+build-backend = "uv_build"
 
-[tool.setuptools]
-packages = ["clap"]
-
-[tool.setuptools.package-dir]
-"" = "."
+[tool.uv.build-backend]
+module-name = "clap"
+module-root = ""
 
 [dependency-groups]
 dev = [
