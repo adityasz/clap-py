@@ -4,14 +4,7 @@ import sys
 from enum import EnumType
 from inspect import getsource
 from textwrap import dedent
-from typing import (
-    Any,
-    Optional,
-    Union,
-    get_args,
-    get_origin,
-    get_type_hints,
-)
+from typing import Any, Optional, Union, get_args, get_origin, get_type_hints, override
 
 from .core import (
     Arg,
@@ -59,6 +52,7 @@ class DocstringExtractor(ast.NodeVisitor):
     def __init__(self):
         self.docstrings: dict[str, str] = {}
 
+    @override
     def visit_ClassDef(self, node):
         for stmt_1, stmt_2 in zip(node.body[:-1], node.body[1:], strict=False):
             # Class attributes do not have __doc__, but the interpreter does
@@ -290,6 +284,8 @@ def set_default_and_required(arg: Arg):
                 raise TypeError("An argument with the 'store_true' action can never be None.")
             if arg.default_value is None:
                 arg.default_value = False
+        case _:
+            pass
 
 
 def set_value_name(arg: Arg, field_name: str):
@@ -523,6 +519,8 @@ def apply_parsed_args(args: dict[str, Any], instance: Any):
                 case ArgType.Enum(choice_to_enum_member=choice_to_enum_member):
                     if isinstance(value, str):
                         value = choice_to_enum_member[value]
+                case _:
+                    pass
             setattr(instance, attr_name, value)
 
     # no subcommands

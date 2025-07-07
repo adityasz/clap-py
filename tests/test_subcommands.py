@@ -278,7 +278,7 @@ class TestSubcommandErrors(unittest.TestCase):
                 class Sub:
                     ...
 
-                cmd: Sub = "invalid"  # type: ignore
+                cmd: Sub = "invalid"  # pyright: ignore[reportAssignmentType]
 
     def test_unknown_subcommand(self):
         @clap.subcommand
@@ -338,8 +338,8 @@ class TestSubcommandIntegration(unittest.TestCase):
 
         @clap.command
         class Cli(clap.Parser):
-            verbose: bool = arg(short, long)
             command: Action
+            verbose: bool = arg(short, long)
 
         args = Cli.parse_args(["--verbose", "action", "target-name"])
         self.assertTrue(args.verbose)

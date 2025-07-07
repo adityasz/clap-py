@@ -52,7 +52,7 @@ def command[T](
     cls: Optional[type[T]] = None,
     /,
     *,
-    name: str = os.path.basename(sys.argv[0]),
+    name: Optional[str] = None,
     version: Optional[str] = None,
     long_version: Optional[str] = None,
     usage: Optional[str] = None,
@@ -137,6 +137,8 @@ def command[T](
                 about = doc_about
             if long_about is None:
                 long_about = doc_long_about
+        if name is None:
+            name = os.path.basename(sys.argv[0])
         command = Command(
             name=name,
             usage=usage,
@@ -414,10 +416,12 @@ def arg[U](
     match short_or_long:
         case AutoFlag.Short: short_name = AutoFlag.Short
         case AutoFlag.Long: long_name = AutoFlag.Long
+        case _: pass
 
     match long_or_short:
         case AutoFlag.Short: short_name = AutoFlag.Short
         case AutoFlag.Long: long_name = AutoFlag.Long
+        case _: pass
 
     if short is not None:
         if isinstance(short, str):

@@ -14,9 +14,10 @@ import select
 import subprocess
 from contextlib import suppress
 from io import StringIO
-from typing import Optional
+from typing import Optional, override
 
 from mkdocs.config import config_options
+from mkdocs.config.base import LegacyConfig  # for some reason, the default is called Legacy
 from mkdocs.plugins import BasePlugin
 from rich.console import Console
 from rich.text import Text
@@ -24,9 +25,10 @@ from rich.text import Text
 TERM_WIDTH = 100
 
 
-class InsertStdoutPlugin(BasePlugin):
+class InsertStdoutPlugin(BasePlugin[LegacyConfig]):
     config_scheme = (("root", config_options.Type(str, default=".")),)
 
+    @override
     def on_page_markdown(self, markdown: str, **_) -> str:
         def replace_stdout_marker(match):
             command = match.group(1).strip()
@@ -35,7 +37,7 @@ class InsertStdoutPlugin(BasePlugin):
         pattern = r"<~--\s*stdout\[(.*?)\]\s*-->"
         return re.sub(pattern, replace_stdout_marker, markdown)
 
-    def read_pty_output(self, master_fd: int, process: subprocess.Popen) -> bytes:
+    def read_pty_output(self, master_fd: int, process: subprocess.Popen[bytes]) -> bytes:
         return_code = process.wait()
         assert return_code == 0
 

@@ -1,7 +1,7 @@
 import sys
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
-from typing import Optional
+from typing import Optional, override
 
 
 class ColorChoice(Enum):
@@ -191,6 +191,7 @@ class Style:
         else:
             return ""
 
+    @override
     def __str__(self) -> str:
         codes = []
         if self.color_fg is not None:
@@ -207,6 +208,7 @@ class Style:
             codes.append("4")
         return f"\033[{';'.join(codes)}m" if codes else ""
 
+    @override
     def __format__(self, format_spec: str) -> str:
         if format_spec == '#':
             return self.render_reset()

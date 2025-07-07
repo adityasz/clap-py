@@ -150,6 +150,8 @@ class HelpRenderer:
                     self.write_arg_group("Arguments", "", self.get_positionals())
                 case "subcommands":
                     self.write_subcommands()
+                case _:
+                    pass
             self.writer.push_str(rest)
 
     def format_usage(self, command: Optional[Command] = None, usage_prefix: str = "") -> str:

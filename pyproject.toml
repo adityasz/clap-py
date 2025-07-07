@@ -26,11 +26,11 @@ module-root = ""
 
 [dependency-groups]
 dev = [
+    "basedpyright>=1.29.5",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.14",
     "mkdocstrings[python]>=0.29.1",
     "pymdown-extensions>=10.15",
-    "pyright>=1.1.402",
     "pytest>=8.4.1",
     "rich>=14.0.0",
     "ruff>=0.12.0",
@@ -38,3 +38,35 @@ dev = [
 
 [project.entry-points."mkdocs.plugins"]
 insert_stdout = "docs.plugins.insert_stdout:InsertStdoutPlugin"
+
+[tool.ruff]
+line-length = 99
+
+[tool.ruff.format]
+preview = true
+docstring-code-format = true
+
+[tool.ruff.lint]
+preview = true
+select = ["E", "F", "UP", "B", "SIM", "I"]
+ignore = ["UP007", "UP045", "E701", "SIM108"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.basedpyright]
+reportAny = false                   # is this rule a joke?
+reportExplicitAny = false           # is this rule a joke?
+deprecateTypingAliases = false      # this rule is incorrect as Union and Optional are not deprecated; `Optional[int]` is objectively better than `int | None`
+reportUnknownMemberType = false     # because `v = []; v.append(1)` is perfectly fine and requires no annotations (Rust: `let mut v = Vec::new(); v.push(1);`)
+reportUnknownVariableType = false   # because pyright is too dumb to infer types sometimes
+reportUnknownLambdaType = false     # because pyright is too dumb to infer types sometimes
+reportUnknownArgumentType = false   # to pass variables where pyright can't infer types
+reportUnknownParameterType = false  # to accept `*args`, `**kwargs`
+reportMissingParameterType = false  # to accept `*args`, `**kwargs`
+reportUnusedCallResult = false      # for marimo
+reportPrivateUsage = false          # python does not enforce public/private; if someone types a `_`, they know what they are doing
+reportImportCycles = false          # python does not have forward declarations
+reportUnannotatedClassAttribute = false
+reportImplicitStringConcatenation = false
+reportUnusedParameter = "hint"

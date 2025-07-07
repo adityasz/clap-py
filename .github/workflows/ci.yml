@@ -40,3 +40,6 @@ jobs:
     - name: Lint
       run: uvx ruff check
       continue-on-error: true
+
+    - name: Type check
+      run: uvx basedpyright

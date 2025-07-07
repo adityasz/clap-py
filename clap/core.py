@@ -4,14 +4,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import Enum, StrEnum, auto
-from typing import (
-    Any,
-    Literal,
-    Optional,
-    Self,
-    Union,
-    cast,
-)
+from typing import Any, Literal, Optional, Self, Union, cast, override
 
 from .styling import ColorChoice, Styles
 
@@ -137,6 +130,7 @@ class ArgAction(StrEnum):
         def __init__(self, option_strings, dest, **kwargs):
             super().__init__(option_strings, dest, nargs=0)
 
+        @override
         def __call__(self, parser, namespace, values, option_string=None):
             from .parser import ClapArgParser
             parser = cast(ClapArgParser, parser)
@@ -154,6 +148,7 @@ class ArgAction(StrEnum):
         def __init__(self, option_strings: Sequence[str], dest: str, **_):
             super().__init__(option_strings, dest, nargs=0)
 
+        @override
         def __call__(self, parser, _, __, option_string: Optional[str] = None):
             from .parser import ClapArgParser
             parser = cast(ClapArgParser, parser)
@@ -168,6 +163,7 @@ class ArgAction(StrEnum):
         def __init__(self, option_strings: Sequence[str], dest: str, **_):
             super().__init__(option_strings, dest, nargs=0)
 
+        @override
         def __call__(self, parser, _, __, ___: Optional[str] = None):
             from .parser import ClapArgParser
             cast(ClapArgParser, parser).print_nice_help(use_long=False)
@@ -178,6 +174,7 @@ class ArgAction(StrEnum):
         def __init__(self, option_strings: Sequence[str], dest: str, **_):
             super().__init__(option_strings, dest, nargs=0)
 
+        @override
         def __call__(self, parser, _, __, ___: Optional[str] = None):
             from .parser import ClapArgParser
             cast(ClapArgParser, parser).print_nice_help(use_long=True)
@@ -192,8 +189,8 @@ type NargsType = Union[Literal['?', '*', '+'], int]
 
 
 def to_kebab_case(name: str) -> str:
-    name = name.replace('_', '-')  # snake_case, SCREAMING_SNAKE_CASE
-    name = re.sub(r'([a-z0-9])([A-Z])', r'\1-\2', name)  # camelCase, PascalCase
+    name = name.replace('_', '-')                           # snake_case, SCREAMING_SNAKE_CASE
+    name = re.sub(r'([a-z0-9])([A-Z])', r'\1-\2', name)     # camelCase, PascalCase
     name = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1-\2', name)  # HTTPSConnection -> HTTPS-Connection
     name = name.lower()
     name = re.sub(r'-+', '-', name)
@@ -214,7 +211,7 @@ class ArgType:
     class Enum(Base):
         enum: type
         ty: type = field(init=False)
-        members: dict = field(init=False)
+        members: dict[str, Any] = field(init=False)
         choice_to_enum_member: dict[str, Any] = field(init=False)
 
         def __post_init__(self):
@@ -286,6 +283,7 @@ class Group:
     This is forwarded to [argparse][].
     """
 
+    @override
     def __hash__(self):
         return hash(id(self))
 
@@ -332,6 +330,7 @@ class MutexGroup:
     required: bool = False
     """Whether at least one of the mutually exclusive arguments must be present."""
 
+    @override
     def __hash__(self):
         return hash(id(self))
 
