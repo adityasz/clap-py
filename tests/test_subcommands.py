@@ -2,6 +2,8 @@ import unittest
 from pathlib import Path
 from typing import Optional, Union
 
+import pytest
+
 import clap
 from clap import arg, long, short
 
@@ -17,8 +19,8 @@ class TestBasicSubcommands(unittest.TestCase):
             command: Create
 
         args = Cli.parse(["create", "test-name"])
-        self.assertIsInstance(args.command, Create)
-        self.assertEqual(args.command.name, "test-name")
+        assert isinstance(args.command, Create)
+        assert args.command.name == "test-name"
 
     def test_multiple_subcommands(self):
         @clap.subcommand
@@ -35,14 +37,14 @@ class TestBasicSubcommands(unittest.TestCase):
             command: Union[Create, Delete]
 
         args = Cli.parse(["create", "test-name"])
-        self.assertIsInstance(args.command, Create)
-        self.assertEqual(args.command.name, "test-name")
+        assert isinstance(args.command, Create)
+        assert args.command.name == "test-name"
 
         args = Cli.parse(["delete", "test-name", "--force"])
         if not isinstance(args.command, Delete):
             self.fail()
-        self.assertEqual(args.command.name, "test-name")
-        self.assertTrue(args.command.force)
+        assert args.command.name == "test-name"
+        assert args.command.force
 
     def test_subcommand_with_options(self):
         @clap.subcommand
@@ -65,11 +67,11 @@ class TestBasicSubcommands(unittest.TestCase):
             "--threads",
             "4",
         ])
-        self.assertIsInstance(args.command, Process)
-        self.assertEqual(args.command.input_file, Path("input.txt"))
-        self.assertEqual(args.command.output, Path("out.txt"))
-        self.assertTrue(args.command.verbose)
-        self.assertEqual(args.command.threads, 4)
+        assert isinstance(args.command, Process)
+        assert args.command.input_file == Path("input.txt")
+        assert args.command.output == Path("out.txt")
+        assert args.command.verbose
+        assert args.command.threads == 4
 
     def test_optional_subcommand(self):
         @clap.subcommand
@@ -83,10 +85,10 @@ class TestBasicSubcommands(unittest.TestCase):
         args = Cli.parse(["action", "target-name"])
         if not isinstance(args.command, Action):
             self.fail()
-        self.assertEqual(args.command.target, "target-name")
+        assert args.command.target == "target-name"
 
         args = Cli.parse([])
-        self.assertIsNone(args.command)
+        assert args.command is None
 
 
 class TestNestedSubcommands(unittest.TestCase):
@@ -108,16 +110,16 @@ class TestNestedSubcommands(unittest.TestCase):
             command: Stash
 
         args = Cli.parse(["stash", "push", "--message", "work in progress"])
-        self.assertIsInstance(args.command, Stash)
+        assert isinstance(args.command, Stash)
         if not isinstance(args.command.subcommand, Push):
             self.fail()
-        self.assertEqual(args.command.subcommand.message, "work in progress")
+        assert args.command.subcommand.message == "work in progress"
 
         args = Cli.parse(["stash", "pop", "--index", "0"])
-        self.assertIsInstance(args.command, Stash)
+        assert isinstance(args.command, Stash)
         if not isinstance(args.command.subcommand, Pop):
             self.fail()
-        self.assertEqual(args.command.subcommand.index, 0)
+        assert args.command.subcommand.index == 0
 
     def test_three_level_nested_subcommands(self):
         @clap.subcommand
@@ -141,11 +143,11 @@ class TestNestedSubcommands(unittest.TestCase):
             command: System
 
         args = Cli.parse(["system", "service", "status", "--verbose"])
-        self.assertIsInstance(args.command, System)
-        self.assertIsInstance(args.command.component, Service)
+        assert isinstance(args.command, System)
+        assert isinstance(args.command.component, Service)
         if not isinstance(args.command.component.action, Status):
             self.fail()
-        self.assertTrue(args.command.component.action.verbose)
+        assert args.command.component.action.verbose
 
     def test_mixed_nested_and_flat_subcommands(self):
         @clap.subcommand
@@ -174,13 +176,13 @@ class TestNestedSubcommands(unittest.TestCase):
             self.fail()
         if not isinstance(args.command.operation, AddItem):
             self.fail()
-        self.assertEqual(args.command.operation.name, "key")
-        self.assertEqual(args.command.operation.value, "value")
+        assert args.command.operation.name == "key"
+        assert args.command.operation.value == "value"
 
         args = Cli.parse(["status", "--verbose"])
         if not isinstance(args.command, Status):
             self.fail()
-        self.assertTrue(args.command.verbose)
+        assert args.command.verbose
 
 
 class TestSubcommandNamingAndAliases(unittest.TestCase):
@@ -200,12 +202,12 @@ class TestSubcommandNamingAndAliases(unittest.TestCase):
         args = Cli.parse(["create-project", "my-app"])
         if not isinstance(args.command, CreateProject):
             self.fail()
-        self.assertEqual(args.command.name, "my-app")
+        assert args.command.name == "my-app"
 
         args = Cli.parse(["delete-all", "--confirm"])
         if not isinstance(args.command, DeleteAll):
             self.fail()
-        self.assertTrue(args.command.confirm)
+        assert args.command.confirm
 
     def test_subcommand_with_custom_name(self):
         @clap.subcommand(name="ls")
@@ -217,8 +219,8 @@ class TestSubcommandNamingAndAliases(unittest.TestCase):
             command: ListFiles
 
         args = Cli.parse(["ls", "/tmp"])
-        self.assertIsInstance(args.command, ListFiles)
-        self.assertEqual(args.command.directory, "/tmp")
+        assert isinstance(args.command, ListFiles)
+        assert args.command.directory == "/tmp"
 
     def test_subcommand_with_aliases(self):
         @clap.subcommand(aliases=("rm", "del"))
@@ -230,21 +232,21 @@ class TestSubcommandNamingAndAliases(unittest.TestCase):
             command: Remove
 
         args = Cli.parse(["remove", "file.txt"])
-        self.assertIsInstance(args.command, Remove)
-        self.assertEqual(args.command.target, "file.txt")
+        assert isinstance(args.command, Remove)
+        assert args.command.target == "file.txt"
 
         args = Cli.parse(["rm", "file.txt"])
-        self.assertIsInstance(args.command, Remove)
-        self.assertEqual(args.command.target, "file.txt")
+        assert isinstance(args.command, Remove)
+        assert args.command.target == "file.txt"
 
         args = Cli.parse(["del", "file.txt"])
-        self.assertIsInstance(args.command, Remove)
-        self.assertEqual(args.command.target, "file.txt")
+        assert isinstance(args.command, Remove)
+        assert args.command.target == "file.txt"
 
 
 class TestSubcommandErrors(unittest.TestCase):
     def test_subcommand_mixed_types(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             @clap.command
             class _:
                 @clap.subcommand
@@ -255,7 +257,7 @@ class TestSubcommandErrors(unittest.TestCase):
 
     def test_multiple_subcommand_destinations(self):
         """Test error when multiple subcommand destinations are defined."""
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             @clap.command
             class _:
                 @clap.subcommand
@@ -271,7 +273,7 @@ class TestSubcommandErrors(unittest.TestCase):
 
     def test_subcommand_field_assignment(self):
         """Test error when assigning value to subcommand field."""
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             @clap.command
             class _:
                 @clap.subcommand
@@ -289,7 +291,7 @@ class TestSubcommandErrors(unittest.TestCase):
         class Cli(clap.Parser):
             command: Valid
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["invalid", "arg"])
 
     def test_missing_required_subcommand(self):
@@ -301,7 +303,7 @@ class TestSubcommandErrors(unittest.TestCase):
         class Cli(clap.Parser):
             command: Required
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse([])
 
     def test_subcommand_with_invalid_args(self):
@@ -313,7 +315,7 @@ class TestSubcommandErrors(unittest.TestCase):
         class Cli(clap.Parser):
             command: Command
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["command", "not_a_number"])
 
     def test_missing_arguments_to_subcommand(self):
@@ -325,7 +327,7 @@ class TestSubcommandErrors(unittest.TestCase):
         class Cli(clap.Parser):
             command: Command
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["command"])
 
 
@@ -342,16 +344,16 @@ class TestSubcommandIntegration(unittest.TestCase):
             verbose: bool = arg(short, long)
 
         args = Cli.parse(["--verbose", "action", "target-name"])
-        self.assertTrue(args.verbose)
-        self.assertFalse(args.command.verbose)
-        self.assertIsInstance(args.command, Action)
-        self.assertEqual(args.command.target, "target-name")
+        assert args.verbose
+        assert not args.command.verbose
+        assert isinstance(args.command, Action)
+        assert args.command.target == "target-name"
 
         args = Cli.parse(["--verbose", "action", "target-name", "--verbose"])
-        self.assertTrue(args.verbose)
-        self.assertTrue(args.command.verbose)
-        self.assertIsInstance(args.command, Action)
-        self.assertEqual(args.command.target, "target-name")
+        assert args.verbose
+        assert args.command.verbose
+        assert isinstance(args.command, Action)
+        assert args.command.target == "target-name"
 
     def test_subcommand_with_enums(self):
         from clap import ColorChoice
@@ -365,8 +367,8 @@ class TestSubcommandIntegration(unittest.TestCase):
             command: Configure
 
         args = Cli.parse(["configure", "always"])
-        self.assertIsInstance(args.command, Configure)
-        self.assertEqual(args.command.color, ColorChoice.Always)
+        assert isinstance(args.command, Configure)
+        assert args.command.color == ColorChoice.Always
 
     def test_subcommand_with_lists(self):
         @clap.subcommand
@@ -379,9 +381,9 @@ class TestSubcommandIntegration(unittest.TestCase):
             command: Process
 
         args = Cli.parse(["process", "file1.txt", "file2.txt", "--exclude", "tmp", "cache"])
-        self.assertIsInstance(args.command, Process)
-        self.assertEqual(args.command.files, ["file1.txt", "file2.txt"])
-        self.assertEqual(args.command.exclude, ["tmp", "cache"])
+        assert isinstance(args.command, Process)
+        assert args.command.files == ["file1.txt", "file2.txt"]
+        assert args.command.exclude == ["tmp", "cache"]
 
 
 if __name__ == "__main__":

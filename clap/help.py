@@ -182,9 +182,9 @@ class HelpRenderer:
                 )
                 mutex_usage += ">"
                 parts.append(mutex_usage)
-        for arg in command.args.values():
-            if arg.is_positional():
-                parts.append(cast(str, arg.value_name))
+        parts.extend(
+            cast(str, arg.value_name) for arg in command.args.values() if arg.is_positional()
+        )
         usage = " ".join(parts)
         if command.contains_subcommands():
             for subcommand in command.subcommands.values():
@@ -291,11 +291,10 @@ class HelpRenderer:
             if arg.aliases:
                 spec_vals.append(f"[aliases: {", ".join(arg.aliases)}]")
             return spec_vals
-        else:
-            cmd = thing
-            if cmd.aliases:
-                return [f"[aliases: {", ".join(cmd.aliases)}]"]
-            return []
+        cmd = thing
+        if cmd.aliases:
+            return [f"[aliases: {", ".join(cmd.aliases)}]"]
+        return []
 
     def write_subcommands(self):
         self.writer.push_str(self.style_header(f"{self.command.subcommand_help_heading}:"))
@@ -303,7 +302,7 @@ class HelpRenderer:
         subcommands = self.command.subcommands
 
         longest = 1
-        for name, _ in subcommands.items():
+        for name in subcommands:
             longest = max(len(name), longest)
 
         next_line_help = any(
@@ -359,10 +358,13 @@ class HelpRenderer:
                     length += 1 + len(arg.value_name)
                 longest = max(longest, length)
         next_line_help = any(
-            (lambda about, spec:
-                (taken := longest + 2 * len(INDENT)) <= self.term_width
-                and taken / self.term_width > 0.40
-                and taken + len(about + (" " + spec if about and spec else spec)) > self.term_width
+            (
+                lambda about, spec: (
+                    (taken := longest + 2 * len(INDENT)) <= self.term_width
+                    and taken / self.term_width > 0.40
+                    and taken + len(about + (" " + spec if about and spec else spec))
+                    > self.term_width
+                )
                 or "\n" in about
             )(self.get_about(arg.help, arg.long_help, True), " ".join(self.spec_vals(arg)))
             for arg in args

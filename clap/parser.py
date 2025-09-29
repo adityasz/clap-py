@@ -150,19 +150,22 @@ def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
         if contains_subcommands(subcommands):
             return ArgType.SubcommandDest(optional, subcommands)
         if len(types) != 2 or not optional:
-            raise TypeError(f"{type_hint}: Unions can only contain subcommands.")
+            msg = f"{type_hint}: Unions can only contain subcommands."
+            raise TypeError(msg) from None
         if type(None) is types[0]:
             return parse_type_hint(types[1], True)
-        elif type(None) is types[1]:
+        if type(None) is types[1]:
             return parse_type_hint(types[0], True)
     if origin is list:
         return ArgType.List(types[0], optional)
     if origin is tuple:
         for ty in types:
             if ty != (types[0]):
-                raise TypeError("Heterogenous tuples are not supported.")
+                msg = "Heterogenous tuples are not supported."
+                raise TypeError(msg)
         return ArgType.Tuple(types[0], optional, len(types))
-    raise TypeError(f"Could not parse {type_hint}.")
+    msg = f"Could not parse {type_hint}."
+    raise TypeError(msg)
 
 
 def set_flags(arg: Arg, field_name: str, prefix_chars: str):
@@ -213,22 +216,23 @@ def set_type_dependent_kwargs(arg: Arg):
                         case "+":
                             arg.num_args = "*"
                         case _:
-                            raise TypeError(
+                            msg = (
                                 "argparse limitation: Please use `num_args='*'` "
                                 "with manual validation."
                             )
+                            raise TypeError(msg)
         case ArgType.Tuple(t, _, n):
             if arg.action is None:
                 arg.action = ArgAction.Set
             if (num_args := arg.num_args) is not None:
                 if num_args != n:
-                    raise TypeError(
-                        f"The tuple has {n} values but 'num_args' is set to {num_args}."
-                    )
+                    msg = f"The tuple has {n} values but 'num_args' is set to {num_args}."
+                    raise TypeError(msg)
             else:
                 arg.num_args = n
         case _:
-            raise TypeError("An unknown error occurred.")
+            msg = "An unknown error occurred."
+            raise TypeError(msg)
 
 
 def set_default_and_required(arg: Arg):
@@ -243,18 +247,21 @@ def set_default_and_required(arg: Arg):
             if arg.default_value is None:
                 arg.default_value = 0
             if optional_type_hint:
-                raise TypeError(
+                msg = (
                     "An argument with the 'count' action cannot be None. If no default is "
                     "provided, it is set to 0."
                 )
+                raise TypeError(msg)
         case ArgAction.Set:
             if arg.required is not None:
                 if arg.required and optional_type_hint:
-                    raise TypeError("An argument with 'required=True' can never be None.")
+                    msg = "An argument with 'required=True' can never be None."
+                    raise TypeError(msg)
                 return
             if arg.default_value is not None:
                 if optional_type_hint:
-                    raise TypeError("An argument with a default value can never be None.")
+                    msg = "An argument with a default value can never be None."
+                    raise TypeError(msg)
                 if arg.is_positional():
                     arg.num_args = "?"
                     arg.required = None
@@ -276,12 +283,14 @@ def set_default_and_required(arg: Arg):
                     arg.required = None
         case ArgAction.SetFalse:
             if optional_type_hint:
-                raise TypeError("An argument with the 'store_false' action can never be None.")
+                msg = "An argument with the 'store_false' action can never be None."
+                raise TypeError(msg)
             if arg.default_value is None:
                 arg.default_value = True
         case ArgAction.SetTrue:
             if optional_type_hint:
-                raise TypeError("An argument with the 'store_true' action can never be None.")
+                msg = "An argument with the 'store_true' action can never be None."
+                raise TypeError(msg)
             if arg.default_value is None:
                 arg.default_value = False
         case _:
@@ -340,12 +349,13 @@ def add_argument(
         command.groups[group].append(arg)
     if (mutex := arg.mutex) is not None:
         if (group := arg.group) is not None and mutex.parent != group:
-            raise ValueError(
+            msg = (
                 "The mutex group's parent group ('{}') is different from this "
                 "argument's group ('{}'). It is not necessary to provide the "
                 "group when the mutex group is already provided because the "
                 "mutex group's parent must be the given group."
             )
+            raise ValueError(msg)
         command.mutexes[mutex].append(arg)
 
 
@@ -357,14 +367,14 @@ def configure_subcommands(
     command_path: str,
 ):
     if command.subcommand_dest is not None:
-        raise TypeError(
-            f"'{command.subcommand_dest}' is already the subcommand destination."
-        )
+        msg = f"'{command.subcommand_dest}' is already the subcommand destination."
+        raise TypeError(msg)
     if value is not None:
-        raise TypeError(
+        msg = (
             f"{field_name} is a subcommand destination based on the annotation; "
             f"cannot assign {type(value)} to it."
         )
+        raise TypeError(msg)
     command.subcommand_required = not ty.optional
     command.subcommand_dest = field_name
     # if dest is not provided to add_subparsers(), argparse does not give the
@@ -396,9 +406,10 @@ def create_command(cls: type, command_path: str = "", parent: Optional[Command] 
         value = getattr(cls, field_name, None)
         if isinstance(group := value, Group):
             if group in command.groups:
-                raise ValueError(
+                msg = (
                     f"A group with title '{group.title}' and the same description already exists."
                 )
+                raise ValueError(msg)
             if (docstring := docstrings.get(field_name)) is not None:
                 about, long_about = get_help_from_docstring(docstring)
                 if group.about is None:
@@ -426,9 +437,8 @@ def create_command(cls: type, command_path: str = "", parent: Optional[Command] 
             continue  # already handled in the previous loop
         else:
             if value is not None and not isinstance(value, Arg):
-                raise TypeError(
-                    "Only 'arg(...)', 'group(...)', or 'mutex(...)' can be assigned to a field."
-                )
+                msg = "Only 'arg(...)', 'group(...)', or 'mutex(...)' can be assigned to a field."
+                raise TypeError(msg)
             arg = value or Arg()
             add_argument(arg, ty, command, field_name, command_path, docstrings)
 

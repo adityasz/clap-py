@@ -2,6 +2,8 @@ import unittest
 from enum import Enum, auto
 from typing import Optional
 
+import pytest
+
 import clap
 from clap import ColorChoice, arg, long, short
 
@@ -35,21 +37,21 @@ class TestEnums(unittest.TestCase):
             color: ColorChoice
 
         args = Cli.parse(["auto"])
-        self.assertEqual(args.color, ColorChoice.Auto)
+        assert args.color == ColorChoice.Auto
 
         args = Cli.parse(["always"])
-        self.assertEqual(args.color, ColorChoice.Always)
+        assert args.color == ColorChoice.Always
 
         args = Cli.parse(["never"])
-        self.assertEqual(args.color, ColorChoice.Never)
+        assert args.color == ColorChoice.Never
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["invalid"])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse([])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["Auto"])
 
     def test_optional_color_choice(self):
@@ -58,15 +60,15 @@ class TestEnums(unittest.TestCase):
             color: Optional[ColorChoice] = arg(long)
 
         args = Cli.parse([])
-        self.assertIsNone(args.color)
+        assert args.color is None
 
         args = Cli.parse(["--color", "always"])
-        self.assertEqual(args.color, ColorChoice.Always)
+        assert args.color == ColorChoice.Always
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--color"])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--color", "invalid"])
 
     def test_enum_kebab_conversion(self):
@@ -75,30 +77,30 @@ class TestEnums(unittest.TestCase):
             option: PascalEnum
 
         args = Cli.parse(["option-one"])
-        self.assertEqual(args.option, PascalEnum.OptionOne)
+        assert args.option == PascalEnum.OptionOne
 
         args = Cli.parse(["option-two"])
-        self.assertEqual(args.option, PascalEnum.optionTwo)
+        assert args.option == PascalEnum.optionTwo
 
         args = Cli.parse(["option-three"])
-        self.assertEqual(args.option, PascalEnum.option_three)
+        assert args.option == PascalEnum.option_three
 
         args = Cli.parse(["option-four"])
-        self.assertEqual(args.option, PascalEnum.Option_Four)
+        assert args.option == PascalEnum.Option_Four
 
         args = Cli.parse(["option-five"])
-        self.assertEqual(args.option, PascalEnum.OPTION_FIVE)
+        assert args.option == PascalEnum.OPTION_FIVE
 
         args = Cli.parse(["h-atom"])
-        self.assertEqual(args.option, PascalEnum.HAtom)
+        assert args.option == PascalEnum.HAtom
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["OptionOne"])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["option_one"])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["non-existent"])
 
     def test_optional_enum(self):
@@ -107,21 +109,21 @@ class TestEnums(unittest.TestCase):
             priority: Optional[Priority] = arg(short, long)
 
         args = Cli.parse([])
-        self.assertIsNone(args.priority)
+        assert args.priority is None
 
         args = Cli.parse(["-p", "high"])
-        self.assertEqual(args.priority, Priority.High)
+        assert args.priority == Priority.High
 
         args = Cli.parse(["--priority", "high"])
-        self.assertEqual(args.priority, Priority.High)
+        assert args.priority == Priority.High
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["-p", "urgent"])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["-p"])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--priority", "High"])
 
     def test_enum_with_default(self):
@@ -130,15 +132,15 @@ class TestEnums(unittest.TestCase):
             level: LogLevel = arg(long, default_value=LogLevel.Info)
 
         args = Cli.parse([])
-        self.assertEqual(args.level, LogLevel.Info)
+        assert args.level == LogLevel.Info
 
         args = Cli.parse(["--level", "error"])
-        self.assertEqual(args.level, LogLevel.Error)
+        assert args.level == LogLevel.Error
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--level", "fatal"])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--level"])
 
 
@@ -148,13 +150,13 @@ class TestEnumErrors(unittest.TestCase):
         class Cli(clap.Parser):
             priority: Priority
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["invalid"])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse([""])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["low", "medium"])
 
 

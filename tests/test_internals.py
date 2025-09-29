@@ -3,6 +3,8 @@ import unittest
 from textwrap import dedent
 from typing import Union
 
+import pytest
+
 from clap.core import Arg, to_kebab_case
 from clap.parser import (
     DocstringExtractor,
@@ -30,10 +32,11 @@ class TestDocstringExtraction(unittest.TestCase):
         extractor = DocstringExtractor()
         extractor.visit(tree)
 
-        self.assertEqual(extractor.docstrings["field1"], "Field 1 docstring")
-        self.assertEqual(extractor.docstrings["field2"],
-                         "Field 2 docstring.\n\n    Multi-line description here.")
-        self.assertNotIn("field3", extractor.docstrings)
+        assert extractor.docstrings["field1"] == "Field 1 docstring"
+        assert extractor.docstrings["field2"] == (
+            "Field 2 docstring.\n\n    Multi-line description here."
+        )
+        assert "field3" not in extractor.docstrings
 
     def test_group_docs(self):
         """Test DocstringExtractor with assigned fields (groups)."""
@@ -47,14 +50,14 @@ class TestDocstringExtraction(unittest.TestCase):
         extractor = DocstringExtractor()
         extractor.visit(tree)
 
-        self.assertEqual(extractor.docstrings["group1"], "Group 1 description")
-        self.assertNotIn("field2", extractor.docstrings)
+        assert extractor.docstrings["group1"] == "Group 1 description"
+        assert "field2" not in extractor.docstrings
 
     def test_single_paragraph(self):
         """Test help extraction from single paragraph."""
         short, long_help = get_help_from_docstring("Simple help text.")
-        self.assertEqual(short, "Simple help text")
-        self.assertEqual(long_help, "Simple help text")
+        assert short == "Simple help text"
+        assert long_help == "Simple help text"
 
     def test_multiple_paragraphs(self):
         """Test help extraction from multiple paragraphs."""
@@ -65,130 +68,130 @@ class TestDocstringExtraction(unittest.TestCase):
 
         Third paragraph here."""
         short_help, long_help = get_help_from_docstring(docstring)
-        self.assertEqual(short_help, "First paragraph with period")
+        assert short_help == "First paragraph with period"
         expected_long = (
             "First paragraph with period.\n\n"
             "Second paragraph with more details. This continues the second paragraph.\n\n"
             "Third paragraph here.")
-        self.assertEqual(long_help, expected_long)
+        assert long_help == expected_long
 
     def test_empty(self):
         """Test help extraction from empty docstring."""
         short_help, long_help = get_help_from_docstring("")
-        self.assertEqual(short_help, "")
-        self.assertEqual(long_help, "")
+        assert short_help == ""
+        assert long_help == ""
 
     def test_whitespace_only(self):
         """Test help extraction from whitespace-only docstring."""
         short_help, long_help = get_help_from_docstring("   \n  \n  ")
-        self.assertEqual(short_help, "")
-        self.assertEqual(long_help, "")
+        assert short_help == ""
+        assert long_help == ""
 
 
 class TestTypeHintParsing(unittest.TestCase):
     def test_invalid_union(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             parse_type_hint(Union[str, int, float])
 
     def test_heterogeneous_tuple(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             parse_type_hint(tuple[str, int])
 
     def test_unsupported_type(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             parse_type_hint(set[str])
 
     def test_none_only_union(self):
-        with self.assertRaises(TypeError):
-            parse_type_hint(Union[type(None), type(None)])
+        with pytest.raises(TypeError):
+            parse_type_hint(type(None))
 
 
 class TestFlagSetting(unittest.TestCase):
     def test_set_flags_invalid_short_flag_length(self):
         arg_obj = Arg(short="abc")
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011 until parser is written from scratch with good error messages
             set_flags(arg_obj, "test", "-")
 
     def test_set_flags_short_flag_with_prefix_char(self):
         arg_obj = Arg(short="--")
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011 until parser is written from scratch with good error messages
             set_flags(arg_obj, "test", "-")
 
     def test_set_flags_long_flag_without_prefix(self):
         arg_obj = Arg(long="verbose")
         set_flags(arg_obj, "test", "-")
-        self.assertEqual(arg_obj.long, "--verbose")
+        assert arg_obj.long == "--verbose"
 
 
 class TestValueNameGeneration(unittest.TestCase):
     def test_set_value_name_question_mark(self):
         arg_obj = Arg(num_args="?")
         set_value_name(arg_obj, "input")
-        self.assertEqual(arg_obj.value_name, "[INPUT]")
+        assert arg_obj.value_name == "[INPUT]"
 
     def test_set_value_name_star(self):
         arg_obj = Arg(num_args="*")
         set_value_name(arg_obj, "files")
-        self.assertEqual(arg_obj.value_name, "[<FILES>...]")
+        assert arg_obj.value_name == "[<FILES>...]"
 
     def test_set_value_name_plus(self):
         arg_obj = Arg(num_args="+")
         set_value_name(arg_obj, "items")
-        self.assertEqual(arg_obj.value_name, "<ITEMS>...")
+        assert arg_obj.value_name == "<ITEMS>..."
 
     def test_set_value_name_integer(self):
         arg_obj = Arg(num_args=3)
         set_value_name(arg_obj, "coord")
-        self.assertEqual(arg_obj.value_name, "<COORD> <COORD> <COORD>")
+        assert arg_obj.value_name == "<COORD> <COORD> <COORD>"
 
     def test_set_value_name_no_action_clears_value_name(self):
         from clap.core import ArgAction
         arg_obj = Arg(action=ArgAction.SetTrue)
         set_value_name(arg_obj, "flag")
-        self.assertIsNone(arg_obj.value_name)
+        assert arg_obj.value_name is None
 
 
 class TestKebabCaseConversion(unittest.TestCase):
     def test_pascal_case(self):
-        self.assertEqual(to_kebab_case("PascalCase"), "pascal-case")
-        self.assertEqual(to_kebab_case("HTTPSConnection"), "https-connection")
-        self.assertEqual(to_kebab_case("XMLHttpRequest"), "xml-http-request")
+        assert to_kebab_case("PascalCase") == "pascal-case"
+        assert to_kebab_case("HTTPSConnection") == "https-connection"
+        assert to_kebab_case("XMLHttpRequest") == "xml-http-request"
 
     def test_camel_case(self):
-        self.assertEqual(to_kebab_case("camelCase"), "camel-case")
+        assert to_kebab_case("camelCase") == "camel-case"
 
     def test_snake_case(self):
-        self.assertEqual(to_kebab_case("snake_case"), "snake-case")
-        self.assertEqual(to_kebab_case("get_user_id"), "get-user-id")
-        self.assertEqual(to_kebab_case("a_b_c"), "a-b-c")
-        self.assertEqual(to_kebab_case("a_b__c_"), "a-b-c")
+        assert to_kebab_case("snake_case") == "snake-case"
+        assert to_kebab_case("get_user_id") == "get-user-id"
+        assert to_kebab_case("a_b_c") == "a-b-c"
+        assert to_kebab_case("a_b__c_") == "a-b-c"
 
     def test_screaming_snake_case(self):
-        self.assertEqual(to_kebab_case("SCREAMING_SNAKE_CASE"), "screaming-snake-case")
-        self.assertEqual(to_kebab_case("_MAX__RETRY___COUNT__"), "max-retry-count")
+        assert to_kebab_case("SCREAMING_SNAKE_CASE") == "screaming-snake-case"
+        assert to_kebab_case("_MAX__RETRY___COUNT__") == "max-retry-count"
 
     def test_mixed_cases(self):
-        self.assertEqual(to_kebab_case("Option_Four"), "option-four")
-        self.assertEqual(to_kebab_case("HAtom"), "h-atom")
-        self.assertEqual(to_kebab_case("APIKey_Value"), "api-key-value")
+        assert to_kebab_case("Option_Four") == "option-four"
+        assert to_kebab_case("HAtom") == "h-atom"
+        assert to_kebab_case("APIKey_Value") == "api-key-value"
 
     def test_edge_cases(self):
-        self.assertEqual(to_kebab_case("A"), "a")
-        self.assertEqual(to_kebab_case("AB"), "ab")
-        self.assertEqual(to_kebab_case("ABC"), "abc")
-        self.assertEqual(to_kebab_case("ABc"), "a-bc")
-        self.assertEqual(to_kebab_case("AbC"), "ab-c")
-        self.assertEqual(to_kebab_case("a"), "a")
-        self.assertEqual(to_kebab_case("aB"), "a-b")
-        self.assertEqual(to_kebab_case(""), "")
-        self.assertEqual(to_kebab_case("option1"), "option1")
-        self.assertEqual(to_kebab_case("Option1Two"), "option1-two")
+        assert to_kebab_case("A") == "a"
+        assert to_kebab_case("AB") == "ab"
+        assert to_kebab_case("ABC") == "abc"
+        assert to_kebab_case("ABc") == "a-bc"
+        assert to_kebab_case("AbC") == "ab-c"
+        assert to_kebab_case("a") == "a"
+        assert to_kebab_case("aB") == "a-b"
+        assert to_kebab_case("") == ""
+        assert to_kebab_case("option1") == "option1"
+        assert to_kebab_case("Option1Two") == "option1-two"
 
     def test_already_kebab_case(self):
-        self.assertEqual(to_kebab_case("kebab-case"), "kebab-case")
-        self.assertEqual(to_kebab_case("HAtom"), "h-atom")
-        self.assertEqual(to_kebab_case("test--case"), "test-case")
-        self.assertEqual(to_kebab_case("---test---"), "test")
+        assert to_kebab_case("kebab-case") == "kebab-case"
+        assert to_kebab_case("HAtom") == "h-atom"
+        assert to_kebab_case("test--case") == "test-case"
+        assert to_kebab_case("---test---") == "test"
 
 
 if __name__ == "__main__":

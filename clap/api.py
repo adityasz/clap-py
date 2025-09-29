@@ -54,8 +54,8 @@ class Parser:
 
     @classmethod
     def parse(cls: type[Self], args: Optional[Sequence[str]] = None) -> Self:
-        """Parse from [`sys.argv`][], exit on error."""
-        ...
+        """Parse from the provided `args` or [`sys.argv`][], exit on error."""
+        ...  # noqa: PIE790 | Ellipsis prevent type errors on `-> Self` in the signature
 
 
 @dataclass_transform()
@@ -184,7 +184,7 @@ def command[T](
 
         # delete default values of fields so that `dataclass` does not complain
         # about mutable defaults (`Arg`)
-        for name, _ in cls.__annotations__.items():
+        for name in cls.__annotations__:
             if hasattr(cls, name):
                 delattr(cls, name)
 
@@ -341,7 +341,7 @@ def subcommand[T](
         # delete default values of fields so that `dataclass` does not complain
         # about mutable defaults (`Arg`)
         attrs = {}
-        for name, _ in cls.__annotations__.items():
+        for name in cls.__annotations__:
             if attr := getattr(cls, name, None):
                 attrs[name] = attr
                 delattr(cls, name)

@@ -2,6 +2,8 @@ import unittest
 from pathlib import Path
 from typing import Optional
 
+import pytest
+
 import clap
 from clap import arg, long
 
@@ -13,12 +15,12 @@ class TestListArguments(unittest.TestCase):
             files: list[str] = arg(num_args="*")
 
         args = Cli.parse([])
-        self.assertEqual(args.files, [])
+        assert args.files == []
 
         args = Cli.parse(["file1.txt", "file2.txt", "file3.txt"])
-        self.assertEqual(args.files, ["file1.txt", "file2.txt", "file3.txt"])
+        assert args.files == ["file1.txt", "file2.txt", "file3.txt"]
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--unknown", "file1.txt"])
 
     def test_option_with_nargs_star(self):
@@ -27,12 +29,12 @@ class TestListArguments(unittest.TestCase):
             files: list[str] = arg(long, num_args="*")
 
         args = Cli.parse([])
-        self.assertEqual(args.files, [])
+        assert args.files == []
 
         args = Cli.parse(["--files", "file1.txt", "file2.txt", "file3.txt"])
-        self.assertEqual(args.files, ["file1.txt", "file2.txt", "file3.txt"])
+        assert args.files == ["file1.txt", "file2.txt", "file3.txt"]
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--unknown", "file1.txt"])
 
     def test_list_of_paths(self):
@@ -41,15 +43,15 @@ class TestListArguments(unittest.TestCase):
             files: list[Path] = arg(num_args="+")
 
         args = Cli.parse(["file1.txt", "file2.txt"])
-        self.assertEqual(args.files, [Path("file1.txt"), Path("file2.txt")])
+        assert args.files == [Path("file1.txt"), Path("file2.txt")]
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse([])
 
         args = Cli.parse(["file.txt"])
-        self.assertEqual(args.files, [Path("file.txt")])
+        assert args.files == [Path("file.txt")]
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["file1.txt", "--unknown"])
 
     def test_optional_list_argument(self):
@@ -58,13 +60,13 @@ class TestListArguments(unittest.TestCase):
             tags: Optional[list[str]] = arg(long, num_args="*")
 
         args = Cli.parse([])
-        self.assertIsNone(args.tags)
+        assert args.tags is None
 
         args = Cli.parse(["--tags"])
-        self.assertEqual(args.tags, [])
+        assert args.tags == []
 
         args = Cli.parse(["--tags", "tag1", "tag2"])
-        self.assertEqual(args.tags, ["tag1", "tag2"])
+        assert args.tags == ["tag1", "tag2"]
 
 
 class TestTupleArguments(unittest.TestCase):
@@ -74,22 +76,22 @@ class TestTupleArguments(unittest.TestCase):
             color: tuple[int, int, int]
 
         args = Cli.parse(["255", "128", "0"])
-        self.assertEqual(args.color, (255, 128, 0))
+        assert args.color == (255, 128, 0)
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse([])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["255", "128"])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["255", "128", "0", "255"])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["255", "not_a_number", "0"])
 
     def test_tuple_nargs_mismatch_error(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             @clap.command
             class _:
                 point: tuple[int, int] = arg(num_args=3)
@@ -100,21 +102,21 @@ class TestTupleArguments(unittest.TestCase):
             size: Optional[tuple[int, int]] = arg(long, num_args=2)
 
         args = Cli.parse([])
-        self.assertIsNone(args.size)
+        assert args.size is None
 
         args = Cli.parse(["--size", "800", "600"])
-        self.assertEqual(args.size, (800, 600))
+        assert args.size == (800, 600)
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--size"])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--size", "800"])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--size", "width", "height"])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--size", "800", "600", "300"])
 
 

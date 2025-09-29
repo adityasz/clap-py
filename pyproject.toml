@@ -48,8 +48,9 @@ docstring-code-format = true
 
 [tool.ruff.lint]
 preview = true
-select = ["E", "F", "UP", "B", "SIM", "I"]
-ignore = ["UP007", "UP045", "E701", "SIM108"]
+select = ["B", "C4", "E", "EM", "EXE", "F", "I", "ISC003", "NPY", "PD", "PERF", "PIE",
+          "PLE", "PT", "PYI", "Q004", "FURB", "RET", "RUF", "SIM", "UP", "W", "YTT"]
+ignore = ["UP007", "UP045", "E701", "SIM108", "PYI001"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

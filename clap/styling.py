@@ -188,8 +188,7 @@ class Style:
         """
         if self != Style():
             return "\033[0m"
-        else:
-            return ""
+        return ""
 
     @override
     def __str__(self) -> str:

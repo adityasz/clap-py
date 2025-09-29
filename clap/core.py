@@ -194,8 +194,7 @@ def to_kebab_case(name: str) -> str:
     name = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1-\2', name)  # HTTPSConnection -> HTTPS-Connection
     name = name.lower()
     name = re.sub(r'-+', '-', name)
-    name = name.strip('-')
-    return name
+    return name.strip('-')
 
 
 class ArgType:
@@ -219,11 +218,10 @@ class ArgType:
             self.members = self.enum.__members__
             choices = list(map(to_kebab_case, self.members.keys()))
             try:
-                self.choice_to_enum_member = {
-                    c: m for c, m in zip(choices, self.members.values(), strict=True)
-                }
+                self.choice_to_enum_member = dict(zip(choices, self.members.values(), strict=True))
             except ValueError:
-                raise TypeError("Cannot uniquely extract choices from this Enum.") from None
+                msg = "Cannot uniquely extract choices from this Enum."
+                raise TypeError(msg) from None
 
     @dataclass(slots=True)
     class List(Base): ...
@@ -385,7 +383,7 @@ class Arg:
             for k, v in {
                 "nargs": self.num_args,
                 "const": self.default_missing_value,
-                "choices": self.choices if self.choices else None,
+                "choices": self.choices or None,
                 "required": self.required,
                 "default": self.default_value,
                 "deprecated": self.deprecated,
@@ -506,7 +504,7 @@ class Command:
                 "allow_abbrev": self.allow_abbrev,
                 "exit_on_error": self.exit_on_error,
                 "deprecated": self.deprecated,
-                "aliases": self.aliases if self.aliases else None,
+                "aliases": self.aliases or None,
             }.items()
             if v is not None
         })

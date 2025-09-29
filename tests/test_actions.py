@@ -1,6 +1,8 @@
 import unittest
 from typing import Optional
 
+import pytest
+
 import clap
 from clap import ArgAction, arg, long, short
 
@@ -13,13 +15,13 @@ class TestActions(unittest.TestCase):
             files: Optional[list[str]] = arg(num_args="+")
 
         args = Cli.parse([])
-        self.assertEqual(args.files, None)
+        assert args.files is None
 
         args = Cli.parse(["one"])
-        self.assertEqual(args.files, ["one"])
+        assert args.files == ["one"]
 
         args = Cli.parse(["one", "two"])
-        self.assertEqual(args.files, ["one", "two"])
+        assert args.files == ["one", "two"]
 
     def test_store_const_action(self):
         @clap.command
@@ -27,12 +29,12 @@ class TestActions(unittest.TestCase):
             mode: Optional[str] = arg(long, default_missing_value="debug", num_args=0)
 
         args = Cli.parse([])
-        self.assertIsNone(args.mode)
+        assert args.mode is None
 
         args = Cli.parse(["--mode"])
-        self.assertEqual(args.mode, "debug")
+        assert args.mode == "debug"
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--mode", "extra_arg"])
 
     def test_append_action_optional_type(self):
@@ -41,12 +43,12 @@ class TestActions(unittest.TestCase):
             include: Optional[list[str]] = arg(short="I", action=ArgAction.Append)
 
         args = Cli.parse(["-I", "path1", "-I", "path2", "-I", "path3"])
-        self.assertEqual(args.include, ["path1", "path2", "path3"])
+        assert args.include == ["path1", "path2", "path3"]
 
         args = Cli.parse([])
-        self.assertIsNone(args.include)
+        assert args.include is None
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["-I"])
 
     def test_count_action(self):
@@ -55,15 +57,15 @@ class TestActions(unittest.TestCase):
             verbose: int = arg(short, action=ArgAction.Count)
 
         args = Cli.parse([])
-        self.assertEqual(args.verbose, 0)
+        assert args.verbose == 0
 
         args = Cli.parse(["-v"])
-        self.assertEqual(args.verbose, 1)
+        assert args.verbose == 1
 
         args = Cli.parse(["-vvv"])
-        self.assertEqual(args.verbose, 3)
+        assert args.verbose == 3
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["-x"])
 
     def test_store_false_action(self):
@@ -72,12 +74,12 @@ class TestActions(unittest.TestCase):
             no_cache: bool = arg(long, action=ArgAction.SetFalse, default_value=True)
 
         args = Cli.parse([])
-        self.assertTrue(args.no_cache)
+        assert args.no_cache
 
         args = Cli.parse(["--no-cache"])
-        self.assertFalse(args.no_cache)
+        assert not args.no_cache
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--no-cache", "false"])
 
     def test_append_action(self):
@@ -86,12 +88,12 @@ class TestActions(unittest.TestCase):
             libs: list[str] = arg(short, action=ArgAction.Append)
 
         args = Cli.parse([])
-        self.assertEqual(args.libs, [])
+        assert args.libs == []
 
         args = Cli.parse(["-l", "lib1", "-l", "lib2"])
-        self.assertEqual(args.libs, ["lib1", "lib2"])
+        assert args.libs == ["lib1", "lib2"]
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["-l"])
 
     def test_append_action_with_explicit_default(self):
@@ -100,12 +102,12 @@ class TestActions(unittest.TestCase):
             flags: list[str] = arg(long, action=ArgAction.Append, default_value=["default"])
 
         args = Cli.parse([])
-        self.assertEqual(args.flags, ["default"])
+        assert args.flags == ["default"]
 
         args = Cli.parse(["--flags", "custom"])
-        self.assertEqual(args.flags, ["default", "custom"])
+        assert args.flags == ["default", "custom"]
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--invalid-flag", "value"])
 
     def test_append_const_action(self):
@@ -119,12 +121,12 @@ class TestActions(unittest.TestCase):
             )
 
         args = Cli.parse([])
-        self.assertEqual(args.features, [])
+        assert args.features == []
 
         args = Cli.parse(["--enable-feature", "--enable-feature"])
-        self.assertEqual(args.features, ["feature1", "feature1"])
+        assert args.features == ["feature1", "feature1"]
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--enable-feature", "value"])
 
     def test_extend_action(self):
@@ -133,12 +135,12 @@ class TestActions(unittest.TestCase):
             items: list[str] = arg(long, num_args="+")
 
         args = Cli.parse([])
-        self.assertEqual(args.items, [])
+        assert args.items == []
 
         args = Cli.parse(["--items", "a", "b", "--items", "c", "d"])
-        self.assertEqual(args.items, ["a", "b", "c", "d"])
+        assert args.items == ["a", "b", "c", "d"]
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--items"])
 
     def test_store_const_with_required(self):
@@ -147,12 +149,12 @@ class TestActions(unittest.TestCase):
             mode: str = arg(long, default_missing_value="production", num_args=0)
 
         args = Cli.parse(["--mode"])
-        self.assertEqual(args.mode, "production")
+        assert args.mode == "production"
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse([])
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--unknown"])
 
     def test_store_true_false_defaults(self):
@@ -162,14 +164,14 @@ class TestActions(unittest.TestCase):
             disable: bool = arg(long, action=ArgAction.SetFalse)
 
         args = Cli.parse([])
-        self.assertFalse(args.enable)
-        self.assertTrue(args.disable)
+        assert not args.enable
+        assert args.disable
 
         args = Cli.parse(["--enable", "--disable"])
-        self.assertTrue(args.enable)
-        self.assertFalse(args.disable)
+        assert args.enable
+        assert not args.disable
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["--enable", "true"])
 
     def test_count_action_with_default(self):
@@ -178,12 +180,12 @@ class TestActions(unittest.TestCase):
             level: int = arg(short="l", action=ArgAction.Count, default_value=5)
 
         args = Cli.parse([])
-        self.assertEqual(args.level, 5)
+        assert args.level == 5
 
         args = Cli.parse(["-ll"])
-        self.assertEqual(args.level, 7)
+        assert args.level == 7
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["-lx"])
 
     def test_multiple_action_combinations(self):
@@ -200,42 +202,42 @@ class TestActions(unittest.TestCase):
             )
 
         args = Cli.parse(["-vv", "--debug", "-I", "lib1", "-I", "lib2", "--feature"])
-        self.assertEqual(args.verbose, 2)
-        self.assertTrue(args.debug)
-        self.assertEqual(args.includes, ["lib1", "lib2"])
-        self.assertEqual(args.features, ["enabled"])
+        assert args.verbose == 2
+        assert args.debug
+        assert args.includes == ["lib1", "lib2"]
+        assert args.features == ["enabled"]
 
         args = Cli.parse([])
-        self.assertEqual(args.verbose, 0)
-        self.assertFalse(args.debug)
-        self.assertEqual(args.includes, [])
-        self.assertEqual(args.features, [])
+        assert args.verbose == 0
+        assert not args.debug
+        assert args.includes == []
+        assert args.features == []
 
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             Cli.parse(["-I"])
 
 
 class TestActionTypeErrors(unittest.TestCase):
     def test_count_with_optional_type_error(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             @clap.command
             class _:
                 count: Optional[int] = arg(short="c", action=ArgAction.Count)
 
     def test_store_true_with_optional_type_error(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             @clap.command
             class _:
                 flag: Optional[bool] = arg(long, action=ArgAction.SetTrue)
 
     def test_store_false_with_optional_type_error(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             @clap.command
             class _:
                 flag: Optional[bool] = arg(long, action=ArgAction.SetFalse)
 
     def test_store_const_with_optional_and_default_error(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             @clap.command
             class _:
                 mode: Optional[str] = arg(
@@ -247,13 +249,13 @@ class TestActionTypeErrors(unittest.TestCase):
                 )
 
     def test_store_with_required_and_optional_error(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             @clap.command
             class _:
                 value: Optional[str] = arg(long, action=ArgAction.Set, required=True)
 
     def test_store_with_default_and_optional_error(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             @clap.command
             class _:
                 value: Optional[str] = arg(long, action=ArgAction.Set, default_value="test")
