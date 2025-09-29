@@ -4,8 +4,17 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Optional, Self, Union, dataclass_transform
 
-from .core import Arg, ArgAction, AutoFlag, Command, Group, MutexGroup, NargsType, to_kebab_case
-from .parser import (
+from clap.core import (
+    Arg,
+    ArgAction,
+    AutoFlag,
+    Command,
+    Group,
+    MutexGroup,
+    NargsType,
+    to_kebab_case,
+)
+from clap.parser import (
     _COMMAND_DATA,
     _SUBCOMMAND_DEFAULTS,
     _SUBCOMMAND_MARKER,
@@ -13,7 +22,7 @@ from .parser import (
     create_parser,
     get_help_from_docstring,
 )
-from .styling import ColorChoice, Styles
+from clap.styling import ColorChoice, Styles
 
 _PARSER = "__parser__"
 
@@ -34,13 +43,15 @@ class Parser:
     ```python
     import clap
 
+
     @clap.command
-    class Cli(clap.Parser):
-        ...
+    class Cli(clap.Parser): ...
+
 
     args = Cli.parse_args()
     ```
     """
+
     @classmethod
     def parse_args(cls: type[Self], args: Optional[Sequence[str]] = None) -> Self:
         """Parse from [`sys.argv`][], exit on error."""
@@ -129,6 +140,7 @@ def command[T](
         ...
     ```
     """
+
     def wrap(cls: type[T]) -> type[T]:
         nonlocal about, long_about, name
         if cls.__doc__ is not None:
@@ -284,6 +296,7 @@ def subcommand[T](
         ...
     ```
     """
+
     def wrap(cls: type[T]) -> type[T]:
         nonlocal about, long_about, name
         if name is None:
@@ -320,7 +333,7 @@ def subcommand[T](
             conflict_handler=conflict_handler,
             allow_abbrev=allow_abbrev,
             exit_on_error=exit_on_error,
-            deprecated=deprecated
+            deprecated=deprecated,
         )
         setattr(cls, _SUBCOMMAND_MARKER, True)
         setattr(cls, _COMMAND_DATA, command)
@@ -362,7 +375,7 @@ def arg[U](
     help: Optional[str] = None,
     long_help: Optional[str] = None,
     value_name: Optional[str] = None,
-    deprecated: bool = False
+    deprecated: bool = False,
 ) -> Arg:
     """Create a command-line argument.
 
@@ -396,6 +409,7 @@ def arg[U](
     import clap
     from clap import ArgAction, ColorChoice, arg, long, short
 
+
     @clap.command
     class Cli:
         verbose: bool = arg(short, long)
@@ -406,7 +420,7 @@ def arg[U](
             value_name="WHEN",
             default_value=ColorChoice.Auto,
             default_missing_value=ColorChoice.Always,
-            num_args="?"
+            num_args="?",
         )
     ```
     """

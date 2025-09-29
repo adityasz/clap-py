@@ -1,8 +1,8 @@
 from collections.abc import Callable, Sequence
 from typing import Any, Optional, TypeVar, Union, dataclass_transform, overload
 
-from .api import Parser
-from .core import (
+from clap.api import Parser
+from clap.core import (
     ArgAction,
     AutoFlag,
     Group,
@@ -11,8 +11,8 @@ from .core import (
     long,
     short,
 )
-from .help import HelpTemplate
-from .styling import AnsiColor, ColorChoice, Style, Styles
+from clap.help import HelpTemplate
+from clap.styling import AnsiColor, ColorChoice, Style, Styles
 
 __all__ = [
     "AnsiColor",
@@ -26,13 +26,12 @@ __all__ = [
     "Parser",
     "arg",
     "command",
-    "subcommand",
+    "long",
     "short",
-    "long"
+    "subcommand",
 ]
 
-T = TypeVar('T')
-U = TypeVar('U')
+T = TypeVar("T")
 
 # TODO: Add overloads that return `Optional[Any]` based on the `required`,
 # `default`, and `num_args`.
@@ -55,7 +54,7 @@ def arg[U](
     help: Optional[str] = ...,
     long_help: Optional[str] = ...,
     value_name: Optional[str] = None,
-    deprecated: bool = False
+    deprecated: bool = False,
 ) -> Any: ...
 
 @overload
@@ -132,5 +131,5 @@ def group(
     title: str,
     about: Optional[str] = ...,
     long_about: Optional[str] = ...,
-    conflict_handler: Optional[str] = ...
+    conflict_handler: Optional[str] = ...,
 ) -> Group: ...

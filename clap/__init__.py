@@ -1,7 +1,7 @@
-from .api import Parser, arg, command, subcommand
-from .core import ArgAction, Group, MutexGroup, long, short
-from .help import HelpTemplate
-from .styling import AnsiColor, ColorChoice, Style, Styles
+from clap.api import Parser, arg, command, subcommand
+from clap.core import ArgAction, Group, MutexGroup, long, short
+from clap.help import HelpTemplate
+from clap.styling import AnsiColor, ColorChoice, Style, Styles
 
 __all__ = [
     "AnsiColor",
@@ -17,5 +17,5 @@ __all__ = [
     "command",
     "subcommand",
     "short",
-    "long"
+    "long",
 ]

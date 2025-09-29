@@ -3,8 +3,8 @@ import textwrap
 from dataclasses import dataclass
 from typing import Optional, Union, cast
 
-from .core import Arg, ArgAction, Command
-from .styling import ColorChoice, Style, Styles, determine_color_usage
+from clap.core import Arg, ArgAction, Command
+from clap.styling import ColorChoice, Style, Styles, determine_color_usage
 
 # So people can write help_template: HelpTemplate = ...
 # and get docs in the IDE for HelpTemplate

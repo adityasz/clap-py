@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from enum import Enum, StrEnum, auto
 from typing import Any, Literal, Optional, Self, Union, cast, override
 
-from .styling import ColorChoice, Styles
+from clap.styling import ColorChoice, Styles
 
 
 class AutoFlag(Enum):

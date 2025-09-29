@@ -6,7 +6,7 @@ from inspect import getsource
 from textwrap import dedent
 from typing import Any, Optional, Union, get_args, get_origin, get_type_hints, override
 
-from .core import (
+from clap.core import (
     Arg,
     ArgAction,
     ArgType,
@@ -16,7 +16,7 @@ from .core import (
     short,
     to_kebab_case,
 )
-from .help import HelpRenderer
+from clap.help import HelpRenderer
 
 _SUBCOMMAND_MARKER = "__com.github.adityasz.clap_py.subcommand_marker__"
 _COMMAND_DATA = "__command_data__"
