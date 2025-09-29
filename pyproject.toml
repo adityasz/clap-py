@@ -55,18 +55,13 @@ ignore = ["UP007", "UP045", "E701", "SIM108"]
 convention = "google"
 
 [tool.basedpyright]
-reportAny = false                   # is this rule a joke?
-reportExplicitAny = false           # is this rule a joke?
-deprecateTypingAliases = false      # this rule is incorrect as Union and Optional are not deprecated; `Optional[int]` is objectively better than `int | None`
-reportUnknownMemberType = false     # because `v = []; v.append(1)` is perfectly fine and requires no annotations (Rust: `let mut v = Vec::new(); v.push(1);`)
-reportUnknownVariableType = false   # because pyright is too dumb to infer types sometimes
-reportUnknownLambdaType = false     # because pyright is too dumb to infer types sometimes
-reportUnknownArgumentType = false   # to pass variables where pyright can't infer types
-reportUnknownParameterType = false  # to accept `*args`, `**kwargs`
-reportMissingParameterType = false  # to accept `*args`, `**kwargs`
-reportUnusedCallResult = false      # for marimo
-reportPrivateUsage = false          # python does not enforce public/private; if someone types a `_`, they know what they are doing
-reportImportCycles = false          # python does not have forward declarations
-reportUnannotatedClassAttribute = false
-reportImplicitStringConcatenation = false
-reportUnusedParameter = "hint"
+typeCheckingMode = "standard"
+reportConstantRedefinition = true
+reportDeprecated = true
+reportDuplicateImport = true
+reportIgnoreCommentWithoutRule = true
+reportMatchNotExhaustive = true
+reportUnnecessaryCast = true
+reportUnnecessaryComparison = true
+reportUnnecessaryContains = true
+reportUnnecessaryIsInstance = true
