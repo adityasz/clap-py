@@ -28,7 +28,7 @@ class Cli(clap.Parser):
 
 
 def main():
-    cli = Cli.parse_args()
+    cli = Cli.parse()
 
     # You can check the value provided by positional arguments, or option arguments
     if cli.name:

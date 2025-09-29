@@ -11,7 +11,7 @@ class Cli(clap.Parser):
 
 
 def main():
-    cli = Cli.parse_args()
+    cli = Cli.parse()
 
     print(f"two: {cli.two}")
     print(f"one: {cli.one}")

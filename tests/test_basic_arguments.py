@@ -14,78 +14,78 @@ class TestBasicArgumentParsing(unittest.TestCase):
         class Cli(clap.Parser):
             file: Path
 
-        args = Cli.parse_args(["/tmp/test.txt"])
+        args = Cli.parse(["/tmp/test.txt"])
         self.assertEqual(args.file, Path("/tmp/test.txt"))
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args([])
+            Cli.parse([])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["/tmp/test.txt", "extra.txt"])
+            Cli.parse(["/tmp/test.txt", "extra.txt"])
 
     def test_optional_positional(self):
         @clap.command
         class Cli(clap.Parser):
             file: Optional[Path]
 
-        args = Cli.parse_args(["/tmp/test.txt"])
+        args = Cli.parse(["/tmp/test.txt"])
         self.assertEqual(args.file, Path("/tmp/test.txt"))
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertEqual(args.file, None)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["/tmp/test.txt", "extra.txt"])
+            Cli.parse(["/tmp/test.txt", "extra.txt"])
 
     def test_bool_flag_with_manual_flags(self):
         @clap.command
         class Cli(clap.Parser):
             verbose: bool = arg(short="v", long="verbose")
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertFalse(args.verbose)
 
-        args = Cli.parse_args(["-v"])
+        args = Cli.parse(["-v"])
         self.assertTrue(args.verbose)
 
-        args = Cli.parse_args(["--verbose"])
+        args = Cli.parse(["--verbose"])
         self.assertTrue(args.verbose)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["-x"])
+            Cli.parse(["-x"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--verbose", "true"])
+            Cli.parse(["--verbose", "true"])
 
     def test_bool_flag_with_hyphenated_flags(self):
         @clap.command
         class Cli(clap.Parser):
             verbose: bool = arg(short="-v", long="--verbose")
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertFalse(args.verbose)
 
-        args = Cli.parse_args(["-v"])
+        args = Cli.parse(["-v"])
         self.assertTrue(args.verbose)
 
-        args = Cli.parse_args(["--verbose"])
+        args = Cli.parse(["--verbose"])
         self.assertTrue(args.verbose)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--unknown"])
+            Cli.parse(["--unknown"])
 
     def test_bool_flag_with_short_long(self):
         @clap.command
         class Cli(clap.Parser):
             verbose: bool = arg(short, long)
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertFalse(args.verbose)
 
-        args = Cli.parse_args(["-v"])
+        args = Cli.parse(["-v"])
         self.assertTrue(args.verbose)
 
-        args = Cli.parse_args(["--verbose"])
+        args = Cli.parse(["--verbose"])
         self.assertTrue(args.verbose)
 
     def test_option_with_value(self):
@@ -93,17 +93,17 @@ class TestBasicArgumentParsing(unittest.TestCase):
         class Cli(clap.Parser):
             output: Optional[str] = arg(long)
 
-        args = Cli.parse_args(["--output", "file.txt"])
+        args = Cli.parse(["--output", "file.txt"])
         self.assertEqual(args.output, "file.txt")
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertIsNone(args.output)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--output"])
+            Cli.parse(["--output"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--invalid", "value"])
+            Cli.parse(["--invalid", "value"])
 
     def test_multiple_arguments_mixed(self):
         @clap.command
@@ -112,52 +112,52 @@ class TestBasicArgumentParsing(unittest.TestCase):
             output_file: Optional[Path] = arg(long, value_name="<PATH>")
             verbose: bool = arg(short, long)
 
-        args = Cli.parse_args(["input.txt", "--output", "output.txt", "-v"])
+        args = Cli.parse(["input.txt", "--output", "output.txt", "-v"])
         self.assertEqual(args.input_file, Path("input.txt"))
         self.assertEqual(args.output_file, Path("output.txt"))
         self.assertTrue(args.verbose)
 
-        args = Cli.parse_args(["input.txt"])
+        args = Cli.parse(["input.txt"])
         self.assertEqual(args.input_file, Path("input.txt"))
         self.assertIsNone(args.output_file)
         self.assertFalse(args.verbose)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--output", "output.txt", "-v"])
+            Cli.parse(["--output", "output.txt", "-v"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--output", "output.txt", "input.txt", "--invalid"])
+            Cli.parse(["--output", "output.txt", "input.txt", "--invalid"])
 
     def test_argument_with_default_value(self):
         @clap.command
         class Cli(clap.Parser):
             asdf: int = arg(default_value=42)
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertEqual(args.asdf, 42)
 
-        args = Cli.parse_args(["100"])
+        args = Cli.parse(["100"])
         self.assertEqual(args.asdf, 100)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["string"])
+            Cli.parse(["string"])
 
     def test_option_with_default_value(self):
         @clap.command
         class Cli(clap.Parser):
             asdf: int = arg(long, default_value=42)
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertEqual(args.asdf, 42)
 
-        args = Cli.parse_args(["--asdf", "100"])
+        args = Cli.parse(["--asdf", "100"])
         self.assertEqual(args.asdf, 100)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--asdf", "not_a_number"])
+            Cli.parse(["--asdf", "not_a_number"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--asdf"])
+            Cli.parse(["--asdf"])
 
     def test_const_default(self):
         @clap.command
@@ -166,20 +166,20 @@ class TestBasicArgumentParsing(unittest.TestCase):
                 long, num_args="?", default_missing_value="stdout", default_value="file.txt"
             )
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertEqual(args.output, "file.txt")
 
-        args = Cli.parse_args(["--output"])
+        args = Cli.parse(["--output"])
         self.assertEqual(args.output, "stdout")
 
-        args = Cli.parse_args(["--output", "custom.txt"])
+        args = Cli.parse(["--output", "custom.txt"])
         self.assertEqual(args.output, "custom.txt")
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--unknown"])
+            Cli.parse(["--unknown"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--output", "custom.txt", "extra"])
+            Cli.parse(["--output", "custom.txt", "extra"])
 
 
 if __name__ == "__main__":

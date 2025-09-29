@@ -12,13 +12,13 @@ class TestActions(unittest.TestCase):
         class Cli(clap.Parser):
             files: Optional[list[str]] = arg(num_args="+")
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertEqual(args.files, None)
 
-        args = Cli.parse_args(["one"])
+        args = Cli.parse(["one"])
         self.assertEqual(args.files, ["one"])
 
-        args = Cli.parse_args(["one", "two"])
+        args = Cli.parse(["one", "two"])
         self.assertEqual(args.files, ["one", "two"])
 
     def test_store_const_action(self):
@@ -26,87 +26,87 @@ class TestActions(unittest.TestCase):
         class Cli(clap.Parser):
             mode: Optional[str] = arg(long, default_missing_value="debug", num_args=0)
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertIsNone(args.mode)
 
-        args = Cli.parse_args(["--mode"])
+        args = Cli.parse(["--mode"])
         self.assertEqual(args.mode, "debug")
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--mode", "extra_arg"])
+            Cli.parse(["--mode", "extra_arg"])
 
     def test_append_action_optional_type(self):
         @clap.command
         class Cli(clap.Parser):
             include: Optional[list[str]] = arg(short="I", action=ArgAction.Append)
 
-        args = Cli.parse_args(["-I", "path1", "-I", "path2", "-I", "path3"])
+        args = Cli.parse(["-I", "path1", "-I", "path2", "-I", "path3"])
         self.assertEqual(args.include, ["path1", "path2", "path3"])
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertIsNone(args.include)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["-I"])
+            Cli.parse(["-I"])
 
     def test_count_action(self):
         @clap.command
         class Cli(clap.Parser):
             verbose: int = arg(short, action=ArgAction.Count)
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertEqual(args.verbose, 0)
 
-        args = Cli.parse_args(["-v"])
+        args = Cli.parse(["-v"])
         self.assertEqual(args.verbose, 1)
 
-        args = Cli.parse_args(["-vvv"])
+        args = Cli.parse(["-vvv"])
         self.assertEqual(args.verbose, 3)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["-x"])
+            Cli.parse(["-x"])
 
     def test_store_false_action(self):
         @clap.command
         class Cli(clap.Parser):
             no_cache: bool = arg(long, action=ArgAction.SetFalse, default_value=True)
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertTrue(args.no_cache)
 
-        args = Cli.parse_args(["--no-cache"])
+        args = Cli.parse(["--no-cache"])
         self.assertFalse(args.no_cache)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--no-cache", "false"])
+            Cli.parse(["--no-cache", "false"])
 
     def test_append_action(self):
         @clap.command
         class Cli(clap.Parser):
             libs: list[str] = arg(short, action=ArgAction.Append)
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertEqual(args.libs, [])
 
-        args = Cli.parse_args(["-l", "lib1", "-l", "lib2"])
+        args = Cli.parse(["-l", "lib1", "-l", "lib2"])
         self.assertEqual(args.libs, ["lib1", "lib2"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["-l"])
+            Cli.parse(["-l"])
 
     def test_append_action_with_explicit_default(self):
         @clap.command
         class Cli(clap.Parser):
             flags: list[str] = arg(long, action=ArgAction.Append, default_value=["default"])
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertEqual(args.flags, ["default"])
 
-        args = Cli.parse_args(["--flags", "custom"])
+        args = Cli.parse(["--flags", "custom"])
         self.assertEqual(args.flags, ["default", "custom"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--invalid-flag", "value"])
+            Cli.parse(["--invalid-flag", "value"])
 
     def test_append_const_action(self):
         @clap.command
@@ -118,42 +118,42 @@ class TestActions(unittest.TestCase):
                 default_missing_value="feature1",
             )
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertEqual(args.features, [])
 
-        args = Cli.parse_args(["--enable-feature", "--enable-feature"])
+        args = Cli.parse(["--enable-feature", "--enable-feature"])
         self.assertEqual(args.features, ["feature1", "feature1"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--enable-feature", "value"])
+            Cli.parse(["--enable-feature", "value"])
 
     def test_extend_action(self):
         @clap.command
         class Cli(clap.Parser):
             items: list[str] = arg(long, num_args="+")
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertEqual(args.items, [])
 
-        args = Cli.parse_args(["--items", "a", "b", "--items", "c", "d"])
+        args = Cli.parse(["--items", "a", "b", "--items", "c", "d"])
         self.assertEqual(args.items, ["a", "b", "c", "d"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--items"])
+            Cli.parse(["--items"])
 
     def test_store_const_with_required(self):
         @clap.command
         class Cli(clap.Parser):
             mode: str = arg(long, default_missing_value="production", num_args=0)
 
-        args = Cli.parse_args(["--mode"])
+        args = Cli.parse(["--mode"])
         self.assertEqual(args.mode, "production")
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args([])
+            Cli.parse([])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--unknown"])
+            Cli.parse(["--unknown"])
 
     def test_store_true_false_defaults(self):
         @clap.command
@@ -161,30 +161,30 @@ class TestActions(unittest.TestCase):
             enable: bool = arg(long, action=ArgAction.SetTrue)
             disable: bool = arg(long, action=ArgAction.SetFalse)
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertFalse(args.enable)
         self.assertTrue(args.disable)
 
-        args = Cli.parse_args(["--enable", "--disable"])
+        args = Cli.parse(["--enable", "--disable"])
         self.assertTrue(args.enable)
         self.assertFalse(args.disable)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--enable", "true"])
+            Cli.parse(["--enable", "true"])
 
     def test_count_action_with_default(self):
         @clap.command
         class Cli(clap.Parser):
             level: int = arg(short="l", action=ArgAction.Count, default_value=5)
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertEqual(args.level, 5)
 
-        args = Cli.parse_args(["-ll"])
+        args = Cli.parse(["-ll"])
         self.assertEqual(args.level, 7)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["-lx"])
+            Cli.parse(["-lx"])
 
     def test_multiple_action_combinations(self):
         @clap.command
@@ -199,20 +199,20 @@ class TestActions(unittest.TestCase):
                 num_args=0,
             )
 
-        args = Cli.parse_args(["-vv", "--debug", "-I", "lib1", "-I", "lib2", "--feature"])
+        args = Cli.parse(["-vv", "--debug", "-I", "lib1", "-I", "lib2", "--feature"])
         self.assertEqual(args.verbose, 2)
         self.assertTrue(args.debug)
         self.assertEqual(args.includes, ["lib1", "lib2"])
         self.assertEqual(args.features, ["enabled"])
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertEqual(args.verbose, 0)
         self.assertFalse(args.debug)
         self.assertEqual(args.includes, [])
         self.assertEqual(args.features, [])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["-I"])
+            Cli.parse(["-I"])
 
 
 class TestActionTypeErrors(unittest.TestCase):

@@ -25,7 +25,7 @@ class Cli(clap.Parser):
 
 
 def main():
-    cli = Cli.parse_args()
+    cli = Cli.parse()
 
     match cli.mode:
         case Mode.Fast:

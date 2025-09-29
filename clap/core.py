@@ -36,7 +36,7 @@ class ArgAction(StrEnum):
     class Cli(clap.Parser):
         output: str = arg(long, action=ArgAction.Set)
 
-    args = Cli.parse_args(["--output", "file.txt"])
+    args = Cli.parse(["--output", "file.txt"])
     assert args.output == "file.txt"
     ```
     """
@@ -53,10 +53,10 @@ class ArgAction(StrEnum):
     class Cli(clap.Parser):
         verbose: bool = arg(long, action=ArgAction.SetTrue)
 
-    args = Cli.parse_args(["--verbose"])
+    args = Cli.parse(["--verbose"])
     assert args.verbose == True
 
-    args = Cli.parse_args([])
+    args = Cli.parse([])
     assert args.verbose == False
     ```
     """
@@ -73,10 +73,10 @@ class ArgAction(StrEnum):
     class Cli(clap.Parser):
         quiet: bool = arg(long, action=ArgAction.SetFalse)
 
-    args = Cli.parse_args(["--quiet"])
+    args = Cli.parse(["--quiet"])
     assert args.quiet == False
 
-    args = Cli.parse_args([])
+    args = Cli.parse([])
     assert args.quiet == True
     ```
     """
@@ -93,10 +93,10 @@ class ArgAction(StrEnum):
     class Cli(clap.Parser):
         files: list[str] = arg(long, action=ArgAction.Append)
 
-    args = Cli.parse_args(["--files", "a.txt", "--files", "b.txt"])
+    args = Cli.parse(["--files", "a.txt", "--files", "b.txt"])
     assert args.files == ["a.txt", "b.txt"]
 
-    args = Cli.parse_args([])
+    args = Cli.parse([])
     assert args.files == []
     ```
     """
@@ -113,10 +113,10 @@ class ArgAction(StrEnum):
     class Cli(clap.Parser):
         verbose: int = arg(short, action=ArgAction.Count)
 
-    args = Cli.parse_args(["-vvv"])
+    args = Cli.parse(["-vvv"])
     assert args.verbose == 3
 
-    args = Cli.parse_args([])
+    args = Cli.parse([])
     assert args.verbose == 0
     ```
     """

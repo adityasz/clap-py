@@ -12,58 +12,58 @@ class TestListArguments(unittest.TestCase):
         class Cli(clap.Parser):
             files: list[str] = arg(num_args="*")
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertEqual(args.files, [])
 
-        args = Cli.parse_args(["file1.txt", "file2.txt", "file3.txt"])
+        args = Cli.parse(["file1.txt", "file2.txt", "file3.txt"])
         self.assertEqual(args.files, ["file1.txt", "file2.txt", "file3.txt"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--unknown", "file1.txt"])
+            Cli.parse(["--unknown", "file1.txt"])
 
     def test_option_with_nargs_star(self):
         @clap.command
         class Cli(clap.Parser):
             files: list[str] = arg(long, num_args="*")
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertEqual(args.files, [])
 
-        args = Cli.parse_args(["--files", "file1.txt", "file2.txt", "file3.txt"])
+        args = Cli.parse(["--files", "file1.txt", "file2.txt", "file3.txt"])
         self.assertEqual(args.files, ["file1.txt", "file2.txt", "file3.txt"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--unknown", "file1.txt"])
+            Cli.parse(["--unknown", "file1.txt"])
 
     def test_list_of_paths(self):
         @clap.command
         class Cli(clap.Parser):
             files: list[Path] = arg(num_args="+")
 
-        args = Cli.parse_args(["file1.txt", "file2.txt"])
+        args = Cli.parse(["file1.txt", "file2.txt"])
         self.assertEqual(args.files, [Path("file1.txt"), Path("file2.txt")])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args([])
+            Cli.parse([])
 
-        args = Cli.parse_args(["file.txt"])
+        args = Cli.parse(["file.txt"])
         self.assertEqual(args.files, [Path("file.txt")])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["file1.txt", "--unknown"])
+            Cli.parse(["file1.txt", "--unknown"])
 
     def test_optional_list_argument(self):
         @clap.command
         class Cli(clap.Parser):
             tags: Optional[list[str]] = arg(long, num_args="*")
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertIsNone(args.tags)
 
-        args = Cli.parse_args(["--tags"])
+        args = Cli.parse(["--tags"])
         self.assertEqual(args.tags, [])
 
-        args = Cli.parse_args(["--tags", "tag1", "tag2"])
+        args = Cli.parse(["--tags", "tag1", "tag2"])
         self.assertEqual(args.tags, ["tag1", "tag2"])
 
 
@@ -73,20 +73,20 @@ class TestTupleArguments(unittest.TestCase):
         class Cli(clap.Parser):
             color: tuple[int, int, int]
 
-        args = Cli.parse_args(["255", "128", "0"])
+        args = Cli.parse(["255", "128", "0"])
         self.assertEqual(args.color, (255, 128, 0))
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args([])
+            Cli.parse([])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["255", "128"])
+            Cli.parse(["255", "128"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["255", "128", "0", "255"])
+            Cli.parse(["255", "128", "0", "255"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["255", "not_a_number", "0"])
+            Cli.parse(["255", "not_a_number", "0"])
 
     def test_tuple_nargs_mismatch_error(self):
         with self.assertRaises(TypeError):
@@ -99,23 +99,23 @@ class TestTupleArguments(unittest.TestCase):
         class Cli(clap.Parser):
             size: Optional[tuple[int, int]] = arg(long, num_args=2)
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertIsNone(args.size)
 
-        args = Cli.parse_args(["--size", "800", "600"])
+        args = Cli.parse(["--size", "800", "600"])
         self.assertEqual(args.size, (800, 600))
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--size"])
+            Cli.parse(["--size"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--size", "800"])
+            Cli.parse(["--size", "800"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--size", "width", "height"])
+            Cli.parse(["--size", "width", "height"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--size", "800", "600", "300"])
+            Cli.parse(["--size", "800", "600", "300"])
 
 
 if __name__ == "__main__":

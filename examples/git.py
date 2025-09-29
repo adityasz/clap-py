@@ -68,7 +68,7 @@ class Cli(clap.Parser):
 
 
 def main():
-    args = Cli.parse_args()
+    args = Cli.parse()
 
     match args.command:
         case Clone(remote):

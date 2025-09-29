@@ -31,7 +31,7 @@ class Parser:
     """A base class for static type checking.
 
     Classes decorated with [`@clap.command`][clap.command] will have a
-    [`parse_args`][clap.Parser.parse_args] method injected at runtime.
+    [`parse`][clap.Parser.parse] method injected at runtime.
     Inheriting from [`Parser`][clap.Parser] provides this method signature to
     static type checkers, avoiding errors and enabling autocompletion in
     editors.
@@ -48,12 +48,12 @@ class Parser:
     class Cli(clap.Parser): ...
 
 
-    args = Cli.parse_args()
+    args = Cli.parse()
     ```
     """
 
     @classmethod
-    def parse_args(cls: type[Self], args: Optional[Sequence[str]] = None) -> Self:
+    def parse(cls: type[Self], args: Optional[Sequence[str]] = None) -> Self:
         """Parse from [`sys.argv`][], exit on error."""
         ...
 
@@ -191,7 +191,7 @@ def command[T](
         dataclass(cls, slots=True)
 
         @classmethod
-        def parse_args(cls: type[T], args: Optional[list[str]] = None) -> T:
+        def parse(cls: type[T], args: Optional[list[str]] = None) -> T:
             """Parse command-line arguments and return an instance of the class."""
             parser = getattr(cls, _PARSER)
             parsed_args = parser.parse_args(args)
@@ -199,7 +199,7 @@ def command[T](
             apply_parsed_args(dict(parsed_args._get_kwargs()), obj)
             return obj
 
-        cls.parse_args = parse_args
+        cls.parse = parse
         return cls
 
     if cls is None:

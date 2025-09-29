@@ -34,112 +34,112 @@ class TestEnums(unittest.TestCase):
         class Cli(clap.Parser):
             color: ColorChoice
 
-        args = Cli.parse_args(["auto"])
+        args = Cli.parse(["auto"])
         self.assertEqual(args.color, ColorChoice.Auto)
 
-        args = Cli.parse_args(["always"])
+        args = Cli.parse(["always"])
         self.assertEqual(args.color, ColorChoice.Always)
 
-        args = Cli.parse_args(["never"])
+        args = Cli.parse(["never"])
         self.assertEqual(args.color, ColorChoice.Never)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["invalid"])
+            Cli.parse(["invalid"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args([])
+            Cli.parse([])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["Auto"])
+            Cli.parse(["Auto"])
 
     def test_optional_color_choice(self):
         @clap.command
         class Cli(clap.Parser):
             color: Optional[ColorChoice] = arg(long)
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertIsNone(args.color)
 
-        args = Cli.parse_args(["--color", "always"])
+        args = Cli.parse(["--color", "always"])
         self.assertEqual(args.color, ColorChoice.Always)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--color"])
+            Cli.parse(["--color"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--color", "invalid"])
+            Cli.parse(["--color", "invalid"])
 
     def test_enum_kebab_conversion(self):
         @clap.command
         class Cli(clap.Parser):
             option: PascalEnum
 
-        args = Cli.parse_args(["option-one"])
+        args = Cli.parse(["option-one"])
         self.assertEqual(args.option, PascalEnum.OptionOne)
 
-        args = Cli.parse_args(["option-two"])
+        args = Cli.parse(["option-two"])
         self.assertEqual(args.option, PascalEnum.optionTwo)
 
-        args = Cli.parse_args(["option-three"])
+        args = Cli.parse(["option-three"])
         self.assertEqual(args.option, PascalEnum.option_three)
 
-        args = Cli.parse_args(["option-four"])
+        args = Cli.parse(["option-four"])
         self.assertEqual(args.option, PascalEnum.Option_Four)
 
-        args = Cli.parse_args(["option-five"])
+        args = Cli.parse(["option-five"])
         self.assertEqual(args.option, PascalEnum.OPTION_FIVE)
 
-        args = Cli.parse_args(["h-atom"])
+        args = Cli.parse(["h-atom"])
         self.assertEqual(args.option, PascalEnum.HAtom)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["OptionOne"])
+            Cli.parse(["OptionOne"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["option_one"])
+            Cli.parse(["option_one"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["non-existent"])
+            Cli.parse(["non-existent"])
 
     def test_optional_enum(self):
         @clap.command
         class Cli(clap.Parser):
             priority: Optional[Priority] = arg(short, long)
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertIsNone(args.priority)
 
-        args = Cli.parse_args(["-p", "high"])
+        args = Cli.parse(["-p", "high"])
         self.assertEqual(args.priority, Priority.High)
 
-        args = Cli.parse_args(["--priority", "high"])
+        args = Cli.parse(["--priority", "high"])
         self.assertEqual(args.priority, Priority.High)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["-p", "urgent"])
+            Cli.parse(["-p", "urgent"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["-p"])
+            Cli.parse(["-p"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--priority", "High"])
+            Cli.parse(["--priority", "High"])
 
     def test_enum_with_default(self):
         @clap.command
         class Cli(clap.Parser):
             level: LogLevel = arg(long, default_value=LogLevel.Info)
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertEqual(args.level, LogLevel.Info)
 
-        args = Cli.parse_args(["--level", "error"])
+        args = Cli.parse(["--level", "error"])
         self.assertEqual(args.level, LogLevel.Error)
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--level", "fatal"])
+            Cli.parse(["--level", "fatal"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["--level"])
+            Cli.parse(["--level"])
 
 
 class TestEnumErrors(unittest.TestCase):
@@ -149,13 +149,13 @@ class TestEnumErrors(unittest.TestCase):
             priority: Priority
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["invalid"])
+            Cli.parse(["invalid"])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args([""])
+            Cli.parse([""])
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["low", "medium"])
+            Cli.parse(["low", "medium"])
 
 
 if __name__ == "__main__":

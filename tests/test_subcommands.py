@@ -16,7 +16,7 @@ class TestBasicSubcommands(unittest.TestCase):
         class Cli(clap.Parser):
             command: Create
 
-        args = Cli.parse_args(["create", "test-name"])
+        args = Cli.parse(["create", "test-name"])
         self.assertIsInstance(args.command, Create)
         self.assertEqual(args.command.name, "test-name")
 
@@ -34,11 +34,11 @@ class TestBasicSubcommands(unittest.TestCase):
         class Cli(clap.Parser):
             command: Union[Create, Delete]
 
-        args = Cli.parse_args(["create", "test-name"])
+        args = Cli.parse(["create", "test-name"])
         self.assertIsInstance(args.command, Create)
         self.assertEqual(args.command.name, "test-name")
 
-        args = Cli.parse_args(["delete", "test-name", "--force"])
+        args = Cli.parse(["delete", "test-name", "--force"])
         if not isinstance(args.command, Delete):
             self.fail()
         self.assertEqual(args.command.name, "test-name")
@@ -56,7 +56,7 @@ class TestBasicSubcommands(unittest.TestCase):
         class Cli(clap.Parser):
             command: Process
 
-        args = Cli.parse_args([
+        args = Cli.parse([
             "process",
             "input.txt",
             "--output",
@@ -80,12 +80,12 @@ class TestBasicSubcommands(unittest.TestCase):
         class Cli(clap.Parser):
             command: Optional[Action]
 
-        args = Cli.parse_args(["action", "target-name"])
+        args = Cli.parse(["action", "target-name"])
         if not isinstance(args.command, Action):
             self.fail()
         self.assertEqual(args.command.target, "target-name")
 
-        args = Cli.parse_args([])
+        args = Cli.parse([])
         self.assertIsNone(args.command)
 
 
@@ -107,13 +107,13 @@ class TestNestedSubcommands(unittest.TestCase):
         class Cli(clap.Parser):
             command: Stash
 
-        args = Cli.parse_args(["stash", "push", "--message", "work in progress"])
+        args = Cli.parse(["stash", "push", "--message", "work in progress"])
         self.assertIsInstance(args.command, Stash)
         if not isinstance(args.command.subcommand, Push):
             self.fail()
         self.assertEqual(args.command.subcommand.message, "work in progress")
 
-        args = Cli.parse_args(["stash", "pop", "--index", "0"])
+        args = Cli.parse(["stash", "pop", "--index", "0"])
         self.assertIsInstance(args.command, Stash)
         if not isinstance(args.command.subcommand, Pop):
             self.fail()
@@ -140,7 +140,7 @@ class TestNestedSubcommands(unittest.TestCase):
         class Cli(clap.Parser):
             command: System
 
-        args = Cli.parse_args(["system", "service", "status", "--verbose"])
+        args = Cli.parse(["system", "service", "status", "--verbose"])
         self.assertIsInstance(args.command, System)
         self.assertIsInstance(args.command.component, Service)
         if not isinstance(args.command.component.action, Status):
@@ -169,7 +169,7 @@ class TestNestedSubcommands(unittest.TestCase):
         class Cli(clap.Parser):
             command: Union[Database, Status]
 
-        args = Cli.parse_args(["database", "add-item", "key", "value"])
+        args = Cli.parse(["database", "add-item", "key", "value"])
         if not isinstance(args.command, Database):
             self.fail()
         if not isinstance(args.command.operation, AddItem):
@@ -177,7 +177,7 @@ class TestNestedSubcommands(unittest.TestCase):
         self.assertEqual(args.command.operation.name, "key")
         self.assertEqual(args.command.operation.value, "value")
 
-        args = Cli.parse_args(["status", "--verbose"])
+        args = Cli.parse(["status", "--verbose"])
         if not isinstance(args.command, Status):
             self.fail()
         self.assertTrue(args.command.verbose)
@@ -197,12 +197,12 @@ class TestSubcommandNamingAndAliases(unittest.TestCase):
         class Cli(clap.Parser):
             command: Union[CreateProject, DeleteAll]
 
-        args = Cli.parse_args(["create-project", "my-app"])
+        args = Cli.parse(["create-project", "my-app"])
         if not isinstance(args.command, CreateProject):
             self.fail()
         self.assertEqual(args.command.name, "my-app")
 
-        args = Cli.parse_args(["delete-all", "--confirm"])
+        args = Cli.parse(["delete-all", "--confirm"])
         if not isinstance(args.command, DeleteAll):
             self.fail()
         self.assertTrue(args.command.confirm)
@@ -216,7 +216,7 @@ class TestSubcommandNamingAndAliases(unittest.TestCase):
         class Cli(clap.Parser):
             command: ListFiles
 
-        args = Cli.parse_args(["ls", "/tmp"])
+        args = Cli.parse(["ls", "/tmp"])
         self.assertIsInstance(args.command, ListFiles)
         self.assertEqual(args.command.directory, "/tmp")
 
@@ -229,15 +229,15 @@ class TestSubcommandNamingAndAliases(unittest.TestCase):
         class Cli(clap.Parser):
             command: Remove
 
-        args = Cli.parse_args(["remove", "file.txt"])
+        args = Cli.parse(["remove", "file.txt"])
         self.assertIsInstance(args.command, Remove)
         self.assertEqual(args.command.target, "file.txt")
 
-        args = Cli.parse_args(["rm", "file.txt"])
+        args = Cli.parse(["rm", "file.txt"])
         self.assertIsInstance(args.command, Remove)
         self.assertEqual(args.command.target, "file.txt")
 
-        args = Cli.parse_args(["del", "file.txt"])
+        args = Cli.parse(["del", "file.txt"])
         self.assertIsInstance(args.command, Remove)
         self.assertEqual(args.command.target, "file.txt")
 
@@ -290,7 +290,7 @@ class TestSubcommandErrors(unittest.TestCase):
             command: Valid
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["invalid", "arg"])
+            Cli.parse(["invalid", "arg"])
 
     def test_missing_required_subcommand(self):
         @clap.subcommand
@@ -302,7 +302,7 @@ class TestSubcommandErrors(unittest.TestCase):
             command: Required
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args([])
+            Cli.parse([])
 
     def test_subcommand_with_invalid_args(self):
         @clap.subcommand
@@ -314,7 +314,7 @@ class TestSubcommandErrors(unittest.TestCase):
             command: Command
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["command", "not_a_number"])
+            Cli.parse(["command", "not_a_number"])
 
     def test_missing_arguments_to_subcommand(self):
         @clap.subcommand
@@ -326,7 +326,7 @@ class TestSubcommandErrors(unittest.TestCase):
             command: Command
 
         with self.assertRaises(SystemExit):
-            Cli.parse_args(["command"])
+            Cli.parse(["command"])
 
 
 class TestSubcommandIntegration(unittest.TestCase):
@@ -341,13 +341,13 @@ class TestSubcommandIntegration(unittest.TestCase):
             command: Action
             verbose: bool = arg(short, long)
 
-        args = Cli.parse_args(["--verbose", "action", "target-name"])
+        args = Cli.parse(["--verbose", "action", "target-name"])
         self.assertTrue(args.verbose)
         self.assertFalse(args.command.verbose)
         self.assertIsInstance(args.command, Action)
         self.assertEqual(args.command.target, "target-name")
 
-        args = Cli.parse_args(["--verbose", "action", "target-name", "--verbose"])
+        args = Cli.parse(["--verbose", "action", "target-name", "--verbose"])
         self.assertTrue(args.verbose)
         self.assertTrue(args.command.verbose)
         self.assertIsInstance(args.command, Action)
@@ -364,7 +364,7 @@ class TestSubcommandIntegration(unittest.TestCase):
         class Cli(clap.Parser):
             command: Configure
 
-        args = Cli.parse_args(["configure", "always"])
+        args = Cli.parse(["configure", "always"])
         self.assertIsInstance(args.command, Configure)
         self.assertEqual(args.command.color, ColorChoice.Always)
 
@@ -378,7 +378,7 @@ class TestSubcommandIntegration(unittest.TestCase):
         class Cli(clap.Parser):
             command: Process
 
-        args = Cli.parse_args(["process", "file1.txt", "file2.txt", "--exclude", "tmp", "cache"])
+        args = Cli.parse(["process", "file1.txt", "file2.txt", "--exclude", "tmp", "cache"])
         self.assertIsInstance(args.command, Process)
         self.assertEqual(args.command.files, ["file1.txt", "file2.txt"])
         self.assertEqual(args.command.exclude, ["tmp", "cache"])

@@ -35,7 +35,7 @@ class Cli(clap.Parser):
     verbose: bool = arg(short, long)
     """Enable verbose output."""
 
-args = Cli.parse_args()
+args = Cli.parse()
 if args.verbose:
     print(f"Reading {args.input}...")
 ```
@@ -64,7 +64,7 @@ for more examples.
   class Cli(clap.Parser):
       command: Union[Add, List]
 
-  args = Cli.parse_args()
+  args = Cli.parse()
   match args.command:
       case Add(file):
           print(f"Adding {file}...")

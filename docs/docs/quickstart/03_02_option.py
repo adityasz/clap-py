@@ -8,7 +8,7 @@ class Cli(clap.Parser):
 
 
 def main():
-    cli = Cli.parse_args()
+    cli = Cli.parse()
     print(f"name: {cli.name}")
 
 

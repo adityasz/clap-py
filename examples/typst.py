@@ -62,7 +62,7 @@ class Cli(clap.Parser):
 
 
 def main():
-    args = Cli.parse_args()
+    args = Cli.parse()
 
     if args.color == ColorChoice.Always or (
         args.color == ColorChoice.Auto and sys.stdout.isatty()
