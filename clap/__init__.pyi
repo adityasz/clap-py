@@ -78,7 +78,7 @@ def command(
     subcommand_help_heading: str = ...,
     subcommand_value_name: str = ...,
     color: ColorChoice = ...,
-    help_styles: Optional[Styles] = ...,
+    styles: Optional[Styles] = ...,
     help_template: Optional[str] = ...,
     max_term_width: Optional[int] = ...,
     propagate_version: bool = False,

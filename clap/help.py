@@ -135,7 +135,7 @@ class HelpRenderer:
                     self.writer.push_str(self.get_about(cmd.about, cmd.long_about, False))
                     self.writer.push_str("\n")
                 case "usage-heading":
-                    self.writer.push_str(self.style_header("Usage:"))
+                    self.writer.push_str(self.style_usage("Usage:"))
                 case "usage":
                     self.writer.push_str(self.format_usage())
                 case "all-args":
@@ -164,10 +164,17 @@ class HelpRenderer:
         parts: list[str] = [usage_prefix] if usage_prefix else []
         parts.append(self.style_literal(command.name))
         if any(
-            arg.required is not True and not arg.is_positional()
+            arg.required is not True
+            and not arg.is_positional()
+            and arg.action not in (
+                ArgAction.Help,
+                ArgAction.HelpShort,
+                ArgAction.HelpLong,
+                ArgAction.Version,
+            )
             for arg in command.args.values()
         ):
-            parts.append("[OPTIONS]")
+            parts.append(self.style_placeholder("[OPTIONS]"))
         for arg in command.args.values():
             if arg.required is True and not arg.is_positional():
                 parts.append(self.style_literal(cast(str, arg.long or arg.short)))
@@ -177,13 +184,16 @@ class HelpRenderer:
             if mutex.required:
                 mutex_usage = "<"
                 mutex_usage += " | ".join(
-                    f"{self.style_literal(cast(str, arg.short or arg.long))} {arg.value_name}"
+                    f"{self.style_literal(cast(str, arg.short or arg.long))} "
+                    f"{self.style_placeholder(cast(str, arg.value_name))}"
                     for arg in args
                 )
                 mutex_usage += ">"
-                parts.append(mutex_usage)
+                parts.append(self.style_placeholder(mutex_usage))
         parts.extend(
-            cast(str, arg.value_name) for arg in command.args.values() if arg.is_positional()
+            self.style_placeholder(cast(str, arg.value_name))
+            for arg in command.args.values()
+            if arg.is_positional()
         )
         usage = " ".join(parts)
         if command.contains_subcommands():
@@ -193,7 +203,7 @@ class HelpRenderer:
                 subcommand_value_name = f"<{command.subcommand_value_name}>"
             else:
                 subcommand_value_name = f"[{command.subcommand_value_name}]"
-            usage += f" {subcommand_value_name}"
+            usage += f" {self.style_placeholder(subcommand_value_name)}"
         command.usage = usage
         return usage
 
@@ -258,7 +268,7 @@ class HelpRenderer:
             width = self.term_width - 2 * len(INDENT) - longest
 
         if not next_line_help and spec_vals:
-            about = f"{about} {" ".join(spec_vals)}"
+            about = f"{about} {' '.join(spec_vals)}" if about else f"{' '.join(spec_vals)}"
 
         self.writer.push_str(
             "\n".join(
@@ -276,7 +286,9 @@ class HelpRenderer:
 
         if next_line_help:
             if spec_vals:
-                self.writer.push_str("\n")
+                if about:
+                    self.writer.push_str("\n")
+                self.writer.push_str(NEXT_LINE_INDENT)
                 self.writer.push_str(f"\n{NEXT_LINE_INDENT}".join(spec_vals))
             self.writer.push_str("\n")
         self.writer.push_str("\n")
@@ -284,16 +296,16 @@ class HelpRenderer:
     def spec_vals(self, thing: Union[Arg, Command]) -> list[str]:
         if isinstance(arg := thing, Arg):
             spec_vals = []
-            if arg.default_value:
+            if arg.default_value is not None:
                 spec_vals.append(f"[default: {arg.default_value}]")
             if arg.choices:
-                spec_vals.append(f"[possible values: {", ".join(arg.choices)}]")
+                spec_vals.append(f"[possible values: {', '.join(arg.choices)}]")
             if arg.aliases:
-                spec_vals.append(f"[aliases: {", ".join(arg.aliases)}]")
+                spec_vals.append(f"[aliases: {', '.join(arg.aliases)}]")
             return spec_vals
         cmd = thing
         if cmd.aliases:
-            return [f"[aliases: {", ".join(cmd.aliases)}]"]
+            return [f"[aliases: {', '.join(cmd.aliases)}]"]
         return []
 
     def write_subcommands(self):
@@ -306,12 +318,15 @@ class HelpRenderer:
             longest = max(len(name), longest)
 
         next_line_help = any(
-            (lambda about, spec:
-                (taken := longest + 2 * len(INDENT)) <= self.term_width
+            (
+                lambda about, spec: (taken := longest + 2 * len(INDENT))
+                >= self.term_width
                 and taken / self.term_width > 0.40
                 and taken + len(about + (" " + spec if about and spec else spec)) > self.term_width
-            )(subcommand.about or subcommand.long_about or "",
-              " ".join(self.spec_vals(subcommand)))
+            )(
+                subcommand.about or subcommand.long_about or "",
+                " ".join(self.spec_vals(subcommand)),
+            )
             for subcommand in subcommands.values()
         )
 
@@ -360,7 +375,7 @@ class HelpRenderer:
         next_line_help = any(
             (
                 lambda about, spec: (
-                    (taken := longest + 2 * len(INDENT)) <= self.term_width
+                    (taken := longest + 2 * len(INDENT))
                     and taken / self.term_width > 0.40
                     and taken + len(about + (" " + spec if about and spec else spec))
                     > self.term_width
