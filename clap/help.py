@@ -376,7 +376,16 @@ class HelpRenderer:
                     for choice in arg.choices:
                         s += f"{NEXT_LINE_INDENT}- {choice}"
                         if about := choices_help.get(choice, None):
-                            s += f": {get_help_from_docstring(about)[0]}"  # TODO: handle long help
+                            s += ": "
+                            indent = f"{NEXT_LINE_INDENT}{"":{len(choice) + 4}}"
+                            s += "\n".join(
+                                textwrap.wrap(
+                                    get_help_from_docstring(about)[0],  # TODO: handle long help
+                                    width=self.term_width,
+                                    initial_indent=indent,
+                                    subsequent_indent=indent,
+                                )
+                            )[len(indent):]
                         s += "\n"
                     spec_vals.append(s.strip())
                 else:
