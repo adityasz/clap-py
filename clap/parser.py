@@ -138,7 +138,7 @@ def set_type_dependent_kwargs(arg: Arg):
             #       so that a custom name can be provided.
             arg.choices_help = extract_docstrings(enum)
             for choice, enum_member in choice_to_enum_member.items():
-                enum_member = str(enum_member).split(".")[-1]
+                enum_member = enum_member.name
                 if enum_member in arg.choices_help:
                     arg.choices_help[choice] = arg.choices_help[enum_member]
                     del arg.choices_help[enum_member]
