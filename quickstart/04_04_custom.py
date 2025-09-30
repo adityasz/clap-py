@@ -29,7 +29,7 @@ class Cli(clap.Parser):
 
 
 def main():
-    cli = Cli.parse_args()
+    cli = Cli.parse()
 
     # Let's assume the old version 1.2.3
     major = 1
