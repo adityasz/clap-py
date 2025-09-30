@@ -2,7 +2,7 @@
 name = "clap-py"
 authors = [{name = "Aditya Singh", email = "1adityasingh@proton.me"}]
 maintainers = [{name = "Aditya Singh", email = "1adityasingh@proton.me"}]
-version = "0.7.1"
+version = "0.7.2"
 description = "A declarative and type-safe command-line argument parser."
 readme = "README.md"
 license = "MIT"
@@ -28,7 +28,7 @@ module-root = ""
 dev = [
     "basedpyright>=1.31.5",
     "mkdocs>=1.6.1",
-    "mkdocs-material>=9.6.20",
+    "mkdocs-material>=9.6.21",
     "mkdocstrings[python]>=0.30.1",
     "pymdown-extensions>=10.16.1",
     "pytest>=8.4.2",

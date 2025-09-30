@@ -14,7 +14,7 @@ from inspect import getsource
 from textwrap import dedent
 from typing import Optional, Union, cast, override
 
-from clap.core import Arg, ArgAction, Command
+from clap.core import Arg, ArgAction, ArgType, Command
 from clap.styling import ColorChoice, Style, Styles, determine_color_usage
 
 # So people can write help_template: HelpTemplate = ...
@@ -390,7 +390,7 @@ class HelpRenderer:
                     spec_vals.append(s.strip())
                 else:
                     spec_vals.append(f"[possible values: {', '.join(arg.choices)}]")
-            if arg.default_value is not None:
+            if arg.default_value is not None and cast(ArgType.Base, arg.ty).ty is not bool:
                 spec_vals.append(f"[default: {arg.default_value}]")
             if arg.aliases:
                 spec_vals.append(f"[aliases: {', '.join(arg.aliases)}]")
