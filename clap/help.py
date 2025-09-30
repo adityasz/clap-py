@@ -294,80 +294,80 @@ class HelpRenderer:
 
     def write_help(
         self,
-        arg: Optional[Arg],
+        header_and_length: tuple[str, int],
         about: str,
         spec_vals: list[str],
-        next_line_help: bool,
         longest: int,
+        next_line_help: bool,
+        choices_help: bool,
     ):
-        if arg:
-            arg_header = ""
-            if arg.is_positional():
-                value_name = cast(str, arg.value_name)
-                arg_header = self.style_placeholder(value_name)
-                padding = longest - len(value_name)
-            else:
-                length = 2
-                if arg.short:
-                    arg_header += self.style_literal(cast(str, arg.short))
-                    if arg.long:
-                        arg_header += ", "
-                if arg.long:
-                    if not arg.short:
-                        arg_header = " " * 4
-                    length += 2 + len(cast(str, arg.long))
-                    arg_header += f"{self.style_literal(cast(str, arg.long))}"
-                    if arg.action == ArgAction.Count:
-                        length += 3
-                        arg_header += "..."
-                if arg.value_name:
-                    length += 1 + len(arg.value_name)
-                    arg_header += f" {self.style_placeholder(arg.value_name)}"
-                padding = longest - length
-            self.writer.push_str(INDENT)
-            self.writer.push_str(arg_header)
-            if next_line_help:
-                self.writer.push_str("\n")
-            else:
-                self.write_padding(padding)
+        header, header_len = header_and_length
+        self.writer.push_str(INDENT)
+        self.writer.push_str(header)
 
+        indent: str
         if next_line_help:
-            initial_indent = NEXT_LINE_INDENT
-            subsequent_indent = NEXT_LINE_INDENT
-            width = self.term_width - len(NEXT_LINE_INDENT)
+            self.writer.push_str("\n")
+            indent = NEXT_LINE_INDENT
         else:
-            initial_indent = INDENT
-            subsequent_indent = INDENT + " " * longest + INDENT
-            width = self.term_width - 2 * len(INDENT) - longest
-
-        if not next_line_help and spec_vals:
-            about = f"{about} {' '.join(spec_vals)}" if about else f"{' '.join(spec_vals)}"
+            indent = INDENT + " " * longest + INDENT
+            if spec_vals:
+                about = f"{about} {' '.join(spec_vals)}" if about else f"{' '.join(spec_vals)}"
 
         self.writer.push_str(
             "\n".join(
                 "\n".join(
                     textwrap.wrap(
                         par,
-                        width=width,
-                        initial_indent=initial_indent,
-                        subsequent_indent=subsequent_indent,
+                        width=self.term_width,
+                        initial_indent=indent,
+                        subsequent_indent=indent,
                     )
                 )
                 for par in about.splitlines()
-            )
+            )[0 if next_line_help else len(INDENT) + header_len :]
         )
 
         if next_line_help:
             if spec_vals:
-                extra_new_line = "\n" if isinstance(arg, Arg) and arg.choices_help else ""
                 if about:
-                    self.writer.push_str(f"\n{extra_new_line}")
+                    self.writer.push_str(f"\n{'\n' if choices_help else ''}")
                 self.writer.push_str(NEXT_LINE_INDENT)
-                self.writer.push_str(f"\n{extra_new_line}{NEXT_LINE_INDENT}".join(spec_vals))
+                self.writer.push_str(
+                    f"\n{'\n' if choices_help else ''}{NEXT_LINE_INDENT}".join(spec_vals)
+                )
             self.writer.push_str("\n")
         self.writer.push_str("\n")
 
-    def spec_vals(self, thing: Union[Arg, Command], next_line_help: bool) -> list[str]:
+    def get_arg_header_and_length(self, arg: Arg) -> tuple[str, int]:
+        length = 0
+        arg_header = ""
+        if arg.is_positional():
+            value_name = cast(str, arg.value_name)
+            arg_header = self.style_placeholder(value_name)
+            length += len(value_name)
+        else:
+            if arg.short:
+                arg_header += self.style_literal(cast(str, arg.short))
+                length += len(cast(str, arg.short))
+                if arg.long:
+                    arg_header += ", "
+                    length += 2
+            if arg.long:
+                if not arg.short:
+                    arg_header = " " * 4
+                    length += 4
+                arg_header += f"{self.style_literal(cast(str, arg.long))}"
+                length += len(cast(str, arg.long))
+                if arg.action == ArgAction.Count:
+                    arg_header += "..."
+                    length += 3
+            if arg.value_name:
+                arg_header += f" {self.style_placeholder(arg.value_name)}"
+                length += len(arg.value_name) + 1
+        return (arg_header, length)
+
+    def spec_vals(self, thing: Union[Arg, Command]) -> list[str]:
         if isinstance(arg := thing, Arg):
             spec_vals = []
             if arg.choices:
@@ -408,22 +408,23 @@ class HelpRenderer:
                 and taken + len(about + (" " + spec if about and spec else spec)) > self.term_width
             )(
                 subcommand.about or subcommand.long_about or "",
-                " ".join(self.spec_vals(subcommand, False)),
+                " ".join(self.spec_vals(subcommand)),
             )
             for subcommand in subcommands.values()
         )
 
         for name, subcommand in subcommands.items():
-            self.writer.push_str(INDENT)
-            self.writer.push_str(self.style_literal(name))
-            if not next_line_help:
-                self.write_padding(longest - len(name))
+            # self.writer.push_str(INDENT)
+            # self.writer.push_str(self.style_literal(name))
+            # if not next_line_help:
+            #     self.write_padding(longest - len(name))
             self.write_help(
-                None,
+                (self.style_literal(name), len(name)),
                 subcommand.about or subcommand.long_about or "",  # prefer about over long about
-                self.spec_vals(subcommand, next_line_help),
-                next_line_help,
+                self.spec_vals(subcommand),
                 longest,
+                next_line_help,
+                False,
             )
         self.writer.push_str("\n")
 
@@ -464,17 +465,19 @@ class HelpRenderer:
                     > self.term_width
                 )
                 or "\n" in about
-            )(self.get_about(arg.help, arg.long_help, True), " ".join(self.spec_vals(arg, False)))
+            )(self.get_about(arg.help, arg.long_help, True), " ".join(self.spec_vals(arg)))
             or (arg.choices_help and self.use_long)
             for arg in args
         )
         for arg in args:
             self.write_help(
-                arg,
+                self.get_arg_header_and_length(arg),
                 self.get_about(arg.help, arg.long_help, True),
-                self.spec_vals(arg, next_line_help),
-                next_line_help,
+                self.spec_vals(arg),
                 longest,
+                next_line_help,
+                self.use_long
+                and (arg.choices_help is not None and len(arg.choices_help.items()) != 0),
             )
         self.writer.strip()
 
