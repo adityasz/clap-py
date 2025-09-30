@@ -358,6 +358,7 @@ class Arg:
     default_missing_value: Optional[Any] = None
     default_value: Optional[Any] = None
     choices: Optional[Sequence[str]] = None
+    choices_help: Optional[dict[str, str]] = None
     required: Optional[bool] = None
     deprecated: Optional[bool] = None
     dest: Optional[str] = None

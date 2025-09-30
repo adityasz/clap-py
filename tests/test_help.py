@@ -1,19 +1,22 @@
 import unittest
 from enum import Enum, auto
 from io import StringIO
+from textwrap import dedent
 from unittest.mock import patch
 
 import pytest
 
 import clap
 from clap import arg, long
+from clap.api import _PARSER
 from clap.styling import AnsiColor, ColorChoice, Style, Styles
 
 
-def help_output(cls: type) -> str:
-    with patch("sys.stdout", new_callable=StringIO) as stdout:
+def help_output(cls: type, long: bool = True) -> str:
+    with patch("sys.stdout", StringIO()) as stdout:
+        help_flag = "--help" if long else "-h"
         with pytest.raises(SystemExit):
-            cls.parse(["--help"])
+            cls.parse([help_flag])
         return stdout.getvalue()
 
 
@@ -32,7 +35,7 @@ class HelpPrintingTest(unittest.TestCase):
             a: int
             """A."""
 
-        assert help_output(Cli) == (
+        assert help_output(Cli, True) == (
             f"{styles.usage_style}Usage:{styles.usage_style:#} "
             f"{styles.literal_style}pytest{styles.literal_style:#} "
             f"{styles.placeholder_style}<A>{styles.placeholder_style:#}\n"
@@ -50,34 +53,96 @@ class HelpPrintingTest(unittest.TestCase):
         class Cli(clap.Parser):
             this_is_a_really_really_long_option: int = arg(long, default_value=0)
 
-        assert help_output(Cli) == (
-            "Usage: pytest [OPTIONS]\n"
-            "\n"
-            "Options:\n"
-            "      --this-is-a-really-really-long-option <THIS_IS_A_REALLY_REALLY_LONG_OPTION>\n"
-            "          [default: 0]\n"
-            "\n"
-            "  -h, --help\n"
-            "          Print help\n"
-        )
+        assert help_output(Cli, True) == dedent("""\
+            Usage: pytest [OPTIONS]
 
-    def test_spec_vals_empty_about(self):
+            Options:
+                  --this-is-a-really-really-long-option <THIS_IS_A_REALLY_REALLY_LONG_OPTION>
+                      [default: 0]
+
+              -h, --help
+                      Print help
+        """)
+
+    def test_choices_empty_about(self):
         class Foo(Enum):
             A = auto()
+            """Help for A."""
             B = auto()
+            """Help for B."""
 
         @clap.command
         class Cli(clap.Parser):
             foo: Foo
 
-        assert help_output(Cli) == (
-            "Usage: pytest <FOO>\n"
-            "\n"
-            "Arguments:\n"
-            "  <FOO>  [possible values: a, b]\n"
-            "\n"
-            "Options:\n"
-            "  -h, --help  Print help\n"
-        )
+        assert help_output(Cli, False) == dedent("""\
+            Usage: pytest <FOO>
+
+            Arguments:
+              <FOO>  [possible values: a, b]
+
+            Options:
+              -h, --help  Print help
+        """)
+
+        # The entire clap pipeline will be refactored at some point in the
+        # future; this is a temporary hack:
+        getattr(Cli, _PARSER).help_renderer.writer.s = ""
+
+        assert help_output(Cli, True) == dedent("""\
+            Usage: pytest <FOO>
+
+            Arguments:
+              <FOO>
+                      Possible values:
+                      - a: Help for A
+                      - b: Help for B
+
+            Options:
+              -h, --help  Print help
+        """)
+
+    def test_spec_vals(self):
+        class Foo(Enum):
+            A = auto()
+            """Help for A."""
+            B = auto()
+            """Help for B."""
+
+        @clap.command
+        class Cli(clap.Parser):
+            foo: Foo = arg(default_value=Foo.A)
+            """Help for foo."""
+
+        assert help_output(Cli, False) == dedent("""\
+            Usage: pytest [FOO]
+
+            Arguments:
+              [FOO]  Help for foo [possible values: a, b] [default: a]
+
+            Options:
+              -h, --help  Print help
+        """)
+
+        # The entire clap pipeline will be refactored at some point in the
+        # future; this is a temporary hack:
+        getattr(Cli, _PARSER).help_renderer.writer.s = ""
+
+        assert help_output(Cli, True) == dedent("""\
+            Usage: pytest [FOO]
+
+            Arguments:
+              [FOO]
+                      Help for foo
+
+                      Possible values:
+                      - a: Help for A
+                      - b: Help for B
+
+                      [default: a]
+
+            Options:
+              -h, --help  Print help
+        """)
 
     # TODO: Write more tests!

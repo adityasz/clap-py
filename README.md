@@ -115,25 +115,21 @@ creating a PR. Thank you!
 
 ## TODO (v1.0)
 
-- [x] Support more tags in the help template.
-- [x] Support background colors in
-      [`AnsiColor`](https://adityasz.github.io/clap-py/styling/#ansicolor).
-- [ ] In long help, show description of possible values when the enum has
-      docstrings.
-- [ ] Share arguments between (sub)commands using class inheritance.
+- [ ] Actually parse arguments instead of using `argparse`. This will help
+      improve error messages and enable features like `requires_all`,
+      `conflicts_with`, etc.
 
 ## Future work (beyond v1.0)
 
-- [ ] Find out the python equivalent of `color_print::cstr!` and support
-      styled help strings that wrap properly and are formatted depending
-      on output file.
-- [ ] Actually parse arguments intead of relying on `argparse`.
-      This will improve error message greatly.
+- [ ] Create argument groups using classes.
+- [ ] Generate shell completions.
 - [ ] Add a clap-like builder API to add arguments procedurally (after
       defining some arguments in a class). One use case can be to load
       arguments and help strings from a file (which is useful when
       arguments/help strings are referenced in multiple places).
-- [ ] Generate shell completions.
+- [ ] Find or build out the python equivalent of `color_print::cstr!` and
+      support styled help strings that wrap properly and are formatted depending
+      on output file.
 
 ## Acknowledgements
 

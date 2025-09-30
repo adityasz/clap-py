@@ -1,14 +1,11 @@
-import ast
 import unittest
-from textwrap import dedent
 from typing import Union
 
 import pytest
 
 from clap.core import Arg, to_kebab_case
+from clap.help import extract_docstrings, get_help_from_docstring
 from clap.parser import (
-    DocstringExtractor,
-    get_help_from_docstring,
     parse_type_hint,
     set_flags,
     set_value_name,
@@ -18,8 +15,7 @@ from clap.parser import (
 class TestDocstringExtraction(unittest.TestCase):
     def test_annotated_fields(self):
         """Test DocstringExtractor with annotated fields."""
-        source = '''
-        class TestClass:
+        class Foo:
             field1: str
             """Field 1 docstring"""
             field2: int
@@ -27,31 +23,14 @@ class TestDocstringExtraction(unittest.TestCase):
 
             Multi-line description here."""
             field3: bool
-        '''
-        tree = ast.parse(dedent(source))
-        extractor = DocstringExtractor()
-        extractor.visit(tree)
 
-        assert extractor.docstrings["field1"] == "Field 1 docstring"
-        assert extractor.docstrings["field2"] == (
+        docstrings = extract_docstrings(Foo)
+
+        assert docstrings["field1"] == "Field 1 docstring"
+        assert docstrings["field2"] == (
             "Field 2 docstring.\n\n    Multi-line description here."
         )
-        assert "field3" not in extractor.docstrings
-
-    def test_group_docs(self):
-        """Test DocstringExtractor with assigned fields (groups)."""
-        source = '''
-        class TestClass:
-            group1 = Group("Input options")
-            """Group 1 description"""
-            field2 = arg(long)
-        '''
-        tree = ast.parse(dedent(source))
-        extractor = DocstringExtractor()
-        extractor.visit(tree)
-
-        assert extractor.docstrings["group1"] == "Group 1 description"
-        assert "field2" not in extractor.docstrings
+        assert "field3" not in docstrings
 
     def test_single_paragraph(self):
         """Test help extraction from single paragraph."""

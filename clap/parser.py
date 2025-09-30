@@ -1,10 +1,7 @@
 import argparse
-import ast
 import sys
 from enum import EnumType
-from inspect import getsource
-from textwrap import dedent
-from typing import Any, Optional, Union, get_args, get_origin, get_type_hints, override
+from typing import Any, Optional, Union, get_args, get_origin, get_type_hints
 
 from clap.core import (
     Arg,
@@ -16,7 +13,7 @@ from clap.core import (
     short,
     to_kebab_case,
 )
-from clap.help import HelpRenderer
+from clap.help import HelpRenderer, extract_docstrings, get_help_from_docstring
 
 _SUBCOMMAND_MARKER = "__com.github.adityasz.clap_py.subcommand_marker__"
 _COMMAND_DATA = "__command_data__"
@@ -46,68 +43,6 @@ class ClapArgParser(argparse.ArgumentParser):
         self.help_renderer.set_use_long(use_long)
         self.help_renderer.render()
         sys.exit(0)
-
-
-class DocstringExtractor(ast.NodeVisitor):
-    def __init__(self):
-        self.docstrings: dict[str, str] = {}
-
-    @override
-    def visit_ClassDef(self, node):
-        for stmt_1, stmt_2 in zip(node.body[:-1], node.body[1:], strict=False):
-            # Class attributes do not have __doc__, but the interpreter does
-            # not strip away the docstrings either. So we can get them from
-            # the AST.
-            #
-            # >>> file: Path
-            # >>> """Path to the input file"""
-            if not (
-                isinstance(stmt_2, ast.Expr)
-                and isinstance(stmt_2.value, ast.Constant)
-                and isinstance(stmt_2.value.value, str)
-            ):
-                continue
-            if isinstance(stmt_1, ast.AnnAssign) and isinstance(stmt_1.target, ast.Name):
-                self.docstrings[stmt_1.target.id] = stmt_2.value.value.strip()
-            if isinstance(stmt_1, ast.Assign) and isinstance(stmt_1.targets[0], ast.Name):
-                # for groups:
-                # g = group("Input options")  # this does not need an annotation
-                # """This group contains options for..."""
-                self.docstrings[stmt_1.targets[0].id] = stmt_2.value.value.strip()
-
-
-def extract_docstrings(cls: type) -> dict[str, str]:
-    extractor = DocstringExtractor()
-    try:
-        source = dedent(getsource(cls))
-    except OSError:
-        # can't get source in an ipykernel for example
-        return {}
-    tree = ast.parse(source)
-    extractor.visit(tree)
-    return extractor.docstrings
-
-
-def get_help_from_docstring(docstring: str) -> tuple[str, str]:
-    paragraphs: list[str] = []
-    curr_paragraph: list[str] = []
-    for line in map(str.strip, docstring.splitlines()):
-        if line:
-            curr_paragraph.append(line)
-        else:
-            if curr_paragraph:
-                paragraphs.append(" ".join(curr_paragraph))
-                curr_paragraph.clear()
-    if curr_paragraph:
-        paragraphs.append(" ".join(curr_paragraph))
-    if not paragraphs:
-        return "", ""
-    short_help = paragraphs[0]
-    if short_help[-1] == "." and (len(short_help) == 1 or short_help[-2] != "."):
-        short_help = short_help[:-1]
-    if len(paragraphs) == 1:
-        return short_help, short_help
-    return short_help, "\n\n".join(paragraphs)
 
 
 def is_subcommand(cls: type) -> bool:
@@ -196,10 +131,21 @@ def set_type_dependent_kwargs(arg: Arg):
         case ArgType.Enum(enum=enum, choice_to_enum_member=choice_to_enum_member):
             if arg.action is None:
                 arg.action = ArgAction.Set
+
             arg.choices = list(choice_to_enum_member.keys())
+            # FIXME: This is extremely ugly.
+            # Note: Before rewriting, implement something like ValueEnum,
+            #       so that a custom name can be provided.
+            arg.choices_help = extract_docstrings(enum)
+            for choice, enum_member in choice_to_enum_member.items():
+                enum_member = str(enum_member).split(".")[-1]
+                if enum_member in arg.choices_help:
+                    arg.choices_help[choice] = arg.choices_help[enum_member]
+                    del arg.choices_help[enum_member]
+
             if isinstance(arg.default_value, enum):
-                for choice, member in choice_to_enum_member.items():
-                    if member == arg.default_value:
+                for choice, enum_member in choice_to_enum_member.items():
+                    if enum_member == arg.default_value:
                         arg.default_value = choice  # set default to a string for help message
                         break
         case ArgType.List(t, optional):

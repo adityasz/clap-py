@@ -1,7 +1,18 @@
+# The help rendering code is very messy. Requires a rewrite.
+#
+# Also, docstring extraction is done in @clap.command and not in the help
+# generation. Unnecessary overhead when -h/--help are not provided. The whole
+# codebase needs to be refactored! But first: Manually parse arguments and get
+# rid of argparse so that ArgGroups, Arg.conflicts_with, Arg.requires etc. can
+# be implemented. Then rewrite HelpRenderer.
+
+import ast
 import shutil
 import textwrap
 from dataclasses import dataclass
-from typing import Optional, Union, cast
+from inspect import getsource
+from textwrap import dedent
+from typing import Optional, Union, cast, override
 
 from clap.core import Arg, ArgAction, Command
 from clap.styling import ColorChoice, Style, Styles, determine_color_usage
@@ -46,6 +57,68 @@ DEFAULT_TEMPLATE: HelpTemplate = """\
 {all-args}{after-help}\
 """
 """This is the default help template."""
+
+
+class DocstringExtractor(ast.NodeVisitor):
+    def __init__(self):
+        self.docstrings: dict[str, str] = {}
+
+    @override
+    def visit_ClassDef(self, node):
+        for stmt_1, stmt_2 in zip(node.body[:-1], node.body[1:], strict=False):
+            # Class attributes do not have __doc__, but the interpreter does
+            # not strip away the docstrings either. So we can get them from
+            # the AST.
+            #
+            # >>> file: Path
+            # >>> """Path to the input file"""
+            if not (
+                isinstance(stmt_2, ast.Expr)
+                and isinstance(stmt_2.value, ast.Constant)
+                and isinstance(stmt_2.value.value, str)
+            ):
+                continue
+            if isinstance(stmt_1, ast.AnnAssign) and isinstance(stmt_1.target, ast.Name):
+                self.docstrings[stmt_1.target.id] = stmt_2.value.value.strip()
+            if isinstance(stmt_1, ast.Assign) and isinstance(stmt_1.targets[0], ast.Name):
+                # for groups:
+                # g = group("Input options")  # this does not need an annotation
+                # """This group contains options for..."""
+                self.docstrings[stmt_1.targets[0].id] = stmt_2.value.value.strip()
+
+
+def extract_docstrings(cls: type) -> dict[str, str]:
+    extractor = DocstringExtractor()
+    try:
+        source = dedent(getsource(cls))
+    except OSError:
+        # can't get source in an ipykernel for example
+        return {}
+    tree = ast.parse(source)
+    extractor.visit(tree)
+    return extractor.docstrings
+
+
+def get_help_from_docstring(docstring: str) -> tuple[str, str]:
+    paragraphs: list[str] = []
+    curr_paragraph: list[str] = []
+    for line in map(str.strip, docstring.splitlines()):
+        if line:
+            curr_paragraph.append(line)
+        else:
+            if curr_paragraph:
+                paragraphs.append(" ".join(curr_paragraph))
+                curr_paragraph.clear()
+    if curr_paragraph:
+        paragraphs.append(" ".join(curr_paragraph))
+    if not paragraphs:
+        return "", ""
+    short_help = paragraphs[0]
+    if short_help[-1] == "." and (len(short_help) == 1 or short_help[-2] != "."):
+        short_help = short_help[:-1]
+    if len(paragraphs) == 1:
+        return short_help, short_help
+    return short_help, "\n\n".join(paragraphs)
 
 
 @dataclass(slots=True)
@@ -286,20 +359,30 @@ class HelpRenderer:
 
         if next_line_help:
             if spec_vals:
+                extra_new_line = "\n" if isinstance(arg, Arg) and arg.choices_help else ""
                 if about:
-                    self.writer.push_str("\n")
+                    self.writer.push_str(f"\n{extra_new_line}")
                 self.writer.push_str(NEXT_LINE_INDENT)
-                self.writer.push_str(f"\n{NEXT_LINE_INDENT}".join(spec_vals))
+                self.writer.push_str(f"\n{extra_new_line}{NEXT_LINE_INDENT}".join(spec_vals))
             self.writer.push_str("\n")
         self.writer.push_str("\n")
 
-    def spec_vals(self, thing: Union[Arg, Command]) -> list[str]:
+    def spec_vals(self, thing: Union[Arg, Command], next_line_help: bool) -> list[str]:
         if isinstance(arg := thing, Arg):
             spec_vals = []
+            if arg.choices:
+                if (choices_help := arg.choices_help) and self.use_long:
+                    s = "Possible values:\n"
+                    for choice in arg.choices:
+                        s += f"{NEXT_LINE_INDENT}- {choice}"
+                        if about := choices_help.get(choice, None):
+                            s += f": {get_help_from_docstring(about)[0]}"  # TODO: handle long help
+                        s += "\n"
+                    spec_vals.append(s.strip())
+                else:
+                    spec_vals.append(f"[possible values: {', '.join(arg.choices)}]")
             if arg.default_value is not None:
                 spec_vals.append(f"[default: {arg.default_value}]")
-            if arg.choices:
-                spec_vals.append(f"[possible values: {', '.join(arg.choices)}]")
             if arg.aliases:
                 spec_vals.append(f"[aliases: {', '.join(arg.aliases)}]")
             return spec_vals
@@ -325,7 +408,7 @@ class HelpRenderer:
                 and taken + len(about + (" " + spec if about and spec else spec)) > self.term_width
             )(
                 subcommand.about or subcommand.long_about or "",
-                " ".join(self.spec_vals(subcommand)),
+                " ".join(self.spec_vals(subcommand, False)),
             )
             for subcommand in subcommands.values()
         )
@@ -338,7 +421,7 @@ class HelpRenderer:
             self.write_help(
                 None,
                 subcommand.about or subcommand.long_about or "",  # prefer about over long about
-                self.spec_vals(subcommand),
+                self.spec_vals(subcommand, next_line_help),
                 next_line_help,
                 longest,
             )
@@ -381,14 +464,15 @@ class HelpRenderer:
                     > self.term_width
                 )
                 or "\n" in about
-            )(self.get_about(arg.help, arg.long_help, True), " ".join(self.spec_vals(arg)))
+            )(self.get_about(arg.help, arg.long_help, True), " ".join(self.spec_vals(arg, False)))
+            or (arg.choices_help and self.use_long)
             for arg in args
         )
         for arg in args:
             self.write_help(
                 arg,
                 self.get_about(arg.help, arg.long_help, True),
-                self.spec_vals(arg),
+                self.spec_vals(arg, next_line_help),
                 next_line_help,
                 longest,
             )
