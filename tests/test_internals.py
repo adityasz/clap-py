@@ -184,8 +184,8 @@ class TestKebabCaseConversion(unittest.TestCase):
         assert to_kebab_case("a") == "a"
         assert to_kebab_case("aB") == "a-b"
         assert to_kebab_case("") == ""
-        assert to_kebab_case("option1") == "option1"
-        assert to_kebab_case("Option1Two") == "option1-two"
+        assert to_kebab_case("option1") == "option-1"
+        assert to_kebab_case("Option1Two") == "option-1-two"
 
     def test_already_kebab_case(self):
         assert to_kebab_case("kebab-case") == "kebab-case"

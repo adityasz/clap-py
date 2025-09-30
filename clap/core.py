@@ -189,8 +189,10 @@ type NargsType = Union[Literal['?', '*', '+'], int]
 
 
 def to_kebab_case(name: str) -> str:
-    name = name.replace('_', '-')                           # snake_case, SCREAMING_SNAKE_CASE
-    name = re.sub(r'([a-z0-9])([A-Z])', r'\1-\2', name)     # camelCase, PascalCase
+    name = name.replace('_', '-')                           # foo_bar -> foo-bar
+    name = re.sub(r'([a-z])([A-Z])', r'\1-\2', name)        # FooBar -> Foo-Bar
+    name = re.sub(r'([a-zA-Z])([0-9])', r'\1-\2', name)     # A1 -> A-1
+    name = re.sub(r'([0-9])([a-zA-Z])', r'\1-\2', name)     # 1A -> 1-A
     name = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1-\2', name)  # HTTPSConnection -> HTTPS-Connection
     name = name.lower()
     name = re.sub(r'-+', '-', name)
