@@ -1868,12 +1868,12 @@ Watches an input file and recompiles on changes
 <h2 id="sharp-edges">Sharp edges</h2>
 <p>The decorators <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;clap.command&lt;/span&gt;" href="../command/#clap.command"><code>@clap.command</code></a> and
 <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-function&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;clap.subcommand&lt;/span&gt;" href="../subcommand/#clap.subcommand"><code>@clap.subcommand</code></a> are decorated with
-<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/typing.html#typing.dataclass_transform"><code>@dataclass_transform</code></a> to tell type-checkers that
-they provide <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass"><code>dataclass</code></a> like functionality (for
+<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/typing.html#typing.dataclass_transform"><code>@dataclass_transform</code></a> to tell type checkers that
+they provide <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass"><code>dataclass</code></a>-like functionality (for
 example, pattern matching with positionals in <code>match</code>-<code>case</code>).</p>
 <p>This also brings some dataclass limitations: If fields without default values
-appear after fields with default values, the type-checker complains. There are
-no runtime implications, but to satisfy the type-checkers, the following
+are present after fields with default values, the type checker complains. There
+are no runtime implications, but to satisfy the type checkers, the following
 (reasonable) workarounds can be used:</p>
 <ul>
 <li>For positionals where you don't need to modify the default behavior, you can
