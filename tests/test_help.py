@@ -12,7 +12,7 @@ from clap.api import _PARSER
 from clap.styling import AnsiColor, ColorChoice, Style, Styles
 
 
-def help_output(cls: type, long: bool = True) -> str:
+def help_output(cls: type[clap.Parser], long: bool = True) -> str:
     with patch("sys.stdout", StringIO()) as stdout:
         help_flag = "--help" if long else "-h"
         with pytest.raises(SystemExit):

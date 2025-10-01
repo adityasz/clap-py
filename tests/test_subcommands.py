@@ -280,7 +280,7 @@ class TestSubcommandErrors(unittest.TestCase):
                 class Sub:
                     ...
 
-                cmd: Sub = "invalid"  # pyright: ignore[reportAssignmentType]
+                cmd: Sub = "invalid"  # pyright: ignore[reportAssignmentType]  # ty: ignore[invalid-assignment]
 
     def test_unknown_subcommand(self):
         @clap.subcommand
