@@ -326,13 +326,13 @@ Here's the help output for
 
 The decorators [`@clap.command`][clap.command] and
 [`@clap.subcommand`][clap.subcommand] are decorated with
-[`@dataclass_transform`][typing.dataclass_transform] to tell type-checkers that
-they provide [`dataclass`][dataclasses.dataclass] like functionality (for
+[`@dataclass_transform`][typing.dataclass_transform] to tell type checkers that
+they provide [`dataclass`][dataclasses.dataclass]-like functionality (for
 example, pattern matching with positionals in `match`-`case`).
 
 This also brings some dataclass limitations: If fields without default values
-appear after fields with default values, the type-checker complains. There are
-no runtime implications, but to satisfy the type-checkers, the following
+are present after fields with default values, the type checker complains. There
+are no runtime implications, but to satisfy the type checkers, the following
 (reasonable) workarounds can be used:
 
 - For positionals where you don't need to modify the default behavior, you can
