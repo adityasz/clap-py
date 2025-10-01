@@ -1,5 +1,6 @@
 import os
 import sys
+from abc import abstractmethod
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Optional, Self, Union, dataclass_transform
@@ -53,9 +54,9 @@ class Parser:
     """
 
     @classmethod
+    @abstractmethod
     def parse(cls: type[Self], args: Optional[Sequence[str]] = None) -> Self:
         """Parse from the provided `args` or [`sys.argv`][], exit on error."""
-        ...  # noqa: PIE790 | Ellipsis prevent type errors on `-> Self` in the signature
 
 
 @dataclass_transform()
