@@ -14,7 +14,7 @@ Homepage = "https://github.com/adityasz/clap-py"
 Documentation = "https://adityasz.github.io/clap-py"
 Repository = "https://github.com/adityasz/clap-py.git"
 Issues = "https://github.com/adityasz/clap-py/issues"
-# TODO: Changelog
+Changelog = "https://github.com/adityasz/clap-py/blob/master/CHANGELOG.md"
 
 [build-system]
 requires = ["uv_build>=0.8.22,<0.9.0"]
