@@ -838,6 +838,7 @@
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-abstractmethod&quot;&gt;&lt;code&gt;abstractmethod&lt;/code&gt;&lt;/small&gt;
       &lt;small class=&quot;doc doc-label doc-label-classmethod&quot;&gt;&lt;code&gt;classmethod&lt;/code&gt;&lt;/small&gt;
   &lt;/span&gt;" href="#clap.Parser.parse"><code>parse</code></a> method injected at runtime.
 Inheriting from <a class="autorefs autorefs-internal" title="&lt;code class=&quot;doc-symbol doc-symbol-heading doc-symbol-class&quot;&gt;&lt;/code&gt;            &lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;clap.Parser&lt;/span&gt;" href="#clap.Parser"><code>Parser</code></a> provides this method signature to
@@ -873,6 +874,7 @@ editors.</p>
 
 
   &lt;span class=&quot;doc doc-labels&quot;&gt;
+      &lt;small class=&quot;doc doc-label doc-label-abstractmethod&quot;&gt;&lt;code&gt;abstractmethod&lt;/code&gt;&lt;/small&gt;
       &lt;small class=&quot;doc doc-label doc-label-classmethod&quot;&gt;&lt;code&gt;classmethod&lt;/code&gt;&lt;/small&gt;
   &lt;/span&gt; (&lt;code&gt;clap.Parser.parse&lt;/code&gt;)" href="#clap.Parser.parse">parse</a></code></b>
             –
@@ -906,6 +908,7 @@ editors.</p>
 
 
   <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
   </span>
 
@@ -920,13 +923,13 @@ editors.</p>
 
             <details class="quote">
               <summary>Source code in <code>clap/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">55</span>
-<span class="normal">56</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">56</span>
 <span class="normal">57</span>
-<span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">58</span>
+<span class="normal">59</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="nd">@abstractmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Self</span><span class="p">],</span> <span class="n">args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse from the provided `args` or [`sys.argv`][], exit on error.&quot;&quot;&quot;</span>
-    <span class="o">...</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
