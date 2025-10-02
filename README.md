@@ -73,7 +73,7 @@ for more examples.
   ```
 
 - **Separate short and long help** with `-h` and `--help`. See example output
-  [here](https://adityasz.github.io/clap-py/quickstart/#help).
+  [here](https://adityasz.github.io/clap-py/quickstart/#help-output).
 
 - **Customize help output** with
   [templates](https://adityasz.github.io/clap-py/help/#clap.help.HelpTemplate)
