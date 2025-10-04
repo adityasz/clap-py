@@ -48,6 +48,28 @@ class HelpPrintingTest(unittest.TestCase):
             f"{styles.literal_style}--help{styles.literal_style:#}  Print help\n"
         )
 
+    def test_group_order(self):
+        @clap.command
+        class Cli(clap.Parser):
+            z = clap.Group(title="Z")
+            a = clap.Group(title="A")
+
+            x: int = arg(group=z)
+            y: int = arg(group=a)
+
+        assert help_output(Cli, True) == dedent("""\
+            Usage: pytest <X> <Y>
+
+            Options:
+              -h, --help  Print help
+
+            Z:
+              <X>
+
+            A:
+              <Y>
+        """)
+
     def test_spec_val_indent_in_next_line_help(self):
         @clap.command
         class Cli(clap.Parser):

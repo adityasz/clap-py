@@ -348,8 +348,7 @@ def create_command(cls: type, command_path: str = "", parent: Optional[Command] 
         for name, attr in attrs.items():
             setattr(cls, name, attr)
 
-    for field_name in dir(cls):
-        value = getattr(cls, field_name, None)
+    for field_name, value in cls.__dict__.items():
         if isinstance(group := value, Group):
             if group in command.groups:
                 msg = (

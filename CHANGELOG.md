@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 0.7.3
+
+Released on 2025-10-04.
+
+### Fixed
+
+- Print groups in the help output in the order in which they are created.
+- Remove deleted public function for creating groups from the stub file.
+
 ## 0.7.2
 
 Released on 2025-10-02.

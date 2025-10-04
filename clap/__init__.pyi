@@ -126,10 +126,3 @@ def subcommand[T](
     exit_on_error: bool = ...,
     deprecated: bool = False,
 ) -> Callable[[type[T]], type[T]]: ...
-
-def group(
-    title: str,
-    about: Optional[str] = ...,
-    long_about: Optional[str] = ...,
-    conflict_handler: Optional[str] = ...,
-) -> Group: ...
