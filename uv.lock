@@ -79,7 +79,7 @@ wheels = [
 
 [[package]]
 name = "clap-py"
-version = "0.7.2"
+version = "0.8.0"
 source = { editable = "." }
 
 [package.dev-dependencies]
@@ -98,14 +98,14 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "basedpyright", specifier = ">=1.31.5" },
+    { name = "basedpyright", specifier = ">=1.31.6" },
     { name = "mkdocs", specifier = ">=1.6.1" },
     { name = "mkdocs-material", specifier = ">=9.6.21" },
     { name = "mkdocstrings", extras = ["python"], specifier = ">=0.30.1" },
     { name = "pymdown-extensions", specifier = ">=10.16.1" },
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "rich", specifier = ">=14.1.0" },
-    { name = "ruff", specifier = ">=0.13.2" },
+    { name = "ruff", specifier = ">=0.13.3" },
 ]
 
 [[package]]

@@ -2,7 +2,7 @@
 name = "clap-py"
 authors = [{name = "Aditya Singh", email = "1adityasingh@proton.me"}]
 maintainers = [{name = "Aditya Singh", email = "1adityasingh@proton.me"}]
-version = "0.7.3"
+version = "0.8.0"
 description = "A declarative and type-safe command-line argument parser."
 readme = "README.md"
 license = "MIT"

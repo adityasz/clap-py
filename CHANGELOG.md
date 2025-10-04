@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 0.8.0
+
+Released on 2025-10-05.
+
+### Enhancements
+
+- Style possible values of enum members in long help.
+- Align help messages of enum members.
+
 ## 0.7.3
 
 Released on 2025-10-04.

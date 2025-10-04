@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pytest
 
 import clap
-from clap import arg, long
+from clap import arg, long, short
 from clap.api import _PARSER
 from clap.styling import AnsiColor, ColorChoice, Style, Styles
 
@@ -30,22 +30,45 @@ class HelpPrintingTest(unittest.TestCase):
                 .placeholder(Style().fg_color(AnsiColor.Green))
         )
 
+        class Choices(Enum):
+            One = auto()
+            """One."""
+            Two = auto()
+            """Two."""
+
         @clap.command(color=ColorChoice.Always, styles=styles)
         class Cli(clap.Parser):
             a: int
             """A."""
+            b: Choices = arg(short)
+
+        def usage(s: str) -> str:
+            return f"{styles.usage_style}{s}{styles.usage_style:#}"
+
+        def literal(s: str) -> str:
+            return f"{styles.literal_style}{s}{styles.literal_style:#}"
+
+        def placeholder(s: str) -> str:
+            return f"{styles.placeholder_style}{s}{styles.placeholder_style:#}"
+
+        def header(s: str) -> str:
+            return f"{styles.header_style}{s}{styles.header_style:#}"
 
         assert help_output(Cli, True) == (
-            f"{styles.usage_style}Usage:{styles.usage_style:#} "
-            f"{styles.literal_style}pytest{styles.literal_style:#} "
-            f"{styles.placeholder_style}<A>{styles.placeholder_style:#}\n"
+            f"{usage("Usage:")} "
+            f"{literal("pytest")} {literal("-b")} {placeholder("<B>")} {placeholder("<A>")}\n"
             "\n"
-            f"{styles.header_style}Arguments:{styles.header_style:#}\n"
-            f"  {styles.placeholder_style}<A>{styles.placeholder_style:#}  A\n"
+            f"{header("Arguments:")}\n"
+            f"  {placeholder("<A>")}  A\n"
             "\n"
-            f"{styles.header_style}Options:{styles.header_style:#}\n"
-            f"  {styles.literal_style}-h{styles.literal_style:#}, "
-            f"{styles.literal_style}--help{styles.literal_style:#}  Print help\n"
+            f"{header("Options:")}\n"
+            f"  {literal("-b")} {placeholder("<B>")}\n"
+            f"          Possible values:\n"
+            f"          - {literal("one")}: One\n"
+            f"          - {literal("two")}: Two\n"
+            f"\n"
+            f"  {literal("-h")}, {literal("--help")}\n"
+            f"          Print help\n"
         )
 
     def test_group_order(self):
@@ -90,8 +113,8 @@ class HelpPrintingTest(unittest.TestCase):
         class Foo(Enum):
             A = auto()
             """Help for A."""
-            B = auto()
-            """Help for B."""
+            BC = auto()
+            """Help for BC."""
 
         @clap.command
         class Cli(clap.Parser):
@@ -101,7 +124,7 @@ class HelpPrintingTest(unittest.TestCase):
             Usage: pytest <FOO>
 
             Arguments:
-              <FOO>  [possible values: a, b]
+              <FOO>  [possible values: a, bc]
 
             Options:
               -h, --help  Print help
@@ -117,8 +140,38 @@ class HelpPrintingTest(unittest.TestCase):
             Arguments:
               <FOO>
                       Possible values:
-                      - a: Help for A
-                      - b: Help for B
+                      - a:  Help for A
+                      - bc: Help for BC
+
+            Options:
+              -h, --help  Print help
+        """)
+
+    def test_super_long_choice(self):
+        class Choice(Enum):
+            Choice = auto()
+            """A choice with a very long help message.
+            The quick brown fox jumps over the lazy dog."""
+            LongChoice = auto()
+            """A long choice."""
+            VeryLoooooooooooooooooooooooooooooooongChoice = auto()
+            """A very long choice."""
+
+        @clap.command
+        class Cli(clap.Parser):
+            choice: Choice
+
+        assert help_output(Cli, True) == dedent("""\
+            Usage: pytest <CHOICE>
+
+            Arguments:
+              <CHOICE>
+                      Possible values:
+                      - choice:      A choice with a very long help message. The quick brown
+                                     fox jumps over the lazy dog
+                      - long-choice: A long choice
+                      - very-loooooooooooooooooooooooooooooooong-choice:
+                                     A very long choice
 
             Options:
               -h, --help  Print help

@@ -373,11 +373,17 @@ class HelpRenderer:
             if arg.choices:
                 if (choices_help := arg.choices_help) and self.use_long:
                     s = "Possible values:\n"
+                    longest_that_fits = max(
+                        len(c)
+                        for c in arg.choices
+                        if 4 + len(NEXT_LINE_INDENT) + len(c) < 0.5 * self.term_width
+                    )
                     for choice in arg.choices:
-                        s += f"{NEXT_LINE_INDENT}- {choice}"
+                        s += f"{NEXT_LINE_INDENT}- {self.style_literal(choice)}"
                         if about := choices_help.get(choice, None):
-                            s += ": "
-                            indent = f"{NEXT_LINE_INDENT}{"":{len(choice) + 4}}"
+                            fits = len(choice) <= longest_that_fits
+                            s += f":{' ' if fits else '\n'}"
+                            indent = f"{NEXT_LINE_INDENT}{"":{longest_that_fits + 4}}"
                             s += "\n".join(
                                 textwrap.wrap(
                                     get_help_from_docstring(about)[0],  # TODO: handle long help
@@ -385,7 +391,7 @@ class HelpRenderer:
                                     initial_indent=indent,
                                     subsequent_indent=indent,
                                 )
-                            )[len(indent):]
+                            )[len(NEXT_LINE_INDENT) + len(choice) + 4 if fits else 0:]
                         s += "\n"
                     spec_vals.append(s.strip())
                 else:
