@@ -220,4 +220,6 @@ class HelpPrintingTest(unittest.TestCase):
               -h, --help  Print help
         """)
 
-    # TODO: Write more tests!
+
+if __name__ == "__main__":
+    unittest.main()
