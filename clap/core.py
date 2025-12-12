@@ -127,6 +127,7 @@ class ArgAction(StrEnum):
         Depending on the flag, `long_version` may be shown.
         """
 
+        @override
         def __init__(self, option_strings, dest, **kwargs):
             super().__init__(option_strings, dest, nargs=0)
 
@@ -164,7 +165,7 @@ class ArgAction(StrEnum):
             super().__init__(option_strings, dest, nargs=0)
 
         @override
-        def __call__(self, parser, _, __, ___: Optional[str] = None):
+        def __call__(self, parser, namespace, values, option_string: Optional[str] = None):
             from .parser import ClapArgParser
             cast(ClapArgParser, parser).print_nice_help(use_long=False)
 
@@ -175,7 +176,7 @@ class ArgAction(StrEnum):
             super().__init__(option_strings, dest, nargs=0)
 
         @override
-        def __call__(self, parser, _, __, ___: Optional[str] = None):
+        def __call__(self, parser, namespace, values, option_string: Optional[str] = None):
             from .parser import ClapArgParser
             cast(ClapArgParser, parser).print_nice_help(use_long=True)
 
