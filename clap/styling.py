@@ -6,6 +6,7 @@ from typing import Optional, override
 
 class ColorChoice(Enum):
     """Represents the color preferences for help output."""
+
     Auto = auto()
     """Enables colored output only when the output is going to a terminal or TTY.
 
@@ -52,6 +53,7 @@ class AnsiColor(IntEnum):
 
     The user's terminal defines the meaning of the each palette code.
     """
+
     Black = auto()
     """Black: #0 (foreground code `30`, background code `40`)."""
     Red = auto()
@@ -102,6 +104,7 @@ class Style:
     print(f"{style}value{style:#}")
     ```
     """
+
     color_fg: Optional[AnsiColor] = None
     color_bg: Optional[AnsiColor] = None
     is_bold: bool = False
@@ -209,7 +212,7 @@ class Style:
 
     @override
     def __format__(self, format_spec: str) -> str:
-        if format_spec == '#':
+        if format_spec == "#":
             return self.render_reset()
         return str(self)
 
@@ -222,8 +225,11 @@ class Styles:
     ```python
     from clap import AnsiColor, Style, Styles
 
-    styles = (Styles().header(Style().bold().underline())
-                  .literal(Style().fg_color(AnsiColor.Green).bold()))
+    styles = (
+        Styles()
+            .header(Style().bold().underline())
+            .literal(Style().fg_color(AnsiColor.Green).bold())
+    )
     ```
     """
 
@@ -236,10 +242,13 @@ class Styles:
     @classmethod
     def styled(cls) -> "Styles":
         """Default terminal styling."""
-        return (Styles().header(Style().bold().underline())
-                    .literal(Style().bold())
-                    .usage(Style().bold().underline())
-                    .placeholder(Style()))
+        return (
+            Styles()
+                .header(Style().bold().underline())
+                .literal(Style().bold())
+                .usage(Style().bold().underline())
+                .placeholder(Style())
+        )
 
     def header(self, style: Style) -> "Styles":
         """General heading style, e.g., `Commands`."""

@@ -79,14 +79,11 @@ def main():
         case Watch(input):
             print(
                 f"{verb}watching{verb:#} {input}\n"
-                f"{verb}writing to{verb:#} {input.with_suffix(".pdf")}\n\n"
+                f"{verb}writing to{verb:#} {input.with_suffix('.pdf')}\n\n"
                 f"[01:45:47] compiled successfully in 1 picosecond (because typst is way too fast)"
             )
         case Init(template):
-            print(
-                f"{info}'{template}'{info:#} "
-                f"is a cool template!"
-            )
+            print(f"{info}'{template}'{info:#} is a cool template!")
 
 
 if __name__ == "__main__":

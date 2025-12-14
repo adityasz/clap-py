@@ -239,7 +239,8 @@ class HelpRenderer:
         if any(
             arg.required is not True
             and not arg.is_positional()
-            and arg.action not in (
+            and arg.action
+            not in (
                 ArgAction.Help,
                 ArgAction.HelpShort,
                 ArgAction.HelpLong,
@@ -383,7 +384,7 @@ class HelpRenderer:
                         if about := choices_help.get(choice, None):
                             fits = len(choice) <= longest_that_fits
                             s += f":{' ' if fits else '\n'}"
-                            indent = f"{NEXT_LINE_INDENT}{"":{longest_that_fits + 4}}"
+                            indent = f"{NEXT_LINE_INDENT}{'':{longest_that_fits + 4}}"
                             s += "\n".join(
                                 textwrap.wrap(
                                     get_help_from_docstring(about)[0],  # TODO: handle long help
@@ -391,7 +392,7 @@ class HelpRenderer:
                                     initial_indent=indent,
                                     subsequent_indent=indent,
                                 )
-                            )[len(NEXT_LINE_INDENT) + len(choice) + 4 if fits else 0:]
+                            )[len(NEXT_LINE_INDENT) + len(choice) + 4 if fits else 0 :]
                         s += "\n"
                     spec_vals.append(s.strip())
                 else:
@@ -417,8 +418,7 @@ class HelpRenderer:
 
         next_line_help = any(
             (
-                lambda about, spec: (taken := longest + 2 * len(INDENT))
-                >= self.term_width
+                lambda about, spec: (taken := longest + 2 * len(INDENT)) >= self.term_width
                 and taken / self.term_width > 0.40
                 and taken + len(about + (" " + spec if about and spec else spec)) > self.term_width
             )(

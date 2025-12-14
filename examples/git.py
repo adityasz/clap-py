@@ -87,7 +87,7 @@ def main():
         case Push(remote):
             print(f"Pushing to {remote}")
         case Add(paths):
-            print(f"Adding {" ".join(str(path) for path in paths)}")
+            print(f"Adding {' '.join(str(path) for path in paths)}")
         case Stash(command, message):
             command = command or Stash.Push(message)
             match command:

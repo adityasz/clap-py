@@ -249,11 +249,11 @@ def set_value_name(arg: Arg, field_name: str):
         arg.value_name = field_name.upper()
 
     match arg.num_args:
-        case '?':
+        case "?":
             arg.value_name = f"[{arg.value_name}]"
-        case '*':
+        case "*":
             arg.value_name = f"[<{arg.value_name}>...]"
-        case '+':
+        case "+":
             arg.value_name = f"<{arg.value_name}>..."
         case int(n):
             arg.value_name = " ".join(f"<{arg.value_name}>" for _ in range(n))
@@ -413,10 +413,7 @@ def configure_parser(parser: ClapArgParser, command: Command):
         parser.add_argument(*arg.get_argparse_flags(), **arg.get_argparse_kwargs())
 
     # groups can have mutexes in them, so storing them temporarily in a dict
-    groups = {
-        group_obj: parser.add_argument_group()
-        for group_obj in command.groups
-    }
+    groups = {group_obj: parser.add_argument_group() for group_obj in command.groups}
 
     # when both group and mutex are provided for an argument, the argument is
     # only added to the mutex when the command is created
@@ -457,7 +454,7 @@ def apply_parsed_args(args: dict[str, Any], instance: Any):
     subcommand_args: dict[str, Any] = {}
 
     for attr_name, value in args.items():
-        if attr_name.find('.') != -1:
+        if attr_name.find(".") != -1:
             subcommand_args[attr_name.split(".", maxsplit=1)[1]] = value
         else:
             if attr_name == command.subcommand_dest:

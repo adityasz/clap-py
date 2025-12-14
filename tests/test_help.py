@@ -55,19 +55,19 @@ class HelpPrintingTest(unittest.TestCase):
             return f"{styles.header_style}{s}{styles.header_style:#}"
 
         assert help_output(Cli, True) == (
-            f"{usage("Usage:")} "
-            f"{literal("pytest")} {literal("-b")} {placeholder("<B>")} {placeholder("<A>")}\n"
+            f"{usage('Usage:')} "
+            f"{literal('pytest')} {literal('-b')} {placeholder('<B>')} {placeholder('<A>')}\n"
             "\n"
-            f"{header("Arguments:")}\n"
-            f"  {placeholder("<A>")}  A\n"
+            f"{header('Arguments:')}\n"
+            f"  {placeholder('<A>')}  A\n"
             "\n"
-            f"{header("Options:")}\n"
-            f"  {literal("-b")} {placeholder("<B>")}\n"
+            f"{header('Options:')}\n"
+            f"  {literal('-b')} {placeholder('<B>')}\n"
             f"          Possible values:\n"
-            f"          - {literal("one")}: One\n"
-            f"          - {literal("two")}: Two\n"
+            f"          - {literal('one')}: One\n"
+            f"          - {literal('two')}: Two\n"
             f"\n"
-            f"  {literal("-h")}, {literal("--help")}\n"
+            f"  {literal('-h')}, {literal('--help')}\n"
             f"          Print help\n"
         )
 

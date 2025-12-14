@@ -134,6 +134,7 @@ class ArgAction(StrEnum):
         @override
         def __call__(self, parser, namespace, values, option_string=None):
             from .parser import ClapArgParser
+
             parser = cast(ClapArgParser, parser)
             if isinstance(option_string, str) and len(option_string) == 2:
                 parser.print_version(use_long=False)
@@ -152,6 +153,7 @@ class ArgAction(StrEnum):
         @override
         def __call__(self, parser, _, __, option_string: Optional[str] = None):
             from .parser import ClapArgParser
+
             parser = cast(ClapArgParser, parser)
             if isinstance(option_string, str) and len(option_string) == 2:
                 parser.print_nice_help(use_long=False)
@@ -167,6 +169,7 @@ class ArgAction(StrEnum):
         @override
         def __call__(self, parser, namespace, values, option_string: Optional[str] = None):
             from .parser import ClapArgParser
+
             cast(ClapArgParser, parser).print_nice_help(use_long=False)
 
     class HelpLong(argparse.Action):
@@ -178,6 +181,7 @@ class ArgAction(StrEnum):
         @override
         def __call__(self, parser, namespace, values, option_string: Optional[str] = None):
             from .parser import ClapArgParser
+
             cast(ClapArgParser, parser).print_nice_help(use_long=True)
 
 
@@ -186,18 +190,18 @@ short = AutoFlag.Short
 long = AutoFlag.Long
 """Generate long from the case-converted field name."""
 
-type NargsType = Union[Literal['?', '*', '+'], int]
+type NargsType = Union[Literal["?", "*", "+"], int]
 
 
 def to_kebab_case(name: str) -> str:
-    name = name.replace('_', '-')                           # foo_bar -> foo-bar
-    name = re.sub(r'([a-z])([A-Z])', r'\1-\2', name)        # FooBar -> Foo-Bar
-    name = re.sub(r'([a-zA-Z])([0-9])', r'\1-\2', name)     # A1 -> A-1
-    name = re.sub(r'([0-9])([a-zA-Z])', r'\1-\2', name)     # 1A -> 1-A
-    name = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1-\2', name)  # HTTPSConnection -> HTTPS-Connection
+    name = name.replace("_", "-")                           # foo_bar -> foo-bar
+    name = re.sub(r"([a-z])([A-Z])", r"\1-\2", name)        # FooBar -> Foo-Bar
+    name = re.sub(r"([a-zA-Z])([0-9])", r"\1-\2", name)     # A1 -> A-1
+    name = re.sub(r"([0-9])([a-zA-Z])", r"\1-\2", name)     # 1A -> 1-A
+    name = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1-\2", name)  # HTTPSConnection -> HTTPS-Connection
     name = name.lower()
-    name = re.sub(r'-+', '-', name)
-    return name.strip('-')
+    name = re.sub(r"-+", "-", name)
+    return name.strip("-")
 
 
 class ArgType:
@@ -316,6 +320,7 @@ class MutexGroup:
     import clap
     from clap import MutexGroup
 
+
     @clap.command
     class Cli(clap.Parser):
         loglevel = MutexGroup()
@@ -323,6 +328,7 @@ class MutexGroup:
         quiet: bool = arg(long, mutex=loglevel)
     ```
     """
+
     parent: Optional[Group] = None
     """The parent argument group to add this mutually exclusive group to.
 

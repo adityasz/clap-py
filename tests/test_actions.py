@@ -10,6 +10,7 @@ from clap import ArgAction, arg, long, short
 class TestActions(unittest.TestCase):
     def test_optional_positional_with_num_args_plus(self):
         """Test error for optional positional with incompatible num_args."""
+
         @clap.command
         class Cli(clap.Parser):
             files: Optional[list[str]] = arg(num_args="+")

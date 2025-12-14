@@ -15,6 +15,7 @@ from clap.parser import (
 class TestDocstringExtraction(unittest.TestCase):
     def test_annotated_fields(self):
         """Test DocstringExtractor with annotated fields."""
+
         class Foo:
             field1: str
             """Field 1 docstring"""
@@ -27,9 +28,7 @@ class TestDocstringExtraction(unittest.TestCase):
         docstrings = extract_docstrings(Foo)
 
         assert docstrings["field1"] == "Field 1 docstring"
-        assert docstrings["field2"] == (
-            "Field 2 docstring.\n\n    Multi-line description here."
-        )
+        assert docstrings["field2"] == ("Field 2 docstring.\n\n    Multi-line description here.")
         assert "field3" not in docstrings
 
     def test_single_paragraph(self):
@@ -51,7 +50,8 @@ class TestDocstringExtraction(unittest.TestCase):
         expected_long = (
             "First paragraph with period.\n\n"
             "Second paragraph with more details. This continues the second paragraph.\n\n"
-            "Third paragraph here.")
+            "Third paragraph here."
+        )
         assert long_help == expected_long
 
     def test_empty(self):
@@ -125,6 +125,7 @@ class TestValueNameGeneration(unittest.TestCase):
 
     def test_set_value_name_no_action_clears_value_name(self):
         from clap.core import ArgAction
+
         arg_obj = Arg(action=ArgAction.SetTrue)
         set_value_name(arg_obj, "flag")
         assert arg_obj.value_name is None
