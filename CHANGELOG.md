@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 0.9.0
+
+Released on 2025-12-14.
+
+### Fixed
+
+- Create parser when `.parse()` is called (and not in the decorator). This fixes
+  errors when `multiprocessing` is used.
+
 ## 0.8.0
 
 Released on 2025-10-05.
