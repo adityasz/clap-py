@@ -246,41 +246,47 @@ class TestSubcommandNamingAndAliases(unittest.TestCase):
 
 class TestSubcommandErrors(unittest.TestCase):
     def test_subcommand_mixed_types(self):
-        with pytest.raises(TypeError):
-            @clap.command
-            class _:
-                @clap.subcommand
-                class SubCmd:
-                    ...
+        @clap.command
+        class Cli(clap.Parser):
+            @clap.subcommand
+            class SubCmd: ...
 
-                cmd: Union[SubCmd, str]
+            cmd: Union[SubCmd, str]
+
+        with pytest.raises(TypeError):
+            Cli.parse()
 
     def test_multiple_subcommand_destinations(self):
         """Test error when multiple subcommand destinations are defined."""
+
+        @clap.command
+        class Cli(clap.Parser):
+            @clap.subcommand
+            class Sub1:
+                pass
+
+            @clap.subcommand
+            class Sub2:
+                pass
+
+            cmd1: Sub1
+            cmd2: Sub2
+
         with pytest.raises(TypeError):
-            @clap.command
-            class _:
-                @clap.subcommand
-                class Sub1:
-                    pass
-
-                @clap.subcommand
-                class Sub2:
-                    pass
-
-                cmd1: Sub1
-                cmd2: Sub2
+            Cli.parse()
 
     def test_subcommand_field_assignment(self):
         """Test error when assigning value to subcommand field."""
-        with pytest.raises(TypeError):
-            @clap.command
-            class _:
-                @clap.subcommand
-                class Sub:
-                    ...
 
-                cmd: Sub = "invalid"  # pyright: ignore[reportAssignmentType]  # ty: ignore[invalid-assignment]
+        @clap.command
+        class Cli(clap.Parser):
+            @clap.subcommand
+            class Sub: ...
+
+            cmd: Sub = "invalid"  # pyright: ignore[reportAssignmentType]  # ty: ignore[invalid-assignment]
+
+        with pytest.raises(TypeError):
+            Cli.parse()
 
     def test_unknown_subcommand(self):
         @clap.subcommand

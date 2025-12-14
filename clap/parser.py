@@ -15,10 +15,11 @@ from clap.core import (
 )
 from clap.help import HelpRenderer, extract_docstrings, get_help_from_docstring
 
-_SUBCOMMAND_MARKER = "__com.github.adityasz.clap_py.subcommand_marker__"
-_COMMAND_DATA = "__command_data__"
-_SUBCOMMAND_DEFAULTS = "__subcommand_defaults__"
-_HELP_DEST = "0h"
+_SUBCOMMAND_MARKER = "__com.github.adityasz.clap-py.subcommand-marker__"
+_COMMAND_DATA = "__com.github.adityasz.clap-py.command-data__"
+_ATTR_DEFAULTS = "__com.github.adityasz.clap-py.attr-defaults__"
+
+_HELP_DEST = "0h"  # anything that is not a valid identifier
 _VERSION_DEST = "0v"
 
 
@@ -337,6 +338,9 @@ def configure_subcommands(
 def create_command(cls: type, command_path: str = "", parent: Optional[Command] = None) -> Command:
     command: Command = getattr(cls, _COMMAND_DATA)
     docstrings: dict[str, str] = extract_docstrings(cls)
+    attrs = getattr(cls, _ATTR_DEFAULTS)
+    for name, attr in attrs.items():
+        setattr(cls, name, attr)
 
     if parent:
         parent.propagate_subcommand(command)
@@ -344,9 +348,6 @@ def create_command(cls: type, command_path: str = "", parent: Optional[Command] 
     if getattr(cls, _SUBCOMMAND_MARKER, False):
         command_path += command.name + "."
         command.subcommand_class = cls
-        attrs = getattr(cls, _SUBCOMMAND_DEFAULTS)
-        for name, attr in attrs.items():
-            setattr(cls, name, attr)
 
     for field_name, value in cls.__dict__.items():
         if isinstance(group := value, Group):

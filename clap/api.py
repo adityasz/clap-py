@@ -16,8 +16,8 @@ from clap.core import (
     to_kebab_case,
 )
 from clap.parser import (
+    _ATTR_DEFAULTS,
     _COMMAND_DATA,
-    _SUBCOMMAND_DEFAULTS,
     _SUBCOMMAND_MARKER,
     apply_parsed_args,
     create_parser,
@@ -25,7 +25,7 @@ from clap.parser import (
 )
 from clap.styling import ColorChoice, Styles
 
-_PARSER = "__parser__"
+_PARSER = "__com.github.adityasz.clap-py.parser__"
 
 
 class Parser:
@@ -181,19 +181,26 @@ def command[T](
         )
 
         setattr(cls, _COMMAND_DATA, command)
-        setattr(cls, _PARSER, create_parser(cls))
 
         # delete default values of fields so that `dataclass` does not complain
         # about mutable defaults (`Arg`)
+        attrs = {}
         for name in cls.__annotations__:
-            if hasattr(cls, name):
+            if attr := getattr(cls, name, None):
+                attrs[name] = attr
                 delattr(cls, name)
+        setattr(cls, _ATTR_DEFAULTS, attrs)
 
         dataclass(cls, slots=True)
 
         @classmethod
         def parse(cls: type[T], args: Optional[list[str]] = None) -> T:
             """Parse command-line arguments and return an instance of the class."""
+            if not hasattr(cls, _PARSER):
+                # not sure if .parse() would ever have to be called more than
+                # once in the real world, but it has to be called multiple times
+                # in tests
+                setattr(cls, _PARSER, create_parser(cls))
             parser = getattr(cls, _PARSER)
             parsed_args = parser.parse_args(args)
             obj = object.__new__(cls)
@@ -336,6 +343,7 @@ def subcommand[T](
             exit_on_error=exit_on_error,
             deprecated=deprecated,
         )
+
         setattr(cls, _SUBCOMMAND_MARKER, True)
         setattr(cls, _COMMAND_DATA, command)
 
@@ -346,7 +354,7 @@ def subcommand[T](
             if attr := getattr(cls, name, None):
                 attrs[name] = attr
                 delattr(cls, name)
-        setattr(cls, _SUBCOMMAND_DEFAULTS, attrs)
+        setattr(cls, _ATTR_DEFAULTS, attrs)
 
         dataclass(cls, slots=True)
 

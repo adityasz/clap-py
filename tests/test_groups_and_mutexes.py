@@ -259,14 +259,16 @@ class TestGroupsWithMutexes(unittest.TestCase):
         assert not args.option_b
 
     def test_mutex_parent_mismatch(self):
-        with pytest.raises(ValueError):  # noqa: PT011 until parser is written from scratch with good error messages
-            @clap.command
-            class _:
-                g1 = Group("Group 1")
-                g2 = Group("Group 2")
-                m = MutexGroup(parent=g1)
+        @clap.command
+        class Cli(clap.Parser):
+            g1 = Group("Group 1")
+            g2 = Group("Group 2")
+            m = MutexGroup(parent=g1)
 
-                arg1: bool = arg(long, group=g2, mutex=m)
+            arg1: bool = arg(long, group=g2, mutex=m)
+
+        with pytest.raises(ValueError):  # noqa: PT011 until parser is written from scratch with good error messages
+            Cli.parse()
 
 
 if __name__ == "__main__":

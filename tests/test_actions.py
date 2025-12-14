@@ -219,46 +219,58 @@ class TestActions(unittest.TestCase):
 
 class TestActionTypeErrors(unittest.TestCase):
     def test_count_with_optional_type_error(self):
+        @clap.command
+        class Cli(clap.Parser):
+            count: Optional[int] = arg(short="c", action=ArgAction.Count)
+
         with pytest.raises(TypeError):
-            @clap.command
-            class _:
-                count: Optional[int] = arg(short="c", action=ArgAction.Count)
+            Cli.parse()
 
     def test_store_true_with_optional_type_error(self):
+        @clap.command
+        class Cli(clap.Parser):
+            flag: Optional[bool] = arg(long, action=ArgAction.SetTrue)
+
         with pytest.raises(TypeError):
-            @clap.command
-            class _:
-                flag: Optional[bool] = arg(long, action=ArgAction.SetTrue)
+            Cli.parse()
 
     def test_store_false_with_optional_type_error(self):
+        @clap.command
+        class Cli(clap.Parser):
+            flag: Optional[bool] = arg(long, action=ArgAction.SetFalse)
+
         with pytest.raises(TypeError):
-            @clap.command
-            class _:
-                flag: Optional[bool] = arg(long, action=ArgAction.SetFalse)
+            Cli.parse()
 
     def test_store_const_with_optional_and_default_error(self):
+        @clap.command
+        class Cli(clap.Parser):
+            mode: Optional[str] = arg(
+                long,
+                action=ArgAction.Set,
+                default_missing_value="test",
+                num_args=0,
+                default_value="default",
+            )
+
         with pytest.raises(TypeError):
-            @clap.command
-            class _:
-                mode: Optional[str] = arg(
-                    long,
-                    action=ArgAction.Set,
-                    default_missing_value="test",
-                    num_args=0,
-                    default_value="default",
-                )
+            Cli.parse()
 
     def test_store_with_required_and_optional_error(self):
+        @clap.command
+        class Cli(clap.Parser):
+            value: Optional[str] = arg(long, action=ArgAction.Set, required=True)
+
         with pytest.raises(TypeError):
-            @clap.command
-            class _:
-                value: Optional[str] = arg(long, action=ArgAction.Set, required=True)
+            Cli.parse()
 
     def test_store_with_default_and_optional_error(self):
+        @clap.command
+        class Cli(clap.Parser):
+            value: Optional[str] = arg(long, action=ArgAction.Set, default_value="test")
+
         with pytest.raises(TypeError):
-            @clap.command
-            class _:
-                value: Optional[str] = arg(long, action=ArgAction.Set, default_value="test")
+            Cli.parse()
 
 
 if __name__ == "__main__":

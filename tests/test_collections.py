@@ -91,10 +91,12 @@ class TestTupleArguments(unittest.TestCase):
             Cli.parse(["255", "not_a_number", "0"])
 
     def test_tuple_nargs_mismatch_error(self):
+        @clap.command
+        class Cli(clap.Parser):
+            point: tuple[int, int] = arg(num_args=3)
+
         with pytest.raises(TypeError):
-            @clap.command
-            class _:
-                point: tuple[int, int] = arg(num_args=3)
+            Cli.parse()
 
     def test_optional_tuple(self):
         @clap.command
