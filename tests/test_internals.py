@@ -139,6 +139,7 @@ class TestKebabCaseConversion(unittest.TestCase):
 
     def test_camel_case(self):
         assert to_kebab_case("camelCase") == "camel-case"
+        assert to_kebab_case("camelCaseFoo") == "camel-case-foo"
 
     def test_snake_case(self):
         assert to_kebab_case("snake_case") == "snake-case"
