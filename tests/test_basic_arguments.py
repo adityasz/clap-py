@@ -39,7 +39,7 @@ class TestBasicArgumentParsing(unittest.TestCase):
         with pytest.raises(SystemExit):
             Cli.parse(["/tmp/test.txt", "extra.txt"])
 
-    def test_bool_flag_with_manual_flags(self):
+    def test_flag_handling_with_manual_flags(self):
         @clap.command
         class Cli(clap.Parser):
             verbose: bool = arg(short="v", long="verbose")
@@ -59,7 +59,7 @@ class TestBasicArgumentParsing(unittest.TestCase):
         with pytest.raises(SystemExit):
             Cli.parse(["--verbose", "true"])
 
-    def test_bool_flag_with_hyphenated_flags(self):
+    def test_flag_handling_with_hyphenated_flags(self):
         @clap.command
         class Cli(clap.Parser):
             verbose: bool = arg(short="-v", long="--verbose")
@@ -76,7 +76,24 @@ class TestBasicArgumentParsing(unittest.TestCase):
         with pytest.raises(SystemExit):
             Cli.parse(["--unknown"])
 
-    def test_bool_flag_with_short_long(self):
+    def test_flag_handling_with_bools(self):
+        @clap.command
+        class Cli(clap.Parser):
+            verbose: bool = arg(short=True, long=True)
+
+        args = Cli.parse([])
+        assert not args.verbose
+
+        args = Cli.parse(["-v"])
+        assert args.verbose
+
+        args = Cli.parse(["--verbose"])
+        assert args.verbose
+
+        with pytest.raises(SystemExit):
+            Cli.parse(["--unknown"])
+
+    def test_flag_handling_with_short_long(self):
         @clap.command
         class Cli(clap.Parser):
             verbose: bool = arg(short, long)
