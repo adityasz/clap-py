@@ -388,7 +388,9 @@ def group[T](
         title: The title for the argument group in the help output.
         about: The group's description for the short help (`-h`).
         long_about: The group's description for the long help (`--help`).
-        multiple: TODO
+        required: Require an argument from the group to be present when parsing.
+            Note: Currently, it only works when `multiple = False`.
+        multiple: Allows more than one of the Args in this group to be used.
 
     Example:
 
