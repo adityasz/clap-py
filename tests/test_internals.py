@@ -1,9 +1,10 @@
 import unittest
-from typing import Union
+from typing import Optional, Union
 
 import pytest
 
-from clap.core import Arg, to_kebab_case
+import clap
+from clap.core import Arg, ArgType, to_kebab_case
 from clap.help import extract_docstrings, get_help_from_docstring
 from clap.parser import (
     parse_type_hint,
@@ -68,10 +69,34 @@ class TestDocstringExtraction(unittest.TestCase):
 
 
 class TestTypeHintParsing(unittest.TestCase):
+    def test_subcommands(self):
+        @clap.subcommand
+        class A: ...
+
+        @clap.subcommand
+        class B: ...
+
+        assert parse_type_hint(A | B) == ArgType.SubcommandDest(False, [A, B])
+        assert parse_type_hint(Union[A, B]) == ArgType.SubcommandDest(False, [A, B])
+        assert parse_type_hint(A | B | None) == ArgType.SubcommandDest(True, [A, B])
+        assert parse_type_hint(Optional[A | B]) == ArgType.SubcommandDest(True, [A, B])
+        assert parse_type_hint(Optional[Union[A, B]]) == ArgType.SubcommandDest(True, [A, B])
+
+    def test_union_type(self):
+        assert parse_type_hint(int | None) == ArgType.SimpleType(int, True)
+
     def test_invalid_union(self):
         with pytest.raises(TypeError):
             parse_type_hint(Union[str, int, float])
 
+        with pytest.raises(TypeError):
+            parse_type_hint(str | int | float)
+
+        with pytest.raises(TypeError):
+            parse_type_hint(Union[None])
+
+    # This might be supported in the future once I rewrite the parser from
+    # scratch instead of relying on that argparse thing
     def test_heterogeneous_tuple(self):
         with pytest.raises(TypeError):
             parse_type_hint(tuple[str, int])

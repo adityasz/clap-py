@@ -1,6 +1,7 @@
 import argparse
 import sys
 from enum import EnumType
+from types import UnionType
 from typing import Any, Optional, Union, get_args, get_origin, get_type_hints
 
 from clap.core import (
@@ -84,7 +85,7 @@ def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
         return ArgType.Enum(optional, type_hint)
     origin = get_origin(type_hint)
     types = get_args(type_hint)
-    if origin is Union:
+    if origin is Union or origin is UnionType:
         subcommands = []
         for ty in types:
             if ty is type(None):
@@ -108,7 +109,7 @@ def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
                 msg = "Heterogenous tuples are not supported."
                 raise TypeError(msg)
         return ArgType.Tuple(types[0], optional, len(types))
-    msg = f"Could not parse {type_hint}."
+    msg = f"Could not parse {type_hint} of type {type(origin)}."
     raise TypeError(msg)
 
 
