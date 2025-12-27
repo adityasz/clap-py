@@ -1,3 +1,0 @@
-# MutexGroup
-
-::: clap.MutexGroup

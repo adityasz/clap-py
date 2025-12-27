@@ -246,27 +246,27 @@ class HelpRenderer:
                 ArgAction.HelpLong,
                 ArgAction.Version,
             )
-            for arg in command.args.values()
+            for arg in command.field_to_arg.values()
         ):
             parts.append(self.style_placeholder("[OPTIONS]"))
-        for arg in command.args.values():
+        for arg in command.field_to_arg.values():
             if arg.required is True and not arg.is_positional():
                 parts.append(self.style_literal(cast(str, arg.long or arg.short)))
                 if arg.value_name:
                     parts.append(self.style_placeholder(arg.value_name))
-        for mutex, args in command.mutexes.items():
-            if mutex.required:
-                mutex_usage = "<"
-                mutex_usage += " | ".join(
+        for group, args in command.group_to_args.items():
+            if group.required and not group.multiple:
+                group_usage = "<"
+                group_usage += " | ".join(
                     f"{self.style_literal(cast(str, arg.short or arg.long))} "
                     f"{self.style_placeholder(cast(str, arg.value_name))}"
                     for arg in args
                 )
-                mutex_usage += ">"
-                parts.append(self.style_placeholder(mutex_usage))
+                group_usage += ">"
+                parts.append(self.style_placeholder(group_usage))
         parts.extend(
             self.style_placeholder(cast(str, arg.value_name))
-            for arg in command.args.values()
+            for arg in command.field_to_arg.values()
             if arg.is_positional()
         )
         usage = " ".join(parts)
@@ -510,8 +510,8 @@ class HelpRenderer:
 
         arguments: list[Arg] = []
         options: list[Arg] = []
-        for arg in self.command.args.values():
-            if arg.group or arg.mutex:
+        for arg in self.command.field_to_arg.values():
+            if arg.group:
                 continue
             if arg.is_positional():
                 arguments.append(arg)
@@ -523,7 +523,7 @@ class HelpRenderer:
         if options:
             self.write_arg_group("Options", "", options)
             self.writer.push_str("\n")
-        for group, args in self.command.groups.items():
+        for group, args in self.command.group_to_args.items():
             if self.use_long:
                 about = group.long_about or group.about or ""
             else:
@@ -533,8 +533,8 @@ class HelpRenderer:
 
     def get_positionals(self) -> list[Arg]:
         positionals: list[Arg] = []
-        for arg in self.command.args.values():
-            if arg.group or arg.mutex:
+        for arg in self.command.field_to_arg.values():
+            if arg.group:
                 continue
             if arg.is_positional():
                 positionals.append(arg)
@@ -542,8 +542,8 @@ class HelpRenderer:
 
     def get_options(self) -> list[Arg]:
         options: list[Arg] = []
-        for arg in self.command.args.values():
-            if arg.group or arg.mutex:
+        for arg in self.command.field_to_arg.values():
+            if arg.group:
                 continue
             if not arg.is_positional():
                 options.append(arg)

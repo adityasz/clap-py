@@ -264,7 +264,7 @@ For arguments with specific values you want to test for, you can use Python's `E
 
 !!! note
 
-    Advanced argument relations and dependencies like `requires` and `conflicts_with` are not yet implemented in clap-py. You can use [`Group`][clap.Group] and [`MutexGroup`][clap.MutexGroup] for basic grouping and mutual exclusion.
+    Advanced argument relations and dependencies like `requires` and `conflicts_with` are not yet implemented in clap-py. You can use [`Group`][clap.Group] for basic grouping and mutual exclusion.
 
 ### Custom Validation
 

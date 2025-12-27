@@ -16,7 +16,9 @@ from clap.core import (
 from clap.help import HelpRenderer, extract_docstrings, get_help_from_docstring
 
 _SUBCOMMAND_MARKER = "__com.github.adityasz.clap-py.subcommand-marker__"
+_GROUP_MARKER = "__com.github.adityasz.clap-py.group-marker__"
 _COMMAND_DATA = "__com.github.adityasz.clap-py.command-data__"
+_GROUP_DATA = "__com.github.adityasz.clap-py.group-data__"
 _ATTR_DEFAULTS = "__com.github.adityasz.clap-py.attr-defaults__"
 
 _HELP_DEST = "0h"  # anything that is not a valid identifier
@@ -50,6 +52,10 @@ def is_subcommand(cls: type) -> bool:
     return getattr(cls, _SUBCOMMAND_MARKER, False)
 
 
+def is_group(cls: type) -> bool:
+    return getattr(cls, _GROUP_MARKER, False)
+
+
 def contains_subcommands(types: list[type]) -> bool:
     error_msg = "Field contains a mixture of subcommands and other types."
     flag = None
@@ -69,6 +75,8 @@ def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
     if type(type_hint) is type:
         if is_subcommand(type_hint):
             return ArgType.SubcommandDest(optional, [type_hint])
+        if is_group(type_hint):
+            return ArgType.GroupDest(optional, type_hint)
         if type_hint is type(None):
             raise TypeError
         return ArgType.SimpleType(type_hint, optional)
@@ -158,14 +166,13 @@ def set_type_dependent_kwargs(arg: Arg):
                     arg.num_args = "*"
                 if optional:
                     match arg.num_args:
-                        case 0 | "?": ...
-                        case "*": ...
+                        case 0 | "?" | '*': ...
                         case "+":
                             arg.num_args = "*"
                         case _:
                             msg = (
                                 "argparse limitation: Please use `num_args='*'` "
-                                "with manual validation."
+                                "with manual validation until I write my own parser."
                             )
                             raise TypeError(msg)
         case ArgType.Tuple(t, _, n):
@@ -270,11 +277,11 @@ def add_argument(
     ty: ArgType.Base,
     command: Command,
     field_name: str,
-    command_path: str,
+    prefix: str,
     docstrings: dict[str, str],
 ):
     arg.ty = ty
-    arg.dest = command_path + field_name
+    arg.dest = prefix + field_name
     if (docstring := docstrings.get(field_name)) is not None:
         help, long_help = get_help_from_docstring(docstring)
         if arg.help is None:
@@ -290,20 +297,10 @@ def add_argument(
 
     set_value_name(arg, field_name)
 
-    command.args[field_name] = arg
+    command.field_to_arg[field_name] = arg
 
     if (group := arg.group) is not None:
-        command.groups[group].append(arg)
-    if (mutex := arg.mutex) is not None:
-        if (group := arg.group) is not None and mutex.parent != group:
-            msg = (
-                "The mutex group's parent group ('{}') is different from this "
-                "argument's group ('{}'). It is not necessary to provide the "
-                "group when the mutex group is already provided because the "
-                "mutex group's parent must be the given group."
-            )
-            raise ValueError(msg)
-        command.mutexes[mutex].append(arg)
+        command.group_to_args[group].append(arg)
 
 
 def configure_subcommands(
@@ -335,6 +332,51 @@ def configure_subcommands(
         command.subcommands[name] = subcommand
 
 
+def configure_group_args(
+    ty: ArgType.GroupDest,
+    command: Command,
+    value: Any,
+    field_name: str,
+    group_path: str,
+):
+    if value is not None:
+        msg = (
+            f"{field_name} is a group field based on the annotation; "
+            f"cannot assign {type(value)} to it."
+        )
+        raise TypeError(msg)
+
+    group_cls = ty.group_class
+    group: Group = getattr(group_cls, _GROUP_DATA)
+    docstrings: dict[str, str] = extract_docstrings(group_cls)
+
+    attrs = getattr(group_cls, _ATTR_DEFAULTS, {})
+    for name, attr in attrs.items():
+        setattr(group_cls, name, attr)
+
+    command.field_to_group_cls[group_path + field_name] = group_cls
+    command.group_to_args[group] = []
+
+    type_hints = get_type_hints(group_cls)
+    group_path += field_name + "."
+
+    for field_name, type_hint in type_hints.items():
+        arg_ty = parse_type_hint(type_hint)
+        arg_value = getattr(group_cls, field_name, None)
+
+        if isinstance(arg_ty, ArgType.GroupDest):
+            msg = "Nested groups are not supported."
+            raise TypeError(msg)
+
+        if arg_value is not None and not isinstance(arg_value, Arg):
+            msg = "Only 'arg(...)' can be assigned to a field in a group class."
+            raise TypeError(msg)
+
+        arg = arg_value or Arg()
+        arg.group = group
+        add_argument(arg, arg_ty, command, field_name, group_path, docstrings)
+
+
 def create_command(cls: type, command_path: str = "", parent: Optional[Command] = None) -> Command:
     command: Command = getattr(cls, _COMMAND_DATA)
     docstrings: dict[str, str] = extract_docstrings(cls)
@@ -351,7 +393,7 @@ def create_command(cls: type, command_path: str = "", parent: Optional[Command] 
 
     for field_name, value in cls.__dict__.items():
         if isinstance(group := value, Group):
-            if group in command.groups:
+            if group in command.group_to_args:
                 msg = (
                     f"A group with title '{group.title}' and the same description already exists."
                 )
@@ -362,7 +404,7 @@ def create_command(cls: type, command_path: str = "", parent: Optional[Command] 
                     group.about = about
                 if group.long_about is None:
                     group.about = long_about
-            command.groups[group] = []
+            command.group_to_args[group] = []
         if isinstance(arg := value, Arg) and arg.action in (
             ArgAction.Help,
             ArgAction.HelpShort,
@@ -370,7 +412,7 @@ def create_command(cls: type, command_path: str = "", parent: Optional[Command] 
             ArgAction.Version,
         ):
             # no processing to be done
-            command.args[command_path + field_name] = arg
+            command.field_to_arg[command_path + field_name] = arg
 
     type_hints = get_type_hints(cls)
 
@@ -379,22 +421,24 @@ def create_command(cls: type, command_path: str = "", parent: Optional[Command] 
         value = getattr(cls, field_name, None)
         if isinstance(ty, ArgType.SubcommandDest):
             configure_subcommands(ty, command, value, field_name, command_path)
+        elif isinstance(ty, ArgType.GroupDest):
+            configure_group_args(ty, command, value, field_name, command_path)
         elif isinstance(value, Group):
             continue  # already handled in the previous loop
         else:
             if value is not None and not isinstance(value, Arg):
-                msg = "Only 'arg(...)', 'group(...)', or 'mutex(...)' can be assigned to a field."
+                msg = "Only 'arg(...)' or 'group(...)' can be assigned to a field."
                 raise TypeError(msg)
             arg = value or Arg()
             add_argument(arg, ty, command, field_name, command_path, docstrings)
 
     if not command.disable_help_flag:
-        command.args[command_path + _HELP_DEST] = Arg(
+        command.field_to_arg[command_path + _HELP_DEST] = Arg(
             action=ArgAction.Help, dest=_HELP_DEST, short="-h", long="--help", help="Print help"
         )
 
     if not command.disable_version_flag and (command.version or command.long_version):
-        command.args[command_path + _VERSION_DEST] = Arg(
+        command.field_to_arg[command_path + _VERSION_DEST] = Arg(
             action=ArgAction.Version,
             dest=_VERSION_DEST,
             short="-V",
@@ -407,31 +451,16 @@ def create_command(cls: type, command_path: str = "", parent: Optional[Command] 
 
 
 def configure_parser(parser: ClapArgParser, command: Command):
-    for arg in command.args.values():
-        if arg.group is not None or arg.mutex is not None:
+    for arg in command.field_to_arg.values():
+        if (group := arg.group) is not None and not group.multiple:
             continue
         parser.add_argument(*arg.get_argparse_flags(), **arg.get_argparse_kwargs())
 
-    # groups can have mutexes in them, so storing them temporarily in a dict
-    groups = {group_obj: parser.add_argument_group() for group_obj in command.groups}
-
-    # when both group and mutex are provided for an argument, the argument is
-    # only added to the mutex when the command is created
-    for group, args in command.groups.items():
-        for arg in args:
-            if arg.mutex is not None:
-                continue
-            groups[group].add_argument(*arg.get_argparse_flags(), **arg.get_argparse_kwargs())
-
-    for mutex, args in command.mutexes.items():
-        if mutex.parent is None:
-            mutex_group = parser.add_mutually_exclusive_group(required=mutex.required)
-        else:
-            mutex_group = groups[mutex.parent].add_mutually_exclusive_group(
-                required=mutex.required
-            )
-        for arg in args:
-            mutex_group.add_argument(*arg.get_argparse_flags(), **arg.get_argparse_kwargs())
+    for group, args in command.group_to_args.items():
+        if not group.multiple:
+            mutex_group = parser.add_mutually_exclusive_group(required=group.required)
+            for arg in args:
+                mutex_group.add_argument(*arg.get_argparse_flags(), **arg.get_argparse_kwargs())
 
     if command.contains_subcommands():
         subparsers = parser.add_subparsers(
@@ -449,31 +478,58 @@ def create_parser(cls: type):
     return parser
 
 
+def transform_value(value: Any, arg: Arg) -> Any:
+    """Transform a parsed value based on its argument type."""
+    match arg.ty:
+        case ArgType.List(_, optional):
+            if optional and arg.is_positional():
+                if value == []:
+                    return None
+                if isinstance(value, list) and all(v is None for v in value):
+                    return None
+        case ArgType.Tuple():
+            if value is not None:
+                return tuple(value)
+        case ArgType.Enum(choice_to_enum_member=choice_to_enum_member):
+            if isinstance(value, str):
+                return choice_to_enum_member[value]
+        case _: ...
+    return value
+
+
+def apply_group_args(
+    args: dict[str, Any],
+    group_cls: type,
+    command: Command,
+    group_prefix: str,
+) -> Any:
+    group_instance = object.__new__(group_cls)
+    for attr_name, value in args.items():
+        if not attr_name.startswith(group_prefix):
+            continue
+        value = transform_value(value, command.field_to_arg[attr_name[len(group_prefix):]])
+        setattr(group_instance, attr_name[len(group_prefix):], value)
+    return group_instance
+
+
 def apply_parsed_args(args: dict[str, Any], instance: Any):
     command: Command = getattr(instance, _COMMAND_DATA)
     subcommand_args: dict[str, Any] = {}
 
     for attr_name, value in args.items():
-        if attr_name.find(".") != -1:
-            subcommand_args[attr_name.split(".", maxsplit=1)[1]] = value
+        if (dot_idx := attr_name.find(".")) != -1:
+            if group_cls := command.field_to_group_cls.get(attr_name[:dot_idx], None):
+                setattr(
+                    instance,
+                    attr_name[:dot_idx],
+                    apply_group_args(args, group_cls, command, attr_name[: dot_idx + 1]),
+                )
+                continue
+            subcommand_args[attr_name[dot_idx + 1:]] = value
         else:
             if attr_name == command.subcommand_dest:
                 continue
-            match command.args[attr_name].ty:
-                case ArgType.List(_, optional):
-                    if optional and command.args[attr_name].is_positional():
-                        if value == []:
-                            value = None
-                        if isinstance(value, list) and all(v is None for v in value):
-                            value = None
-                case ArgType.Tuple():
-                    if value is not None:
-                        value = tuple(value)
-                case ArgType.Enum(choice_to_enum_member=choice_to_enum_member):
-                    if isinstance(value, str):
-                        value = choice_to_enum_member[value]
-                case _:
-                    pass
+            value = transform_value(value, command.field_to_arg[attr_name])
             setattr(instance, attr_name, value)
 
     # no subcommands

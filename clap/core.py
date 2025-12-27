@@ -1,6 +1,5 @@
 import argparse
 import re
-from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import Enum, StrEnum, auto
@@ -246,6 +245,16 @@ class ArgType:
         def __post_init__(self):
             self.ty = type(None)
 
+    @dataclass(slots=True)
+    class GroupDest(Base):
+        """Represents a field that holds an argument group class."""
+
+        group_class: type
+        ty: type = field(init=False)
+
+        def __post_init__(self):
+            self.ty = type(None)
+
 
 @dataclass(slots=True)
 class Group:
@@ -261,14 +270,14 @@ class Group:
 
     @clap.command
     class Cli(clap.Parser):
-        output_options = Group("Output Options")
+        output_options = Group(title="Output Options")
         \"""Configure output settings.\"""
         output_dir: Path = arg(long="output", group=output_options, value_name="DIR")
         \"""Path to output directory\"""
     ```
     """
 
-    title: str
+    title: Optional[str] = None
     """The title for the argument group in the help output."""
     about: Optional[str] = None
     """The group's description for the short help (`-h`).
@@ -282,60 +291,21 @@ class Group:
     If not set, [`Group.about`][clap.Group.about] will be used for long help in
     addition to short help (`-h`).
     """
-    conflict_handler: Optional[str] = None
-    """The strategy for resolving conflicting optionals within this group.
-
-    This is forwarded to [argparse][].
-    """
-
-    @override
-    def __hash__(self):
-        return hash(id(self))
-
-    def get_argparse_kwargs(self):
-        kwargs = {}
-        kwargs.update({
-            k: v
-            for k, v in {
-                "title": self.title,
-                "description": self.long_about,
-                "conflict_handler": self.conflict_handler,
-            }.items()
-            if v is not None
-        })
-        return kwargs
-
-
-@dataclass(slots=True)
-class MutexGroup:
-    """Create a mutually exclusive group of arguments.
-
-    It will be ensured that only one of the arguments in the mutually
-    exclusive group is present on the command line. This is useful for
-    options that conflict with each other, such as `--verbose` and `--quiet`.
-
-    Example:
-
-    ```python
-    import clap
-    from clap import MutexGroup
-
-
-    @clap.command
-    class Cli(clap.Parser):
-        loglevel = MutexGroup()
-        verbose: bool = arg(long, mutex=loglevel)
-        quiet: bool = arg(long, mutex=loglevel)
-    ```
-    """
-
-    parent: Optional[Group] = None
-    """The parent argument group to add this mutually exclusive group to.
-
-    If `None`, the group will be added directly to the parser.
-    """
     required: bool = False
-    """Whether at least one of the mutually exclusive arguments must be present."""
+    """Require an argument from the group to be present when parsing. See note below.
+
+    Note: Currently, it only works when `multiple = False`.
+    """
+    multiple: bool = True
+    """Allows more than one of the Args in this group to be used."""
+
+    def __post_init__(self):
+        if self.required and self.multiple:
+            msg = (
+                "Currently, `required = True` only works when `multiple` is set to `False`. "
+                "Consider restructuring the parser or doing manual validation."
+            )
+            raise TypeError(msg)
 
     @override
     def __hash__(self):
@@ -357,8 +327,6 @@ class Arg:
     """Stores type information for the argument."""
     group: Optional[Group] = None
     """The group containing the argument."""
-    mutex: Optional[MutexGroup] = None
-    """The mutually exclusive group containing the argument."""
 
     action: Optional[Union[ArgAction, type]] = None
     num_args: Optional[NargsType] = None
@@ -469,9 +437,9 @@ class Command:
     exit_on_error: Optional[bool] = None
     deprecated: Optional[bool] = None
 
-    args: dict[str, Arg] = field(default_factory=dict)
-    groups: dict[Group, list[Arg]] = field(default_factory=dict)
-    mutexes: defaultdict[MutexGroup, list[Arg]] = field(default_factory=lambda: defaultdict(list))
+    field_to_arg: dict[str, Arg] = field(default_factory=dict)
+    field_to_group_cls: dict[str, type] = field(default_factory=dict)
+    group_to_args: dict[Group, list[Arg]] = field(default_factory=dict)
 
     subcommand_class: Optional[type] = None
     """Contains the class if it is a subcommand."""

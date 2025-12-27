@@ -11,13 +11,14 @@ from clap.core import (
     AutoFlag,
     Command,
     Group,
-    MutexGroup,
     NargsType,
     to_kebab_case,
 )
 from clap.parser import (
     _ATTR_DEFAULTS,
     _COMMAND_DATA,
+    _GROUP_DATA,
+    _GROUP_MARKER,
     _SUBCOMMAND_MARKER,
     apply_parsed_args,
     create_parser,
@@ -365,6 +366,96 @@ def subcommand[T](
     return wrap(cls)
 
 
+@dataclass_transform()
+def group[T](
+    cls: Optional[type[T]] = None,
+    /,
+    *,
+    title: Optional[str] = None,
+    about: Optional[str] = None,
+    long_about: Optional[str] = None,
+    required: bool = False,
+    multiple: bool = True,
+) -> Union[type[T], Callable[[type[T]], type[T]]]:
+    """Configure a class as an argument group.
+
+    Argument groups allow organizing related arguments together, both in
+    help output and in code structure. Arguments within a group are accessed
+    as nested attributes.
+
+    Args:
+        cls: The class to be decorated (when used without parentheses).
+        title: The title for the argument group in the help output.
+        about: The group's description for the short help (`-h`).
+        long_about: The group's description for the long help (`--help`).
+        multiple: TODO
+
+    Example:
+
+    ```python
+    import clap
+    from clap import arg, long
+    from typing import Optional
+
+    @clap.group(title="Input Options")
+    class InputOpts:
+        input_file: Optional[str] = arg(long)
+
+    @clap.group(title="Output Options")
+    class OutputOpts:
+        output_file: Optional[str] = arg(long)
+
+    @clap.command
+    class Cli(clap.Parser):
+        input_opts: InputOpts
+        output_opts: OutputOpts
+
+    args = Cli.parse()
+    print(args.input_opts.input_file)
+    print(args.output_opts.output_dir)
+    ```
+    """
+
+    def wrap(cls: type[T]) -> type[T]:
+        nonlocal title, about, long_about
+        if cls.__doc__ is not None:
+            doc_about, doc_long_about = get_help_from_docstring(cls.__doc__.strip())
+            if about is None:
+                about = doc_about
+            if long_about is None:
+                long_about = doc_long_about
+
+        setattr(cls, _GROUP_MARKER, True)
+        setattr(
+            cls,
+            _GROUP_DATA,
+            Group(
+                title=title,
+                about=about,
+                long_about=long_about,
+                required=required,
+                multiple=multiple,
+            ),
+        )
+
+        # delete default values of fields so that `dataclass` does not complain
+        # about mutable defaults (`Arg`)
+        attrs = {}
+        for name in cls.__annotations__:
+            if attr := getattr(cls, name, None):
+                attrs[name] = attr
+                delattr(cls, name)
+        setattr(cls, _ATTR_DEFAULTS, attrs)
+
+        dataclass(cls, slots=True)
+
+        return cls
+
+    if cls is None:
+        return wrap
+    return wrap(cls)
+
+
 def arg[U](
     short_or_long: Optional[AutoFlag] = None,
     long_or_short: Optional[AutoFlag] = None,
@@ -374,7 +465,6 @@ def arg[U](
     long: Optional[Union[str, bool]] = None,
     aliases: Optional[Sequence[str]] = None,
     group: Optional[Group] = None,
-    mutex: Optional[MutexGroup] = None,
     action: Optional[Union[type, ArgAction]] = None,
     num_args: Optional[NargsType] = None,
     default_missing_value: Optional[U] = None,
@@ -399,7 +489,6 @@ def arg[U](
             `True` to automatically create it.
         aliases: Additional flags for the argument.
         group: The group to which the argument is added.
-        mutex: The mutually exclusive group to which the argument is added.
         action: How to react to an argument when parsing it.
         num_args: The number of arguments parsed per occurrence.
         default_missing_value: The value for the argument when the flag is
@@ -470,7 +559,6 @@ def arg[U](
         value_name=value_name,
         aliases=aliases or [],
         group=group,
-        mutex=mutex,
         action=action,
         num_args=num_args,
         default_missing_value=default_missing_value,

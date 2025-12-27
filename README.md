@@ -72,6 +72,23 @@ for more examples.
           print(f"Listing {directory}...")
   ```
 
+- **Argument groups**
+
+  ```python
+  @clap.group(required=True, multiple=False)
+  class InputOptions:
+      """This can be shared between multiple parsers in different scripts!"""
+      dpi: Optional[int] = arg(long)
+      resolution: Optional[tuple[int, int]] = arg(long, value_name="PX")
+  
+  @clap.command
+  class Cli(clap.Parser):
+      input_options: InputOptions
+
+  args = Cli.parse()
+  print(args.input_options.dpi)
+  ```
+
 - **Separate short and long help** with `-h` and `--help`. See example output
   [here](https://adityasz.github.io/clap-py/quickstart/#help-output).
 

@@ -6,7 +6,6 @@ from clap.core import (
     ArgAction,
     AutoFlag,
     Group,
-    MutexGroup,
     NargsType,
     long,
     short,
@@ -20,7 +19,6 @@ __all__ = [
     "ColorChoice",
     "Group",
     "HelpTemplate",
-    "MutexGroup",
     "Parser",
     "Style",
     "Styles",
@@ -44,7 +42,6 @@ def arg[U](
     long: Optional[Union[str, bool]] = None,
     aliases: Optional[Sequence[str]] = None,
     group: Optional[Group] = None,
-    mutex: Optional[MutexGroup] = None,
     action: Optional[Union[type, ArgAction]] = None,
     num_args: Optional[NargsType] = None,
     default_missing_value: Optional[U] = None,
@@ -125,4 +122,19 @@ def subcommand[T](
     allow_abbrev: bool = ...,
     exit_on_error: bool = ...,
     deprecated: bool = False,
+) -> Callable[[type[T]], type[T]]: ...
+
+@overload
+@dataclass_transform()
+def group[T](cls: type[T], /) -> type[T]: ...
+
+@overload
+@dataclass_transform()
+def group[T](
+    *,
+    title: Optional[str] = None,
+    about: Optional[str] = None,
+    long_about: Optional[str] = None,
+    required: bool = False,
+    multiple: bool = True,
 ) -> Callable[[type[T]], type[T]]: ...
