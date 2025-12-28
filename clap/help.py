@@ -1,15 +1,11 @@
-# The help rendering code is very messy. Requires a rewrite.
-#
-# Also, docstring extraction is done in @clap.command and not in the help
-# generation. Unnecessary overhead when -h/--help are not provided. The whole
-# codebase needs to be refactored! But first: Manually parse arguments and get
-# rid of argparse so that ArgGroups, Arg.conflicts_with, Arg.requires etc. can
-# be implemented. Then rewrite HelpRenderer.
+# Docstring extraction is done in @clap.command and not in the help generation.
+# Unnecessary overhead when -h/--help are not provided. The whole codebase needs
+# to be refactored! But first: Manually parse arguments and get rid of argparse
+# to improve error messages.
 
 import ast
 import shutil
 import textwrap
-from dataclasses import dataclass
 from inspect import getsource
 from textwrap import dedent
 from typing import Optional, Union, cast, override
@@ -121,19 +117,22 @@ def get_help_from_docstring(docstring: str) -> tuple[str, str]:
     return short_help, "\n\n".join(paragraphs)
 
 
-@dataclass(slots=True)
 class Writer:
-    s: str = ""
+    __slots__ = "buffer"
+
+    def __init__(self):
+        self.buffer: list[str] = []
 
     def push_str(self, s: str):
-        self.s += s
+        self.buffer.append(s)
 
     def strip(self):
-        self.s = self.s.strip()
-        self.push_str("\n")
+        while self.buffer[-1] == "\n":
+            self.buffer.pop()
+        self.buffer.append("\n")
 
     def print(self):
-        print(self.s, end="")
+        print("".join(self.buffer).strip(), end="\n")
 
 
 class HelpRenderer:
@@ -259,7 +258,9 @@ class HelpRenderer:
                 group_usage = "<"
                 group_usage += " | ".join(
                     f"{self.style_literal(cast(str, arg.short or arg.long))} "
-                    f"{self.style_placeholder(cast(str, arg.value_name))}"
+                    f"{self.style_placeholder(arg.value_name)}"
+                    if arg.value_name
+                    else f"{self.style_literal(cast(str, arg.short or arg.long))}"
                     for arg in args
                 )
                 group_usage += ">"
@@ -443,12 +444,13 @@ class HelpRenderer:
             )
         self.writer.push_str("\n")
 
-    def write_arg_group(self, title: str, about: str, args: list[Arg]):
+    def write_arg_group(self, title: Optional[str], about: str, args: list[Arg]):
         if not args:
             return
 
-        self.writer.push_str(self.style_header(f"{title}:"))
-        self.writer.push_str("\n")
+        if title:
+            self.writer.push_str(self.style_header(f"{title}:"))
+            self.writer.push_str("\n")
         if about:
             self.writer.push_str(
                 "\n".join(
@@ -523,7 +525,9 @@ class HelpRenderer:
         if options:
             self.write_arg_group("Options", "", options)
             self.writer.push_str("\n")
-        for group, args in self.command.group_to_args.items():
+        for i, (group, args) in enumerate(self.command.group_to_args.items()):
+            if group.title is None and (options or i > 0):
+                self.writer.strip()
             if self.use_long:
                 about = group.long_about or group.about or ""
             else:

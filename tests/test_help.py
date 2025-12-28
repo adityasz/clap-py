@@ -130,9 +130,9 @@ class HelpPrintingTest(unittest.TestCase):
               -h, --help  Print help
         """)
 
-        # The entire clap pipeline will be refactored at some point in the
-        # future; this is a temporary hack:
-        getattr(Cli, _PARSER).help_renderer.writer.s = ""
+        # The entire help rendering pipeline will be refactored at some point in
+        # the future; this is a temporary hack:
+        getattr(Cli, _PARSER).help_renderer.writer.buffer = []
 
         assert help_output(Cli, True) == dedent("""\
             Usage: pytest <FOO>
@@ -199,9 +199,9 @@ class HelpPrintingTest(unittest.TestCase):
               -h, --help  Print help
         """)
 
-        # The entire clap pipeline will be refactored at some point in the
-        # future; this is a temporary hack:
-        getattr(Cli, _PARSER).help_renderer.writer.s = ""
+        # The entire help rendering pipeline will be refactored at some point in
+        # the future; this is a temporary hack:
+        getattr(Cli, _PARSER).help_renderer.writer.buffer = []
 
         assert help_output(Cli, True) == dedent("""\
             Usage: pytest [FOO]
