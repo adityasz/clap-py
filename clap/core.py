@@ -151,7 +151,7 @@ class ArgAction(StrEnum):
             super().__init__(option_strings, dest, nargs=0)
 
         @override
-        def __call__(self, parser, _, __, option_string: Optional[str] = None):
+        def __call__(self, parser, namespace, values, option_string: Optional[str] = None):
             from .parser import ClapArgParser
 
             parser = cast(ClapArgParser, parser)
