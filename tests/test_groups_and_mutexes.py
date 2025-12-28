@@ -159,6 +159,42 @@ class TestClassArgumentGroups(unittest.TestCase):
         assert args.random_stuff.bar == 2
         assert not args.random_stuff.verbose
 
+    def test_group_in_nested_subcommands(self):
+        @clap.group
+        class Args:
+            arg: str
+
+        @clap.subcommand
+        class C:
+            args: Args
+            opt: bool = arg(long)
+
+        @clap.subcommand
+        class B:
+            command: C
+            args: Args
+
+        @clap.subcommand
+        class A:
+            command: B
+
+        @clap.command
+        class Cli(clap.Parser):
+            command: A
+
+        args = Cli.parse(["a", "b", "b", "c", "d"])
+        assert not args.command.command.command.opt
+        assert args.command.command.args.arg == "b"
+        assert args.command.command.command.args.arg == "d"
+
+        args = Cli.parse(["a", "b", "b", "c", "d", "--opt"])
+        assert args.command.command.command.opt
+        assert args.command.command.args.arg == "b"
+        assert args.command.command.command.args.arg == "d"
+
+        with pytest.raises(SystemExit):
+            Cli.parse([])
+
 
 class TestFlattenedArgumentGroups(unittest.TestCase):
     def test_simple(self):

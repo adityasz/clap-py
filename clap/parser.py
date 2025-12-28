@@ -355,7 +355,7 @@ def configure_group_args(
     for name, attr in attrs.items():
         setattr(group_cls, name, attr)
 
-    command.field_to_group_cls[group_path + field_name] = group_cls
+    command.field_to_group_cls[field_name] = group_cls
     command.group_to_args[group] = []
 
     type_hints = get_type_hints(group_cls)
