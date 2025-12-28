@@ -133,6 +133,32 @@ class TestClassArgumentGroups(unittest.TestCase):
         with pytest.raises(SystemExit):
             Cli.parse([])
 
+    def test_satisfy_type_checkers(self):
+        @clap.group
+        class RandomStuff:
+            # The arg() is redundant at runtime but ensures that type checkers
+            # see that this field is already initialized and hence RandomStuff()
+            # will not raise eyebrows.
+            #
+            # For the runtime, the decorator injects a dummy __init__.
+            bar: int = arg()
+            verbose: bool = arg(long)
+
+        @clap.command
+        class Cli(clap.Parser):
+            foo: int = arg()
+            random_stuff: RandomStuff = RandomStuff()
+
+        args = Cli.parse(["1", "2", "--verbose"])
+        assert args.foo == 1
+        assert args.random_stuff.bar == 2
+        assert args.random_stuff.verbose
+
+        args = Cli.parse(["1", "2"])
+        assert args.foo == 1
+        assert args.random_stuff.bar == 2
+        assert not args.random_stuff.verbose
+
 
 class TestFlattenedArgumentGroups(unittest.TestCase):
     def test_simple(self):

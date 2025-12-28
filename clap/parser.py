@@ -314,7 +314,7 @@ def configure_subcommands(
     if command.subcommand_dest is not None:
         msg = f"'{command.subcommand_dest}' is already the subcommand destination."
         raise TypeError(msg)
-    if value is not None:
+    if value is not None and not any(isinstance(value, sc_ty) for sc_ty in ty.subcommands):
         msg = (
             f"{field_name} is a subcommand destination based on the annotation; "
             f"cannot assign {type(value)} to it."
@@ -340,7 +340,7 @@ def configure_group_args(
     field_name: str,
     group_path: str,
 ):
-    if value is not None:
+    if value is not None and not isinstance(value, ty.group_class):
         msg = (
             f"{field_name} is a group field based on the annotation; "
             f"cannot assign {type(value)} to it."

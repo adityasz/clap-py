@@ -451,6 +451,9 @@ def group[T](
 
         dataclass(cls, slots=True)
 
+        # This allows hacks like `input_opts: InputOpts = InputOpts()`
+        cls.__init__ = object.__init__
+
         return cls
 
     if cls is None:
