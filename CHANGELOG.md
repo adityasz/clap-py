@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 0.10.1
+
+Released on 2025-12-28.
+
+### Enhancements
+
+- Added `groups` field to help template.
+- Very basic diagnostics (but better than useless tracebacks).
+
 ## 0.10.0
 
 Released on 2025-12-28.

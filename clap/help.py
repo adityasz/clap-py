@@ -34,6 +34,7 @@ Valid tags are:
                             arguments, and subcommands) including titles.
 - `{options}`             - Help for options.
 - `{positionals}`         - Help for positional arguments.
+- `{groups}`              - Help for argument groups.
 - `{subcommands}`         - Help for subcommands.
 - `{tab}`                 - Standard tab size used within clap.
 - `{after-help}`          - Help from `after_help` or `after_long_help`.
@@ -220,6 +221,8 @@ class HelpRenderer:
                     self.write_arg_group("Options", "", self.get_options())
                 case "positionals":
                     self.write_arg_group("Arguments", "", self.get_positionals())
+                case "groups":
+                    self.write_groups()
                 case "subcommands":
                     self.write_subcommands()
                 case _:
@@ -444,6 +447,17 @@ class HelpRenderer:
             )
         self.writer.push_str("\n")
 
+    def write_groups(self):
+        for i, (group, args) in enumerate(self.command.group_to_args.items()):
+            if self.use_long:
+                about = group.long_about or group.about or ""
+            else:
+                about = group.about or ""
+            if not (group.title or about) and i > 0:
+                self.writer.strip()
+            self.write_arg_group(group.title, about, args)
+            self.writer.push_str("\n")
+
     def write_arg_group(self, title: Optional[str], about: str, args: list[Arg]):
         if not args:
             return
@@ -525,15 +539,7 @@ class HelpRenderer:
         if options:
             self.write_arg_group("Options", "", options)
             self.writer.push_str("\n")
-        for i, (group, args) in enumerate(self.command.group_to_args.items()):
-            if group.title is None and (options or i > 0):
-                self.writer.strip()
-            if self.use_long:
-                about = group.long_about or group.about or ""
-            else:
-                about = group.about or ""
-            self.write_arg_group(group.title, about, args)
-            self.writer.push_str("\n")
+        self.write_groups()
 
     def get_positionals(self) -> list[Arg]:
         positionals: list[Arg] = []
