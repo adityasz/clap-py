@@ -9,14 +9,14 @@ A declarative and type-safe argument parser for Python, inspired by
 
 ## Installation
 
-- Using pip:
-  ```console
-  $ pip install git+https://github.com/adityasz/clap-py.git
-  ```
-
 - Using [uv](https://docs.astral.sh/uv):
   ```console
   $ uv add git+https://github.com/adityasz/clap-py.git
+  ```
+
+- Using pip:
+  ```console
+  $ pip install git+https://github.com/adityasz/clap-py.git
   ```
 
 ## Example

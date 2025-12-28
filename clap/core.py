@@ -2,7 +2,8 @@ import argparse
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from enum import Enum, StrEnum, auto
+from enum import Enum, EnumType, StrEnum, auto
+from types import MappingProxyType
 from typing import Any, Literal, Optional, Self, Union, cast, override
 
 from clap.styling import ColorChoice, Styles
@@ -214,9 +215,9 @@ class ArgType:
 
     @dataclass(slots=True)
     class Enum(Base):
-        enum: type
+        enum: EnumType
         ty: type = field(init=False)
-        members: dict[str, Any] = field(init=False)
+        members: MappingProxyType[str, EnumType] = field(init=False)
         choice_to_enum_member: dict[str, Any] = field(init=False)
 
         def __post_init__(self):
@@ -345,11 +346,11 @@ class Arg:
         if self.is_positional():
             assert self.dest is not None
             return [self.dest]
-        flags = []
+        flags: list[str] = []
         if self.short:
-            flags.append(self.short)
+            flags.append(cast(str, self.short))
         if self.long:
-            flags.append(self.long)
+            flags.append(cast(str, self.long))
         flags.extend(self.aliases)
         return flags
 
@@ -465,7 +466,7 @@ class Command:
         return self.subcommand_dest is not None
 
     def get_parser_kwargs(self) -> dict[str, Any]:
-        kwargs = {}
+        kwargs: dict[str, Any] = {}
 
         if self.is_subcommand():
             kwargs["name"] = self.name

@@ -53,7 +53,7 @@ class InsertCommandOutputPlugin(BasePlugin[LegacyConfig]):
 
         return output
 
-    def cleanup_fds(self, master_fd: Optional[int] = None, slave_fd: Optional[int] = None) -> None:
+    def cleanup_fds(self, master_fd: Optional[int] = None, slave_fd: Optional[int] = None):
         if slave_fd is not None:
             with suppress(OSError):
                 os.close(slave_fd)

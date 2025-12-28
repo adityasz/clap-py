@@ -1,6 +1,6 @@
 import unittest
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, cast
 
 import pytest
 
@@ -283,7 +283,7 @@ class TestSubcommandErrors(unittest.TestCase):
             @clap.subcommand
             class Sub: ...
 
-            cmd: Sub = "invalid"  # pyright: ignore[reportAssignmentType]  # ty: ignore[invalid-assignment]
+            cmd: Sub = cast(Sub, "invalid")
 
         with pytest.raises(TypeError):
             Cli.parse()

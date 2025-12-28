@@ -1,6 +1,5 @@
 import os
 import sys
-from abc import abstractmethod
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Optional, Self, Union, dataclass_transform
@@ -55,9 +54,17 @@ class Parser:
     """
 
     @classmethod
-    @abstractmethod
     def parse(cls: type[Self], args: Optional[Sequence[str]] = None) -> Self:
         """Parse from the provided `args` or [`sys.argv`][], exit on error."""
+        # - args is passed to the message so that it is no longer unused.
+        # - PyCharm does not like it if I make this an abstractmethod.
+        #   - Making another superclass where this method is abstract and then
+        #     `@override`'ing to suppress the error will only slow down the
+        #     runtime.
+        msg = (
+            f"Did you decorate {cls} with @clap.command: {command}?\n{args or ''}"
+        )
+        raise NotImplementedError(msg)
 
 
 @dataclass_transform()
@@ -194,7 +201,6 @@ def command[T](
 
         dataclass(cls, slots=True)
 
-        @classmethod
         def parse(cls: type[T], args: Optional[list[str]] = None) -> T:
             """Parse command-line arguments and return an instance of the class."""
             if not hasattr(cls, _PARSER):
@@ -208,7 +214,7 @@ def command[T](
             apply_parsed_args(dict(parsed_args._get_kwargs()), obj)
             return obj
 
-        cls.parse = parse
+        setattr(cls, "parse", classmethod(parse))
         return cls
 
     if cls is None:
@@ -452,7 +458,7 @@ def group[T](
         dataclass(cls, slots=True)
 
         # This allows hacks like `input_opts: InputOpts = InputOpts()`
-        cls.__init__ = object.__init__
+        setattr(cls, "__init__", object.__init__)
 
         return cls
 
@@ -527,8 +533,8 @@ def arg[U](
         )
     ```
     """
-    short_name = None
-    long_name = None
+    short_name: Optional[Union[AutoFlag, str]] = None
+    long_name: Optional[Union[AutoFlag, str]] = None
 
     match short_or_long:
         case AutoFlag.Short: short_name = AutoFlag.Short

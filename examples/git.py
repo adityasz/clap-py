@@ -68,9 +68,9 @@ class Cli(clap.Parser):
 
 
 def main():
-    args = Cli.parse()
+    cli = Cli.parse()
 
-    match args.command:
+    match cli.command:
         case Clone(remote):
             print(f"Cloning {remote}")
         case Diff(base, head, path, color):

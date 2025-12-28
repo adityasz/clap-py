@@ -113,12 +113,12 @@ class TestTypeHintParsing(unittest.TestCase):
 class TestFlagSetting(unittest.TestCase):
     def test_set_flags_invalid_short_flag_length(self):
         arg_obj = Arg(short="abc")
-        with pytest.raises(ValueError):  # noqa: PT011 until parser is written from scratch with good error messages
+        with pytest.raises(ValueError):  # noqa: PT011 until I add diagnostics
             set_flags(arg_obj, "test", "-")
 
     def test_set_flags_short_flag_with_prefix_char(self):
         arg_obj = Arg(short="--")
-        with pytest.raises(ValueError):  # noqa: PT011 until parser is written from scratch with good error messages
+        with pytest.raises(ValueError):  # noqa: PT011 until I add diagnostics
             set_flags(arg_obj, "test", "-")
 
     def test_set_flags_long_flag_without_prefix(self):
