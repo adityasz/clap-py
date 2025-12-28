@@ -107,8 +107,9 @@ built from [`/docs`](https://github.com/adityasz/clap-py/tree/master/docs).
 
 ## Motivation
 
-`argparse` doesn't work with static analysis tools. Static analysis is important
-to prevent errors like these:
+`argparse` doesn't work with static analysis tools.
+
+Static analysis is important to prevent errors like these:
 
 ```python
 import argparse
@@ -123,9 +124,7 @@ parser.add_argument("--some-number", type=Path)  # copy-paste error in type
 # 30 lines of other arguments...
 args = parser.parse_args()
 
-# 500 lines of code
-# two days of compute
-# ...
+# 500 lines of code...
 
 c = 1 / args.some_number   # some_number was accidentally set to be Path
 #   ~~^~~~~~~~~~~~~~~~~~
@@ -134,16 +133,16 @@ c = 1 / args.some_number   # some_number was accidentally set to be Path
 Once that error is fixed and the script is re-run:
 
 ```python
-# 1500 lines of code
-# five days of compute
-# ...
+# 1500 lines of code...
  
-torch.save(agi, args.data_dir)  # this attribute does not exist
+torch.save(agi, args.data_dir / "agi.pt")  # this attribute does not exist
 #               ~~~~~~~~~^^^^
 ```
 
-These errors are detected right when you typed them if you use my library and a
-type checker like pyright.
+These errors are detected right when you typed them if you use this library and
+a type checker like pyright. _(A dry run is obviously still recommended before
+starting long training runs. E.g., this library will not see if `args.data_dir`
+exists on disk.)_
 
 Also, using subcommands with `argparse` is error-prone because argparse returns
 a flat namespace, overwriting global arguments with subcommand arguments. This
@@ -171,11 +170,9 @@ creating a PR. Thank you!
 
 ## TODO (v1.0)
 
-- [ ] Proper diagnostics, source range highlighting, etc. instead of the ugly
-  and sometimes confusing `raise TypeError(msg)`s for errors in the parser
-  declaration.
-- [ ] Actually parse arguments instead of using `argparse`. This will help
-  improve error messages since argparse's error messages are ugly.
+- [ ] Better diagnostics (source range highlighting etc.) for incorrect parsers.
+- [ ] Parse arguments manually instead of using `argparse`. This will improve
+  error messages for invalid arguments.
 
 ## Future work (beyond v1.0)
 

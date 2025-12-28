@@ -95,7 +95,7 @@ class TestTupleArguments(unittest.TestCase):
         class Cli(clap.Parser):
             point: tuple[int, int] = arg(num_args=3)
 
-        with pytest.raises(TypeError):
+        with pytest.raises(SystemExit):
             Cli.parse()
 
     def test_optional_tuple(self):

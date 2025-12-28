@@ -253,7 +253,7 @@ class TestSubcommandErrors(unittest.TestCase):
 
             cmd: Union[SubCmd, str]
 
-        with pytest.raises(TypeError):
+        with pytest.raises(SystemExit):
             Cli.parse()
 
     def test_multiple_subcommand_destinations(self):
@@ -272,7 +272,7 @@ class TestSubcommandErrors(unittest.TestCase):
             cmd1: Sub1
             cmd2: Sub2
 
-        with pytest.raises(TypeError):
+        with pytest.raises(SystemExit):
             Cli.parse()
 
     def test_subcommand_field_assignment(self):
@@ -285,7 +285,7 @@ class TestSubcommandErrors(unittest.TestCase):
 
             cmd: Sub = cast(Sub, "invalid")
 
-        with pytest.raises(TypeError):
+        with pytest.raises(SystemExit):
             Cli.parse()
 
     def test_unknown_subcommand(self):

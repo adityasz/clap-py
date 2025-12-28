@@ -14,7 +14,9 @@ from clap.core import (
     short,
     to_kebab_case,
 )
+from clap.diagnostics import Diagnostics
 from clap.help import HelpRenderer, extract_docstrings, get_help_from_docstring
+from clap.styling import AnsiColor, Style
 
 _SUBCOMMAND_MARKER = "__com.github.adityasz.clap-py.subcommand-marker__"
 _GROUP_MARKER = "__com.github.adityasz.clap-py.group-marker__"
@@ -58,16 +60,15 @@ def is_group(cls: type) -> bool:
 
 
 def contains_subcommands(types: list[type]) -> bool:
-    error_msg = "Field contains a mixture of subcommands and other types."
     flag = None
     for ty in types:
         if is_subcommand(ty):
             if flag is False:
-                raise TypeError(error_msg)
+                raise TypeError(Diagnostics.TypeContainsSubcommandEtAl)
             flag = True
         else:
             if flag is True:
-                raise TypeError(error_msg)
+                raise TypeError(Diagnostics.TypeContainsSubcommandEtAl)
             flag = False
     return bool(flag)
 
@@ -95,8 +96,7 @@ def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
         if contains_subcommands(subcommands):
             return ArgType.SubcommandDest(optional, subcommands)
         if len(types) != 2 or not optional:
-            msg = f"{type_hint}: Unions can only contain subcommands."
-            raise TypeError(msg) from None
+            raise TypeError(Diagnostics.UnionOnlyForSubcommands)
         if type(None) is types[0]:
             return parse_type_hint(types[1], True)
         if type(None) is types[1]:
@@ -106,11 +106,9 @@ def parse_type_hint(type_hint: Any, optional: bool = False) -> ArgType.Base:
     if origin is tuple:
         for ty in types:
             if ty != (types[0]):
-                msg = "Heterogenous tuples are not supported."
-                raise TypeError(msg)
+                raise TypeError(Diagnostics.UnimplementedFeatures.HeterogeneousTuples)
         return ArgType.Tuple(types[0], optional, len(types))
-    msg = f"Could not parse {type_hint} of type {type(origin)}."
-    raise TypeError(msg)
+    raise TypeError(Diagnostics.TypeHintParsingFailed)
 
 
 def set_flags(arg: Arg, field_name: str, prefix_chars: str):
@@ -121,7 +119,7 @@ def set_flags(arg: Arg, field_name: str, prefix_chars: str):
         if arg.short[0] not in prefix_chars:
             arg.short = prefix_chars[0] + arg.short
         if len(arg.short) != 2 or arg.short[1] in prefix_chars:
-            raise ValueError
+            raise ValueError(Diagnostics.InvalidFlag)
 
     if arg.long == long:
         arg.long = 2 * prefix_chars[0] + to_kebab_case(field_name)
@@ -171,23 +169,17 @@ def set_type_dependent_kwargs(arg: Arg):
                         case "+":
                             arg.num_args = "*"
                         case _:
-                            msg = (
-                                "argparse limitation: Please use `num_args='*'` "
-                                "with manual validation until I write my own parser."
-                            )
-                            raise TypeError(msg)
+                            raise TypeError(Diagnostics.UnimplementedFeatures.CustomNumArgs)
         case ArgType.Tuple(t, _, n):
             if arg.action is None:
                 arg.action = ArgAction.Set
             if (num_args := arg.num_args) is not None:
                 if num_args != n:
-                    msg = f"The tuple has {n} values but 'num_args' is set to {num_args}."
-                    raise TypeError(msg)
+                    raise TypeError(Diagnostics.InvalidNumArgs.format(n=n, num_args=num_args))
             else:
                 arg.num_args = n
         case _:
-            msg = "An unknown error occurred."
-            raise TypeError(msg)
+            raise TypeError(Diagnostics.UnknownError)
 
 
 def set_default_and_required(arg: Arg):
@@ -202,21 +194,15 @@ def set_default_and_required(arg: Arg):
             if arg.default_value is None:
                 arg.default_value = 0
             if optional_type_hint:
-                msg = (
-                    "An argument with the 'count' action cannot be None. If no default is "
-                    "provided, it is set to 0."
-                )
-                raise TypeError(msg)
+                raise TypeError(Diagnostics.CountActionNeverNone)
         case ArgAction.Set:
             if arg.required is not None:
                 if arg.required and optional_type_hint:
-                    msg = "An argument with 'required=True' can never be None."
-                    raise TypeError(msg)
+                    raise TypeError(Diagnostics.RequiredTrueNeverNone)
                 return
             if arg.default_value is not None:
                 if optional_type_hint:
-                    msg = "An argument with a default value can never be None."
-                    raise TypeError(msg)
+                    raise TypeError(Diagnostics.DefaultValueNeverNone)
                 if arg.is_positional():
                     arg.num_args = "?"
                     arg.required = None
@@ -238,14 +224,12 @@ def set_default_and_required(arg: Arg):
                     arg.required = None
         case ArgAction.SetFalse:
             if optional_type_hint:
-                msg = "An argument with the 'store_false' action can never be None."
-                raise TypeError(msg)
+                raise TypeError(Diagnostics.SetFalseNeverNone)
             if arg.default_value is None:
                 arg.default_value = True
         case ArgAction.SetTrue:
             if optional_type_hint:
-                msg = "An argument with the 'store_true' action can never be None."
-                raise TypeError(msg)
+                raise TypeError(Diagnostics.SetTrueNeverNone)
             if arg.default_value is None:
                 arg.default_value = False
         case _:
@@ -312,14 +296,11 @@ def configure_subcommands(
     command_path: str,
 ):
     if command.subcommand_dest is not None:
-        msg = f"'{command.subcommand_dest}' is already the subcommand destination."
-        raise TypeError(msg)
+        raise TypeError(Diagnostics.SubcommandDestAlreadySet.format(field=command.subcommand_dest))
     if value is not None and not any(isinstance(value, sc_ty) for sc_ty in ty.subcommands):
-        msg = (
-            f"{field_name} is a subcommand destination based on the annotation; "
-            f"cannot assign {type(value)} to it."
+        raise TypeError(
+            Diagnostics.SubcommandDestInvalidType.format(field=field_name, value=value)
         )
-        raise TypeError(msg)
     command.subcommand_required = not ty.optional
     command.subcommand_dest = field_name
     # if dest is not provided to add_subparsers(), argparse does not give the
@@ -341,11 +322,7 @@ def configure_group_args(
     group_path: str,
 ):
     if value is not None and not isinstance(value, ty.group_class):
-        msg = (
-            f"{field_name} is a group field based on the annotation; "
-            f"cannot assign {type(value)} to it."
-        )
-        raise TypeError(msg)
+        raise TypeError(Diagnostics.GroupDestInvalidType.format(field=field_name, value=value))
 
     group_cls = ty.group_class
     group: Group = getattr(group_cls, _GROUP_DATA)
@@ -366,12 +343,10 @@ def configure_group_args(
         arg_value = getattr(group_cls, field_name, None)
 
         if isinstance(arg_ty, ArgType.GroupDest):
-            msg = "Nested groups are not supported."
-            raise TypeError(msg)
+            raise TypeError(Diagnostics.UnimplementedFeatures.NestedGroups)
 
         if arg_value is not None and not isinstance(arg_value, Arg):
-            msg = "Only 'arg(...)' can be assigned to a field in a group class."
-            raise TypeError(msg)
+            raise TypeError(Diagnostics.GroupCanOnlyHaveArgs.format(value=arg_value))
 
         arg = arg_value or Arg()
         arg.group = group
@@ -392,13 +367,18 @@ def create_command(cls: type, command_path: str = "", parent: Optional[Command] 
         command_path += command.name + "."
         command.subcommand_class = cls
 
+    # terrible but better than a useless traceback
+    def print_error(e):
+        error_style = Style().fg_color(AnsiColor.Red).bold()
+        bold_style = Style().bold()
+        print(f"{error_style}Error[clap-py]:{error_style:#} {bold_style}{e}{bold_style:#}")
+
     for field_name, value in cls.__dict__.items():
         if isinstance(group := value, Group):
             if group in command.group_to_args:
-                msg = (
-                    f"A group with title '{group.title}' and the same description already exists."
-                )
-                raise ValueError(msg)
+                print_error(Diagnostics.DuplicateGroupTitle.format(title=group.title))
+                print(f"\n    {field_name} = {value}")
+                sys.exit(1)
             if (docstring := docstrings.get(field_name)) is not None:
                 about, long_about = get_help_from_docstring(docstring)
                 if group.about is None:
@@ -418,20 +398,24 @@ def create_command(cls: type, command_path: str = "", parent: Optional[Command] 
     type_hints = get_type_hints(cls)
 
     for field_name, type_hint in type_hints.items():
-        ty = parse_type_hint(type_hint)
         value = getattr(cls, field_name, None)
-        if isinstance(ty, ArgType.SubcommandDest):
-            configure_subcommands(ty, command, value, field_name, command_path)
-        elif isinstance(ty, ArgType.GroupDest):
-            configure_group_args(ty, command, value, field_name, command_path)
-        elif isinstance(value, Group):
-            continue  # already handled in the previous loop
-        else:
-            if value is not None and not isinstance(value, Arg):
-                msg = "Only 'arg(...)' or 'group(...)' can be assigned to a field."
-                raise TypeError(msg)
-            arg = value or Arg()
-            add_argument(arg, ty, command, field_name, command_path, docstrings)
+        try:
+            ty = parse_type_hint(type_hint)
+            if isinstance(ty, ArgType.SubcommandDest):
+                configure_subcommands(ty, command, value, field_name, command_path)
+            elif isinstance(ty, ArgType.GroupDest):
+                configure_group_args(ty, command, value, field_name, command_path)
+            elif isinstance(value, Group):
+                continue  # already handled in the previous loop
+            else:
+                if value is not None and not isinstance(value, Arg):
+                    raise TypeError(Diagnostics.InvalidValue.format(value=value))
+                arg = value or Arg()
+                add_argument(arg, ty, command, field_name, command_path, docstrings)
+        except TypeError as e:
+            print_error(e)
+            print(f"\n    {field_name}: {type_hint} = {value}")
+            sys.exit(1)
 
     if not command.disable_help_flag:
         command.field_to_arg[command_path + _HELP_DEST] = Arg(

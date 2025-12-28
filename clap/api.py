@@ -13,6 +13,7 @@ from clap.core import (
     NargsType,
     to_kebab_case,
 )
+from clap.diagnostics import Diagnostics
 from clap.parser import (
     _ATTR_DEFAULTS,
     _COMMAND_DATA,
@@ -56,15 +57,7 @@ class Parser:
     @classmethod
     def parse(cls: type[Self], args: Optional[Sequence[str]] = None) -> Self:
         """Parse from the provided `args` or [`sys.argv`][], exit on error."""
-        # - args is passed to the message so that it is no longer unused.
-        # - PyCharm does not like it if I make this an abstractmethod.
-        #   - Making another superclass where this method is abstract and then
-        #     `@override`'ing to suppress the error will only slow down the
-        #     runtime.
-        msg = (
-            f"Did you decorate {cls} with @clap.command: {command}?\n{args or ''}"
-        )
-        raise NotImplementedError(msg)
+        raise TypeError(Diagnostics.ParserNotDecorated.format(cls=cls, args=args or ""))
 
 
 @dataclass_transform()

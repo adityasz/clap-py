@@ -6,6 +6,7 @@ from enum import Enum, EnumType, StrEnum, auto
 from types import MappingProxyType
 from typing import Any, Literal, Optional, Self, Union, cast, override
 
+from clap.diagnostics import Diagnostics
 from clap.styling import ColorChoice, Styles
 
 
@@ -227,8 +228,7 @@ class ArgType:
             try:
                 self.choice_to_enum_member = dict(zip(choices, self.members.values(), strict=True))
             except ValueError:
-                msg = "Cannot uniquely extract choices from this Enum."
-                raise TypeError(msg) from None
+                raise TypeError(Diagnostics.CannotExtractEnumChoices) from None
 
     @dataclass(slots=True)
     class List(Base): ...
@@ -302,11 +302,7 @@ class Group:
 
     def __post_init__(self):
         if self.required and self.multiple:
-            msg = (
-                "Currently, `required = True` only works when `multiple` is set to `False`. "
-                "Consider restructuring the parser or doing manual validation."
-            )
-            raise TypeError(msg)
+            raise TypeError(Diagnostics.UnimplementedFeatures.GroupRequiredTrue)
 
     @override
     def __hash__(self):

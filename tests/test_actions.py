@@ -224,7 +224,7 @@ class TestActionTypeErrors(unittest.TestCase):
         class Cli(clap.Parser):
             count: Optional[int] = arg(short="c", action=ArgAction.Count)
 
-        with pytest.raises(TypeError):
+        with pytest.raises(SystemExit):
             Cli.parse()
 
     def test_store_true_with_optional_type_error(self):
@@ -232,7 +232,7 @@ class TestActionTypeErrors(unittest.TestCase):
         class Cli(clap.Parser):
             flag: Optional[bool] = arg(long, action=ArgAction.SetTrue)
 
-        with pytest.raises(TypeError):
+        with pytest.raises(SystemExit):
             Cli.parse()
 
     def test_store_false_with_optional_type_error(self):
@@ -240,7 +240,7 @@ class TestActionTypeErrors(unittest.TestCase):
         class Cli(clap.Parser):
             flag: Optional[bool] = arg(long, action=ArgAction.SetFalse)
 
-        with pytest.raises(TypeError):
+        with pytest.raises(SystemExit):
             Cli.parse()
 
     def test_store_const_with_optional_and_default_error(self):
@@ -254,7 +254,7 @@ class TestActionTypeErrors(unittest.TestCase):
                 default_value="default",
             )
 
-        with pytest.raises(TypeError):
+        with pytest.raises(SystemExit):
             Cli.parse()
 
     def test_store_with_required_and_optional_error(self):
@@ -262,7 +262,7 @@ class TestActionTypeErrors(unittest.TestCase):
         class Cli(clap.Parser):
             value: Optional[str] = arg(long, action=ArgAction.Set, required=True)
 
-        with pytest.raises(TypeError):
+        with pytest.raises(SystemExit):
             Cli.parse()
 
     def test_store_with_default_and_optional_error(self):
@@ -270,7 +270,7 @@ class TestActionTypeErrors(unittest.TestCase):
         class Cli(clap.Parser):
             value: Optional[str] = arg(long, action=ArgAction.Set, default_value="test")
 
-        with pytest.raises(TypeError):
+        with pytest.raises(SystemExit):
             Cli.parse()
 
 
