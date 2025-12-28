@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 0.10.0
+
+Released on 2025-12-28.
+
+### Enhancements
+
+- New class-based group API.
+- Support for PEP604 annotations.
+- clap-py is now type checked by mypy (basedpyright was already supported).
+
 ## 0.9.0
 
 Released on 2025-12-14.
