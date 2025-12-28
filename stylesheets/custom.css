@@ -2,7 +2,7 @@
     display: none;
 }
 
-.stdout {
+.command-output {
     background-color: var(--md-code-bg-color);
     color: var(--md-code-fg-color);
     font-family: monospace; /* Ideally, people should set a nice monospace font in their browser settings. Their fault if it looks ugly. */
@@ -15,6 +15,6 @@
     white-space: pre;
 }
 
-.stdout code {
+.command-output code {
     font-size: inherit !important;
 }
