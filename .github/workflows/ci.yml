@@ -34,12 +34,14 @@ jobs:
     - name: Install the project
       run: uv sync --all-extras --dev
 
+    - name: ruff
+      run: uv run ruff check
+
+    - name: mypy
+      run: uv run mypy .
+
+    - name: basedpyright
+      run: uv run basedpyright
+
     - name: Run tests
       run: uv run pytest tests
-
-    - name: Lint
-      run: uvx ruff check
-      continue-on-error: true
-
-    - name: Type check
-      run: uvx basedpyright

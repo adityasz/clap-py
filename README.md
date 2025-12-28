@@ -149,6 +149,18 @@ should be written in bold all over the argparse docs but it isn't. The
 workaround is to manually set `dest` for each argument, which is a tedious and
 error-prone process.
 
+## Supported type checkers
+
+clap-py is successfully type checked in CI by:
+
+- mypy
+- basedpyright
+
+ty is in development and gives too many false positive errors. I will not add
+any type ignore comments or redundant casts in my code. Hence, ty will not be a
+part of the CI until the issues are fixed. However, I do run `ty check`
+occasionally and make sure there are no true positives.
+
 ## Contributing
 
 PRs that fix bugs, add features from clap-rs, or complete the following TODOs
