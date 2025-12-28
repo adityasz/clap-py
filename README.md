@@ -45,11 +45,11 @@ for more examples.
 
 ## Features
 
-- **Help generation from docstrings**
+- [**Help generation from docstrings**](https://adityasz.github.io/clap-py/quickstart/#docstrings)
 
   Use the same string for the help output as well as documentation in the IDE.
 
-- **Subcommands**
+- [**Subcommands**](https://adityasz.github.io/clap-py/quickstart/#subcommands)
 
   ```python
   @clap.subcommand
@@ -72,12 +72,14 @@ for more examples.
           print(f"Listing {directory}...")
   ```
 
-- **Argument groups**
+- [**Argument groups**](https://adityasz.github.io/clap-py/quickstart/#argument-relations)
 
   ```python
   @clap.group(required=True, multiple=False)
   class InputOptions:
-      """This can be shared between multiple parsers in different scripts!"""
+      """Only one of these can be provided.
+
+      This can be shared between multiple parsers in different scripts!"""
       dpi: Optional[int] = arg(long)
       resolution: Optional[tuple[int, int]] = arg(long, value_name="PX")
   
@@ -86,7 +88,7 @@ for more examples.
       input_options: InputOptions
 
   args = Cli.parse()
-  print(args.input_options.dpi)
+  print(args.input_options.dpi or args.input_options.resolution)
   ```
 
 - **Separate short and long help** with `-h` and `--help`. See example output

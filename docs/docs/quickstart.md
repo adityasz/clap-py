@@ -372,22 +372,22 @@ are no runtime implications, but to satisfy the type checkers, the following
   though the runtime behavior does not change. In the examples above, I always
   did this, even when it was not required, because it makes the intent clearer,
   especially when the type is a custom class like `Foo`: `foo: Foo` may be an
-  argument group, a subcommand, or a positional, while `foo: Foo = arg()` can
-  only be an argument.
+  argument group, a subcommand, or an argument, while `foo: Foo =
+  arg()` can only be an argument.
 
 - If a field that contains the subcommand, make it the first field. (The order
   only matters for positionals; the subcommand is always parsed after all the
   positionals and options.)
   
-  While I would have preferred a solution where it is at the bottom, I do not
-  want to add a dummy function returning `Any` to the API. There exist
-  workarounds, though: If the subcommand is optional, you can assign `None` to
-  it. Alternatively, if you have something like `command: A | B | C`, you can
-  assign an object of any one of these types to it: `command: A | B | C = A()`.
-  The value is ignored by the library. Note that if the subcommand class `A` has
-  a field without a default value (e.g., `num: int`, where you do not want to
-  modify any attributes), you will have to assign a default to it
-  (e.g., `num: int = arg()`).
+    While I would have preferred a solution where it is at the bottom, I do not
+    want to add a dummy function returning `Any` to the API. There exist
+    workarounds, though: If the subcommand is optional, you can assign `None` to
+    it. Alternatively, if you have something like `command: A | B | C`, you can
+    assign an object of any one of these types to it: `command: A | B | C =
+    A()`. The value is ignored by the library. Note that if the subcommand class
+    `A` has a field without a default value (e.g., `num: int`, where you do not
+    want to modify any attributes), you will have to assign a default to it
+    (e.g., `num: int = arg()`).
 
 - For argument [groups][clap.group], you can call the constructor without any
   arguments and assign that, e.g.:
