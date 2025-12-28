@@ -62,7 +62,7 @@ for more examples.
 
   @clap.command
   class Cli(clap.Parser):
-      command: Union[Add, List]
+      command: Add | List
 
   args = Cli.parse()
   match args.command:
@@ -105,24 +105,49 @@ built from [`/docs`](https://github.com/adityasz/clap-py/tree/master/docs).
 
 ## Motivation
 
-`argparse` requires procedural declaration, which doesn't work with static
-analysis tools. Using subcommands with `argparse` is error-prone because
-argparse returns a flat namespace, overwriting global arguments with subcommand
-arguments, and hence requires manually setting `dest` for each argument, which
-is a tedious and error-prone process.
+`argparse` doesn't work with static analysis tools. Static analysis is important
+to prevent errors like these:
 
 ```python
 import argparse
+from pathlib import Path
+
+import torch
+
 parser = argparse.ArgumentParser()
-parser.add_argument("--type")
+# 50 lines of other arguments...
+parser.add_argument("--data", type=Path)
+parser.add_argument("--some-number", type=Path)  # copy-paste error in type
+# 30 lines of other arguments...
 args = parser.parse_args()
-print(1 / args.type)
-#     ~~^~~~~~~~~~~
-#  no static type checking
-print(args.typo)
-#     ~~~~~^^^^
-# no static analysis
+
+# 500 lines of code
+# two days of compute
+# ...
+
+c = 1 / args.some_number   # some_number was accidentally set to be Path
+#   ~~^~~~~~~~~~~~~~~~~~
 ```
+
+Once that error is fixed and the script is re-run:
+
+```python
+# 1500 lines of code
+# five days of compute
+# ...
+ 
+torch.save(agi, args.data_dir)  # this attribute does not exist
+#               ~~~~~~~~~^^^^
+```
+
+These errors are detected right when you typed them if you use my library and a
+type checker like pyright.
+
+Also, using subcommands with `argparse` is error-prone because argparse returns
+a flat namespace, overwriting global arguments with subcommand arguments. This
+should be written in bold all over the argparse docs but it isn't. The
+workaround is to manually set `dest` for each argument, which is a tedious and
+error-prone process.
 
 ## Contributing
 
@@ -132,21 +157,22 @@ creating a PR. Thank you!
 
 ## TODO (v1.0)
 
+- [ ] Proper diagnostics, source range highlighting, etc. instead of the ugly
+  and sometimes confusing `raise TypeError(msg)`s for errors in the parser
+  declaration.
 - [ ] Actually parse arguments instead of using `argparse`. This will help
-      improve error messages and enable features like `requires_all`,
-      `conflicts_with`, etc.
+  improve error messages since argparse's error messages are ugly.
 
 ## Future work (beyond v1.0)
 
-- [ ] Create argument groups using classes.
+- [ ] Add support for custom value parsers, validation, `conflicts_with`, etc.
 - [ ] Generate shell completions.
 - [ ] Add a clap-like builder API to add arguments procedurally (after
-      defining some arguments in a class). One use case can be to load
-      arguments and help strings from a file (which is useful when
-      arguments/help strings are referenced in multiple places).
+  defining some arguments in a class), which can be used together with the
+  declarative API.
 - [ ] Find or build out the python equivalent of `color_print::cstr!` and
-      support styled help strings that wrap properly and are formatted depending
-      on output file.
+  support styled help strings that wrap properly and are formatted depending on
+  output file.
 
 ## Acknowledgements
 

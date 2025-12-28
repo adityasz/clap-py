@@ -1,6 +1,7 @@
 from enum import Enum, auto
 
 import clap
+from clap import arg
 
 
 class Mode(Enum):
@@ -20,7 +21,7 @@ class Mode(Enum):
 
 @clap.command(version="1.0")
 class Cli(clap.Parser):
-    mode: Mode
+    mode: Mode = arg()
     """What mode to run the program in."""
 
 

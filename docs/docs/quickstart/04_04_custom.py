@@ -7,7 +7,7 @@ from clap import arg, long, short
 
 @clap.command(version="1.0")
 class Cli(clap.Parser):
-    input_file: Optional[str]
+    input_file: Optional[str] = arg()
     """Some regular input."""
 
     set_ver: Optional[str] = arg(long, value_name="VER")

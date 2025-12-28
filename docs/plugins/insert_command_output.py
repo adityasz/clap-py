@@ -25,21 +25,20 @@ from rich.text import Text
 TERM_WIDTH = 100
 
 
-class InsertStdoutPlugin(BasePlugin[LegacyConfig]):
+class InsertCommandOutputPlugin(BasePlugin[LegacyConfig]):
     config_scheme = (("root", config_options.Type(str, default=".")),)
 
     @override
     def on_page_markdown(self, markdown: str, **_) -> str:
-        def replace_stdout_marker(match):
+        def replace_output_marker(match):
             command = match.group(1).strip()
-            return self.get_stdout_as_html(command)
+            return self.get_output_as_html(command)
 
-        pattern = r"<~--\s*stdout\[(.*?)\]\s*-->"
-        return re.sub(pattern, replace_stdout_marker, markdown)
+        pattern = r"<~--\s*output\[(.*?)\]\s*-->"
+        return re.sub(pattern, replace_output_marker, markdown)
 
     def read_pty_output(self, master_fd: int, process: subprocess.Popen[bytes]) -> bytes:
-        return_code = process.wait()
-        assert return_code == 0
+        process.wait()
 
         output = b""
         with suppress(OSError):
@@ -63,7 +62,7 @@ class InsertStdoutPlugin(BasePlugin[LegacyConfig]):
             with suppress(OSError):
                 os.close(master_fd)
 
-    def get_stdout_as_html(self, command: str) -> str:
+    def get_output_as_html(self, command: str) -> str:
         env = os.environ.copy()
         env["COLUMNS"] = str(TERM_WIDTH)
         master_fd, slave_fd = pty.openpty()
@@ -72,18 +71,18 @@ class InsertStdoutPlugin(BasePlugin[LegacyConfig]):
             process = subprocess.Popen(
                 command.split(),
                 stdout=slave_fd,
+                stderr=slave_fd,
                 stdin=subprocess.DEVNULL,
                 env=env,
                 cwd=self.config["root"],
             )
             self.cleanup_fds(master_fd=None, slave_fd=slave_fd)
             output = self.read_pty_output(master_fd, process)
-            stdout_text = output.decode("utf-8", errors="replace")
-            return self.ansi_to_html(command, stdout_text)
+            return self.ansi_to_html(command, output.decode("utf-8", errors="replace"))
         finally:
             self.cleanup_fds(master_fd, slave_fd=None)
 
-    def ansi_to_html(self, command: str, stdout: str) -> str:
+    def ansi_to_html(self, command: str, output: str) -> str:
         console = Console(
             file=StringIO(),
             record=True,
@@ -95,11 +94,11 @@ class InsertStdoutPlugin(BasePlugin[LegacyConfig]):
         prompt.append("adityasz@github:clap-py$ ", style="bold")
         console.print(prompt, end="")
         console.print(command)
-        console.print(Text.from_ansi(stdout), end="")
+        console.print(Text.from_ansi(output), end="")
 
         html = console.export_html(inline_styles=True)
         content_match = re.search(r"<code[^>]*>(.*?)</code>", html, re.DOTALL)
         assert content_match is not None
         code_content = content_match.group(1)
 
-        return f'<div class="stdout"><pre><code>{code_content}</code></pre></div>\n'
+        return f'<div class="command-output"><pre><code>{code_content}</code></pre></div>\n'

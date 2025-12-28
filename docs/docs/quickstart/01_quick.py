@@ -19,7 +19,7 @@ class Cli(clap.Parser):
 
     command: Optional[Test]
 
-    name: Optional[str]
+    name: Optional[str] = arg()
     """Optional name to operate on."""
     config: Optional[Path] = arg(short, long, value_name="FILE")
     """Sets a custom config file."""

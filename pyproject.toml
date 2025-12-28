@@ -40,7 +40,7 @@ dev = [
 ]
 
 [project.entry-points."mkdocs.plugins"]
-insert_stdout = "docs.plugins.insert_stdout:InsertStdoutPlugin"
+insert_command_output = "docs.plugins.insert_command_output:InsertCommandOutputPlugin"
 
 [tool.ruff]
 line-length = 99

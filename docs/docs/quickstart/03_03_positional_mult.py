@@ -1,9 +1,10 @@
 import clap
+from clap import arg
 
 
 @clap.command(version="1.0")
 class Cli(clap.Parser):
-    name: list[str]
+    name: list[str] = arg()
 
 
 def main():
