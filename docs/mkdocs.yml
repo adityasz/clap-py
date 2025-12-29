@@ -1,8 +1,8 @@
 # adapted from https://github.com/tinygrad/tinygrad/blob/master/mkdocs.yml
 
-site_name: clap-py docs
-site_url: https://adityasz.github.io/clap-py
-repo_url: https://github.com/adityasz/clap-py
+site_name: typed-clap docs
+site_url: https://adityasz.github.io/typed-clap
+repo_url: https://github.com/adityasz/typed-clap
 docs_dir: docs
 nav:
   - Home:

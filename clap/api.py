@@ -19,14 +19,13 @@ from clap.parser import (
     _COMMAND_DATA,
     _GROUP_DATA,
     _GROUP_MARKER,
+    _PARSER,
     _SUBCOMMAND_MARKER,
     apply_parsed_args,
     create_parser,
     get_help_from_docstring,
 )
 from clap.styling import ColorChoice, Styles
-
-_PARSER = "__com.github.adityasz.clap-py.parser__"
 
 
 class Parser:

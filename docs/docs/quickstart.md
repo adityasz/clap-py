@@ -1,7 +1,7 @@
 # Quickstart Guide
 
 This guide is structured as a tutorial that will walk you through creating
-command-line applications with [clap-py](https://github.com/adityasz/clap-py).
+command-line applications with [typed-clap](https://github.com/adityasz/typed-clap).
 
 It was adapted from the excellent
 [tutorial](https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html) for
@@ -32,9 +32,9 @@ But you can mix and match the various features:
 
 **See also:**
 
-- The [tests](https://github.com/adityasz/clap-py/tree/master/tests) for more
+- The [tests](https://github.com/adityasz/typed-clap/tree/master/tests) for more
   usage examples.
-- The [examples](https://github.com/adityasz/clap-py/tree/master/examples) for
+- The [examples](https://github.com/adityasz/typed-clap/tree/master/examples) for
   more application-focused examples.
 
 ## Configuring the Parser
@@ -346,7 +346,7 @@ A custom [template][clap.HelpTemplate] can be used, and styles can be customized
 using [`Styles`][clap.Styles].
 
 Here's the help output for
-[`examples/typst.py`](https://github.com/adityasz/clap-py/tree/master/examples/typst.py):
+[`examples/typst.py`](https://github.com/adityasz/typed-clap/tree/master/examples/typst.py):
 
 <~-- output[python examples/typst.py --help] -->
 
@@ -477,7 +477,7 @@ The changes are very minimal, and only make the code clearer:
 
 **See also:**
 
-- [API Reference](https://adityasz.github.io/clap-py/) for complete
+- [API Reference](https://adityasz.github.io/typed-clap/) for complete
   documentation.
-- [Examples](https://github.com/adityasz/clap-py/tree/master/examples) for
+- [Examples](https://github.com/adityasz/typed-clap/tree/master/examples) for
   application-focused examples.

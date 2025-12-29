@@ -1,19 +1,19 @@
-# clap-py
+# typed-clap
 
-Welcome to the docs for [clap-py](https://github.com/adityasz/clap-py).
+Welcome to the docs for [typed-clap](https://github.com/adityasz/typed-clap).
 
 ## Installation
 
 ```console
-$ pip install git+https://github.com/adityasz/clap-py.git
+$ uv add typed-clap
 ```
 
-If you are using [uv](https://docs.astral.sh/uv/), you can do
+or
 
 ```console
-$ uv add git+https://github.com/adityasz/clap-py.git
+$ pip install typed-clap
 ```
 
-## clap-py Usage
+## typed-clap Usage
 
 Check out the [Quickstart Guide](quickstart.md).

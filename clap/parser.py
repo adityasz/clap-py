@@ -18,11 +18,12 @@ from clap.diagnostics import Diagnostics
 from clap.help import HelpRenderer, extract_docstrings, get_help_from_docstring
 from clap.styling import AnsiColor, Style
 
-_SUBCOMMAND_MARKER = "__com.github.adityasz.clap-py.subcommand-marker__"
-_GROUP_MARKER = "__com.github.adityasz.clap-py.group-marker__"
-_COMMAND_DATA = "__com.github.adityasz.clap-py.command-data__"
-_GROUP_DATA = "__com.github.adityasz.clap-py.group-data__"
-_ATTR_DEFAULTS = "__com.github.adityasz.clap-py.attr-defaults__"
+_SUBCOMMAND_MARKER = "__typed-clap.subcommand-marker__"
+_GROUP_MARKER = "__typed-clap.group-marker__"
+_COMMAND_DATA = "__typed-clap.command-data__"
+_GROUP_DATA = "__typed-clap.group-data__"
+_ATTR_DEFAULTS = "__typed-clap.attr-defaults__"
+_PARSER = "__typed-clap.parser__"
 
 _HELP_DEST = "0h"  # anything that is not a valid identifier
 _VERSION_DEST = "0v"
@@ -371,7 +372,7 @@ def create_command(cls: type, command_path: str = "", parent: Optional[Command] 
     def print_error(e):
         error_style = Style().fg_color(AnsiColor.Red).bold()
         bold_style = Style().bold()
-        print(f"{error_style}Error[clap-py]:{error_style:#} {bold_style}{e}{bold_style:#}")
+        print(f"{error_style}Error[clap]:{error_style:#} {bold_style}{e}{bold_style:#}")
 
     for field_name, value in cls.__dict__.items():
         if isinstance(group := value, Group):

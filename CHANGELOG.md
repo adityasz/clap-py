@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 0.11.0
+
+Released on 2025-12-30.
+
+### Changed
+
+- Renamed project to typed-clap as that's the only available name on PyPI
+  (`import clap` and the API remains unchanged).
+
+### Enhancements
+
+- typed-clap can now be used with `uv add typed-clap` instead of the git URL
+  (which still works).
+
 ## 0.10.1
 
 Released on 2025-12-28.

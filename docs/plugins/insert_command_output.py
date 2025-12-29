@@ -91,7 +91,7 @@ class InsertCommandOutputPlugin(BasePlugin[LegacyConfig]):
         )
 
         prompt = Text()
-        prompt.append("adityasz@github:clap-py$ ", style="bold")
+        prompt.append("adityasz@github:typed-clap$ ", style="bold")
         console.print(prompt, end="")
         console.print(command)
         console.print(Text.from_ansi(output), end="")

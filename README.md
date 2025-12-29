@@ -1,23 +1,14 @@
-# clap-py
+# typed-clap[^1]
 
-[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-![CI](https://github.com/adityasz/clap-py/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/adityasz/typed-clap/actions/workflows/ci.yml/badge.svg)
 
 A declarative and type-safe argument parser for Python, inspired by
 [clap-rs](https://github.com/clap-rs/clap).
 
-## Installation
+## Installation [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 
-- Using [uv](https://docs.astral.sh/uv):
-  ```console
-  $ uv add git+https://github.com/adityasz/clap-py.git
-  ```
-
-- Using pip:
-  ```console
-  $ pip install git+https://github.com/adityasz/clap-py.git
-  ```
+- Using uv: `uv add typed-clap`
+- Using pip: `pip install typed-clap`
 
 ## Example
 
@@ -40,16 +31,16 @@ if args.verbose:
     print(f"Reading {args.input}...")
 ```
 
-See [/examples](https://github.com/adityasz/clap-py/tree/master/examples)
+See [/examples](https://github.com/adityasz/typed-clap/tree/master/examples)
 for more examples.
 
 ## Features
 
-- [**Help generation from docstrings**](https://adityasz.github.io/clap-py/quickstart/#docstrings)
+- [**Help generation from docstrings**](https://adityasz.github.io/typed-clap/quickstart/#docstrings)
 
   Use the same string for the help output as well as documentation in the IDE.
 
-- [**Subcommands**](https://adityasz.github.io/clap-py/quickstart/#subcommands)
+- [**Subcommands**](https://adityasz.github.io/typed-clap/quickstart/#subcommands)
 
   ```python
   @clap.subcommand
@@ -72,7 +63,7 @@ for more examples.
           print(f"Listing {directory}...")
   ```
 
-- [**Argument groups**](https://adityasz.github.io/clap-py/quickstart/#argument-relations)
+- [**Argument groups**](https://adityasz.github.io/typed-clap/quickstart/#argument-relations)
 
   ```python
   @clap.group(required=True, multiple=False)
@@ -92,18 +83,18 @@ for more examples.
   ```
 
 - **Separate short and long help** with `-h` and `--help`. See example output
-  [here](https://adityasz.github.io/clap-py/quickstart/#help-output).
+  [here](https://adityasz.github.io/typed-clap/quickstart/#help-output).
 
 - **Customize help output** with
-  [templates](https://adityasz.github.io/clap-py/help/#clap.help.HelpTemplate)
-  and [styles](https://adityasz.github.io/clap-py/styling/#clap.styling.Styles).
+  [templates](https://adityasz.github.io/typed-clap/help/#clap.help.HelpTemplate)
+  and [styles](https://adityasz.github.io/typed-clap/styling/#clap.styling.Styles).
 
 ## Docs
 
 Documentation along with the
-[quickstart guide](https://adityasz.github.io/clap-py/quickstart/)
-can be found on the [docs website](https://adityasz.github.io/clap-py)
-built from [`/docs`](https://github.com/adityasz/clap-py/tree/master/docs).
+[quickstart guide](https://adityasz.github.io/typed-clap/quickstart/)
+can be found on the [docs website](https://adityasz.github.io/typed-clap)
+built from [`/docs`](https://github.com/adityasz/typed-clap/tree/master/docs).
 
 ## Motivation
 
@@ -152,15 +143,12 @@ error-prone process.
 
 ## Supported type checkers
 
-clap-py is successfully type checked in CI by:
+typed-clap is successfully type checked in CI by:
 
-- mypy
-- basedpyright
+- [mypy](https://mypy-lang.org/)
+- [basedpyright](https://docs.basedpyright.com/latest/)
 
-ty is in development and gives too many false positive errors. I will not add
-any type ignore comments or redundant casts in my code. Hence, ty will not be a
-part of the CI until the issues are fixed. However, I do run `ty check`
-occasionally and make sure there are no true positives.
+It can also be used with [ty](https://docs.astral.sh/ty/)[^2].
 
 ## Contributing
 
@@ -188,3 +176,9 @@ creating a PR. Thank you!
 ## Acknowledgements
 
 [clap-rs](https://github.com/clap-rs/clap). Most docstrings are lifted verbatim.
+
+[^1]: Because the names clap{,-py,-python} were already taken on PyPI :-(
+[^2]: ty is not a part of the CI because it gives some false positives in the
+completely standard _internal_ code since ty is not complete and still a WIP.
+It does not have any issues with the APIs of this library or their usage,
+though.
