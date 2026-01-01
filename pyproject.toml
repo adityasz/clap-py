@@ -62,15 +62,16 @@ convention = "google"
 
 [tool.basedpyright]
 typeCheckingMode = "standard"
-reportConstantRedefinition = true
 reportDeprecated = true
 reportDuplicateImport = true
 reportIgnoreCommentWithoutRule = true
+reportInvalidStubStatement = true
 reportMatchNotExhaustive = true
+reportUninitializedInstanceVariable = true
 reportUnnecessaryCast = true
-reportUnnecessaryComparison = true
-reportUnnecessaryContains = true
-reportUnnecessaryIsInstance = true
+reportUnnecessaryTypeIgnoreComment = true
+reportUnusedImport = true
+reportUnusedVariable = true
 
 [tool.mypy]
 exclude = ["^docs/site"]

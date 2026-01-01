@@ -1,4 +1,5 @@
 import unittest
+from dataclasses import dataclass
 from typing import Optional, Union
 
 import pytest
@@ -17,6 +18,7 @@ class TestDocstringExtraction(unittest.TestCase):
     def test_annotated_fields(self):
         """Test DocstringExtractor with annotated fields."""
 
+        @dataclass
         class Foo:
             field1: str
             """Field 1 docstring"""
