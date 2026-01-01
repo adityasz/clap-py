@@ -1,7 +1,7 @@
 import sys
 from enum import Enum, auto
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 import clap
 from clap import AnsiColor, ColorChoice, Style, arg, long, short
@@ -53,7 +53,7 @@ class Init:
 
 @clap.command(name="typst")
 class Cli(clap.Parser):
-    command: Union[Watch, Init]
+    command: Watch | Init
 
     cert: Optional[str] = arg(long)
     """Path to a custom CA certificate to use when making network requests."""

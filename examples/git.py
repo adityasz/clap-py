@@ -3,7 +3,7 @@ Adapted from https://github.com/clap-rs/clap/blob/master/examples/git-derive.rs
 """
 
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 import clap
 from clap import ColorChoice, arg, long, short
@@ -52,8 +52,7 @@ class Stash:
     class Apply:
         stash: Optional[str]
 
-    command: Optional[Union[Push, Pop, Apply]]
-    # is there something like args_conflict_with_subcommands in argparse?
+    command: Optional[Push | Pop | Apply]
     message: Optional[str] = arg(short, long)
 
 
@@ -64,7 +63,7 @@ class External:
 
 @clap.command(name="git")
 class Cli(clap.Parser):
-    command: Union[Clone, Diff, Push, Add, Stash, External]
+    command: Clone | Diff | Push | Add | Stash | External
 
 
 def main():
