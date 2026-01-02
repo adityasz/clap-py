@@ -364,7 +364,7 @@ example, pattern matching with positionals in `match`-`case`).
 
 This also brings some dataclass limitations: If fields without default values
 are present after fields with default values, type checkers will complain. There
-are no runtime implications, but to satisfy the type checkers, the following
+are no runtime implications, but to satisfy type checkers, the following
 (reasonable) workarounds can be used:
 
 - For positionals where you don't need to modify the default behavior, you can

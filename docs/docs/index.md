@@ -4,16 +4,9 @@ Welcome to the docs for [typed-clap](https://github.com/adityasz/typed-clap).
 
 ## Installation
 
-```console
-$ uv add typed-clap
-```
+- Using uv: `uv add typed-clap`
+- Using pip: `install typed-clap`
 
-or
-
-```console
-$ pip install typed-clap
-```
-
-## typed-clap Usage
+## Usage
 
 Check out the [Quickstart Guide](quickstart.md).

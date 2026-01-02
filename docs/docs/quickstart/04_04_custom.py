@@ -9,22 +9,16 @@ from clap import arg, long, short
 class Cli(clap.Parser):
     input_file: Optional[str] = arg()
     """Some regular input."""
-
     set_ver: Optional[str] = arg(long, value_name="VER")
     """Set version manually."""
-
     major: bool = arg(long)
     """Auto inc major."""
-
     minor: bool = arg(long)
     """Auto inc minor."""
-
     patch: bool = arg(long)
     """Auto inc patch."""
-
     spec_in: Optional[str] = arg(long)
     """Some special input argument."""
-
     config: Optional[str] = arg(short)
 
 

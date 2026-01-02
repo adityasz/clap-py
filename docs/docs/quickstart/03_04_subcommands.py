@@ -20,7 +20,6 @@ class Remove:
 class Cli(clap.Parser):
     command: Add | Remove
     # Alternatively, you can write command: Union[Add, Remove]
-
     quiet: bool = arg(short=True, long=True)
 
 

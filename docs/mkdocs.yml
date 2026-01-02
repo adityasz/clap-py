@@ -12,10 +12,10 @@ nav:
       - command: command.md
       - subcommand: subcommand.md
       - arg: arg.md
+      - group: group.md
       - Actions: actions.md
       - Help Template: help.md
       - Parser: parser.md
-      - Group: group.md
       - Styling: styling.md
     - Internal:
       - Core: core.md
