@@ -49,7 +49,7 @@ class Parser:
     class Cli(clap.Parser): ...
 
 
-    args = Cli.parse()
+    cli = Cli.parse()
     ```
     """
 
@@ -410,9 +410,9 @@ def group[T](
         input_opts: InputOpts
         output_opts: OutputOpts
 
-    args = Cli.parse()
-    print(args.input_opts.input_file)
-    print(args.output_opts.output_dir)
+    cli = Cli.parse()
+    print(cli.input_opts.input_file)
+    print(cli.output_opts.output_dir)
     ```
     """
 

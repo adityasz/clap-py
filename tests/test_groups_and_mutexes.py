@@ -21,10 +21,10 @@ class TestClassArgumentGroups(unittest.TestCase):
             input_file: str
             debug_group: DebugOptions
 
-        args = Cli.parse(["input.txt", "--verbose", "--debug"])
-        assert args.input_file == "input.txt"
-        assert args.debug_group.verbose
-        assert args.debug_group.debug
+        cli = Cli.parse(["input.txt", "--verbose", "--debug"])
+        assert cli.input_file == "input.txt"
+        assert cli.debug_group.verbose
+        assert cli.debug_group.debug
 
     def test_multiple(self):
         @clap.group(title="Input Options")
@@ -42,17 +42,17 @@ class TestClassArgumentGroups(unittest.TestCase):
             input_group: InputOptions
             output_group: OutputOptions
 
-        args = Cli.parse(["--input-file", "input.txt", "--output-dir", "out/"])
-        assert args.input_group.input_file == "input.txt"
-        assert args.input_group.input_dir is None
-        assert args.output_group.output_file is None
-        assert args.output_group.output_dir == "out/"
+        cli = Cli.parse(["--input-file", "input.txt", "--output-dir", "out/"])
+        assert cli.input_group.input_file == "input.txt"
+        assert cli.input_group.input_dir is None
+        assert cli.output_group.output_file is None
+        assert cli.output_group.output_dir == "out/"
 
-        args = Cli.parse([])
-        assert args.input_group.input_file is None
-        assert args.input_group.input_dir is None
-        assert args.output_group.output_file is None
-        assert args.output_group.output_dir is None
+        cli = Cli.parse([])
+        assert cli.input_group.input_file is None
+        assert cli.input_group.input_dir is None
+        assert cli.output_group.output_file is None
+        assert cli.output_group.output_dir is None
 
     def test_ungrouped_and_mutex(self):
         @clap.group(title="Output Options")
@@ -77,7 +77,7 @@ class TestClassArgumentGroups(unittest.TestCase):
             format_mutex: FormatMutex
             verbose: bool = arg(short, long)
 
-        args = Cli.parse([
+        cli = Cli.parse([
             "input.txt",
             "--verbose",
             "--output-file",
@@ -86,13 +86,13 @@ class TestClassArgumentGroups(unittest.TestCase):
             "--json-out",
         ])
 
-        assert args.input_file == "input.txt"
-        assert args.verbose
-        assert args.output_group.output_file == "out.txt"
-        assert args.mode_mutex.process
-        assert not args.mode_mutex.analyze
-        assert args.format_mutex.json_out
-        assert not args.format_mutex.csv_out
+        assert cli.input_file == "input.txt"
+        assert cli.verbose
+        assert cli.output_group.output_file == "out.txt"
+        assert cli.mode_mutex.process
+        assert not cli.mode_mutex.analyze
+        assert cli.format_mutex.json_out
+        assert not cli.format_mutex.csv_out
 
         with pytest.raises(SystemExit):
             Cli.parse(["input.txt", "--verbose"])
@@ -114,15 +114,15 @@ class TestClassArgumentGroups(unittest.TestCase):
         class Cli(clap.Parser):
             source_mutex: SourceMutex
 
-        args = Cli.parse(["--file", "input.txt"])
-        assert args.source_mutex.file == "input.txt"
-        assert args.source_mutex.url is None
-        assert not args.source_mutex.stdin
+        cli = Cli.parse(["--file", "input.txt"])
+        assert cli.source_mutex.file == "input.txt"
+        assert cli.source_mutex.url is None
+        assert not cli.source_mutex.stdin
 
-        args = Cli.parse(["--url", "http://example.com"])
-        assert args.source_mutex.file is None
-        assert args.source_mutex.url == "http://example.com"
-        assert not args.source_mutex.stdin
+        cli = Cli.parse(["--url", "http://example.com"])
+        assert cli.source_mutex.file is None
+        assert cli.source_mutex.url == "http://example.com"
+        assert not cli.source_mutex.stdin
 
         with pytest.raises(SystemExit):
             Cli.parse(["--file", "input.txt", "--stdin"])
@@ -149,15 +149,15 @@ class TestClassArgumentGroups(unittest.TestCase):
             foo: int = arg()
             random_stuff: RandomStuff = RandomStuff()
 
-        args = Cli.parse(["1", "2", "--verbose"])
-        assert args.foo == 1
-        assert args.random_stuff.bar == 2
-        assert args.random_stuff.verbose
+        cli = Cli.parse(["1", "2", "--verbose"])
+        assert cli.foo == 1
+        assert cli.random_stuff.bar == 2
+        assert cli.random_stuff.verbose
 
-        args = Cli.parse(["1", "2"])
-        assert args.foo == 1
-        assert args.random_stuff.bar == 2
-        assert not args.random_stuff.verbose
+        cli = Cli.parse(["1", "2"])
+        assert cli.foo == 1
+        assert cli.random_stuff.bar == 2
+        assert not cli.random_stuff.verbose
 
     def test_group_in_nested_subcommands(self):
         @clap.group
@@ -182,15 +182,15 @@ class TestClassArgumentGroups(unittest.TestCase):
         class Cli(clap.Parser):
             command: A
 
-        args = Cli.parse(["a", "b", "b", "c", "d"])
-        assert not args.command.command.command.opt
-        assert args.command.command.args.arg == "b"
-        assert args.command.command.command.args.arg == "d"
+        cli = Cli.parse(["a", "b", "b", "c", "d"])
+        assert not cli.command.command.command.opt
+        assert cli.command.command.args.arg == "b"
+        assert cli.command.command.command.args.arg == "d"
 
-        args = Cli.parse(["a", "b", "b", "c", "d", "--opt"])
-        assert args.command.command.command.opt
-        assert args.command.command.args.arg == "b"
-        assert args.command.command.command.args.arg == "d"
+        cli = Cli.parse(["a", "b", "b", "c", "d", "--opt"])
+        assert cli.command.command.command.opt
+        assert cli.command.command.args.arg == "b"
+        assert cli.command.command.command.args.arg == "d"
 
         with pytest.raises(SystemExit):
             Cli.parse([])
@@ -205,10 +205,10 @@ class TestFlattenedArgumentGroups(unittest.TestCase):
             verbose: bool = arg(short, long, group=debug_group)
             debug: bool = arg(short, long, group=debug_group)
 
-        args = Cli.parse(["input.txt", "--verbose", "--debug"])
-        assert args.input_file == "input.txt"
-        assert args.verbose
-        assert args.debug
+        cli = Cli.parse(["input.txt", "--verbose", "--debug"])
+        assert cli.input_file == "input.txt"
+        assert cli.verbose
+        assert cli.debug
 
     def test_multiple(self):
         @clap.command
@@ -222,17 +222,17 @@ class TestFlattenedArgumentGroups(unittest.TestCase):
             output_file: Optional[str] = arg(long, group=output_group)
             output_dir: Optional[str] = arg(long, group=output_group)
 
-        args = Cli.parse(["--input-file", "input.txt", "--output-dir", "out/"])
-        assert args.input_file == "input.txt"
-        assert args.input_dir is None
-        assert args.output_file is None
-        assert args.output_dir == "out/"
+        cli = Cli.parse(["--input-file", "input.txt", "--output-dir", "out/"])
+        assert cli.input_file == "input.txt"
+        assert cli.input_dir is None
+        assert cli.output_file is None
+        assert cli.output_dir == "out/"
 
-        args = Cli.parse([])
-        assert args.input_file is None
-        assert args.input_dir is None
-        assert args.output_file is None
-        assert args.output_dir is None
+        cli = Cli.parse([])
+        assert cli.input_file is None
+        assert cli.input_dir is None
+        assert cli.output_file is None
+        assert cli.output_dir is None
 
     def test_ungrouped_and_mutex(self):
         @clap.command
@@ -251,7 +251,7 @@ class TestFlattenedArgumentGroups(unittest.TestCase):
             json_out: bool = arg(long, group=format_mutex)
             csv_out: bool = arg(long, group=format_mutex)
 
-        args = Cli.parse([
+        cli = Cli.parse([
             "input.txt",
             "--verbose",
             "--output-file",
@@ -260,13 +260,13 @@ class TestFlattenedArgumentGroups(unittest.TestCase):
             "--json-out",
         ])
 
-        assert args.input_file == "input.txt"
-        assert args.verbose
-        assert args.output_file == "out.txt"
-        assert args.process
-        assert not args.analyze
-        assert args.json_out
-        assert not args.csv_out
+        assert cli.input_file == "input.txt"
+        assert cli.verbose
+        assert cli.output_file == "out.txt"
+        assert cli.process
+        assert not cli.analyze
+        assert cli.json_out
+        assert not cli.csv_out
 
         with pytest.raises(SystemExit):
             Cli.parse(["input.txt", "--verbose"])
@@ -286,15 +286,15 @@ class TestFlattenedArgumentGroups(unittest.TestCase):
             url: Optional[str] = arg(long, group=source_mutex)
             stdin: bool = arg(long, group=source_mutex)
 
-        args = Cli.parse(["--file", "input.txt"])
-        assert args.file == "input.txt"
-        assert args.url is None
-        assert not args.stdin
+        cli = Cli.parse(["--file", "input.txt"])
+        assert cli.file == "input.txt"
+        assert cli.url is None
+        assert not cli.stdin
 
-        args = Cli.parse(["--url", "http://example.com"])
-        assert args.file is None
-        assert args.url == "http://example.com"
-        assert not args.stdin
+        cli = Cli.parse(["--url", "http://example.com"])
+        assert cli.file is None
+        assert cli.url == "http://example.com"
+        assert not cli.stdin
 
         with pytest.raises(SystemExit):
             Cli.parse(["--file", "input.txt", "--stdin"])

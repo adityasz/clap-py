@@ -62,20 +62,20 @@ class Cli(clap.Parser):
 
 
 def main():
-    args = Cli.parse()
+    cli = Cli.parse()
 
-    if args.color == ColorChoice.Always or (
-        args.color == ColorChoice.Auto and sys.stdout.isatty()
+    if cli.color == ColorChoice.Always or (
+        cli.color == ColorChoice.Auto and sys.stdout.isatty()
     ):
         verb = Style().fg_color(AnsiColor.Green).bold()
         info = Style().fg_color(AnsiColor.Blue).bold()
     else:
         verb = info = Style()
 
-    if cert := args.cert:
+    if cert := cli.cert:
         print(f"Using {info}'{cert}'{info:#} as the CA certificate\n")
 
-    match args.command:
+    match cli.command:
         case Watch(input):
             print(
                 f"{verb}watching{verb:#} {input}\n"

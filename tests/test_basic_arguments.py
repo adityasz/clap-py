@@ -16,8 +16,8 @@ class TestBasicArgumentParsing(unittest.TestCase):
         class Cli(clap.Parser):
             file: Path
 
-        args = Cli.parse(["/tmp/test.txt"])
-        assert args.file == Path("/tmp/test.txt")
+        cli = Cli.parse(["/tmp/test.txt"])
+        assert cli.file == Path("/tmp/test.txt")
 
         with pytest.raises(SystemExit):
             Cli.parse([])
@@ -30,11 +30,11 @@ class TestBasicArgumentParsing(unittest.TestCase):
         class Cli(clap.Parser):
             file: Optional[Path]
 
-        args = Cli.parse(["/tmp/test.txt"])
-        assert args.file == Path("/tmp/test.txt")
+        cli = Cli.parse(["/tmp/test.txt"])
+        assert cli.file == Path("/tmp/test.txt")
 
-        args = Cli.parse([])
-        assert args.file is None
+        cli = Cli.parse([])
+        assert cli.file is None
 
         with pytest.raises(SystemExit):
             Cli.parse(["/tmp/test.txt", "extra.txt"])
@@ -44,14 +44,14 @@ class TestBasicArgumentParsing(unittest.TestCase):
         class Cli(clap.Parser):
             verbose: bool = arg(short="v", long="verbose")
 
-        args = Cli.parse([])
-        assert not args.verbose
+        cli = Cli.parse([])
+        assert not cli.verbose
 
-        args = Cli.parse(["-v"])
-        assert args.verbose
+        cli = Cli.parse(["-v"])
+        assert cli.verbose
 
-        args = Cli.parse(["--verbose"])
-        assert args.verbose
+        cli = Cli.parse(["--verbose"])
+        assert cli.verbose
 
         with pytest.raises(SystemExit):
             Cli.parse(["-x"])
@@ -64,14 +64,14 @@ class TestBasicArgumentParsing(unittest.TestCase):
         class Cli(clap.Parser):
             verbose: bool = arg(short="-v", long="--verbose")
 
-        args = Cli.parse([])
-        assert not args.verbose
+        cli = Cli.parse([])
+        assert not cli.verbose
 
-        args = Cli.parse(["-v"])
-        assert args.verbose
+        cli = Cli.parse(["-v"])
+        assert cli.verbose
 
-        args = Cli.parse(["--verbose"])
-        assert args.verbose
+        cli = Cli.parse(["--verbose"])
+        assert cli.verbose
 
         with pytest.raises(SystemExit):
             Cli.parse(["--unknown"])
@@ -81,14 +81,14 @@ class TestBasicArgumentParsing(unittest.TestCase):
         class Cli(clap.Parser):
             verbose: bool = arg(short=True, long=True)
 
-        args = Cli.parse([])
-        assert not args.verbose
+        cli = Cli.parse([])
+        assert not cli.verbose
 
-        args = Cli.parse(["-v"])
-        assert args.verbose
+        cli = Cli.parse(["-v"])
+        assert cli.verbose
 
-        args = Cli.parse(["--verbose"])
-        assert args.verbose
+        cli = Cli.parse(["--verbose"])
+        assert cli.verbose
 
         with pytest.raises(SystemExit):
             Cli.parse(["--unknown"])
@@ -98,25 +98,25 @@ class TestBasicArgumentParsing(unittest.TestCase):
         class Cli(clap.Parser):
             verbose: bool = arg(short, long)
 
-        args = Cli.parse([])
-        assert not args.verbose
+        cli = Cli.parse([])
+        assert not cli.verbose
 
-        args = Cli.parse(["-v"])
-        assert args.verbose
+        cli = Cli.parse(["-v"])
+        assert cli.verbose
 
-        args = Cli.parse(["--verbose"])
-        assert args.verbose
+        cli = Cli.parse(["--verbose"])
+        assert cli.verbose
 
     def test_option_with_value(self):
         @clap.command
         class Cli(clap.Parser):
             output: Optional[str] = arg(long)
 
-        args = Cli.parse(["--output", "file.txt"])
-        assert args.output == "file.txt"
+        cli = Cli.parse(["--output", "file.txt"])
+        assert cli.output == "file.txt"
 
-        args = Cli.parse([])
-        assert args.output is None
+        cli = Cli.parse([])
+        assert cli.output is None
 
         with pytest.raises(SystemExit):
             Cli.parse(["--output"])
@@ -131,15 +131,15 @@ class TestBasicArgumentParsing(unittest.TestCase):
             output_file: Optional[Path] = arg(long, value_name="<PATH>")
             verbose: bool = arg(short, long)
 
-        args = Cli.parse(["input.txt", "--output", "output.txt", "-v"])
-        assert args.input_file == Path("input.txt")
-        assert args.output_file == Path("output.txt")
-        assert args.verbose
+        cli = Cli.parse(["input.txt", "--output", "output.txt", "-v"])
+        assert cli.input_file == Path("input.txt")
+        assert cli.output_file == Path("output.txt")
+        assert cli.verbose
 
-        args = Cli.parse(["input.txt"])
-        assert args.input_file == Path("input.txt")
-        assert args.output_file is None
-        assert not args.verbose
+        cli = Cli.parse(["input.txt"])
+        assert cli.input_file == Path("input.txt")
+        assert cli.output_file is None
+        assert not cli.verbose
 
         with pytest.raises(SystemExit):
             Cli.parse(["--output", "output.txt", "-v"])
@@ -152,11 +152,11 @@ class TestBasicArgumentParsing(unittest.TestCase):
         class Cli(clap.Parser):
             asdf: int = arg(default_value=42)
 
-        args = Cli.parse([])
-        assert args.asdf == 42
+        cli = Cli.parse([])
+        assert cli.asdf == 42
 
-        args = Cli.parse(["100"])
-        assert args.asdf == 100
+        cli = Cli.parse(["100"])
+        assert cli.asdf == 100
 
         with pytest.raises(SystemExit):
             Cli.parse(["string"])
@@ -166,11 +166,11 @@ class TestBasicArgumentParsing(unittest.TestCase):
         class Cli(clap.Parser):
             asdf: int = arg(long, default_value=42)
 
-        args = Cli.parse([])
-        assert args.asdf == 42
+        cli = Cli.parse([])
+        assert cli.asdf == 42
 
-        args = Cli.parse(["--asdf", "100"])
-        assert args.asdf == 100
+        cli = Cli.parse(["--asdf", "100"])
+        assert cli.asdf == 100
 
         with pytest.raises(SystemExit):
             Cli.parse(["--asdf", "not_a_number"])
@@ -185,14 +185,14 @@ class TestBasicArgumentParsing(unittest.TestCase):
                 long, num_args="?", default_missing_value="stdout", default_value="file.txt"
             )
 
-        args = Cli.parse([])
-        assert args.output == "file.txt"
+        cli = Cli.parse([])
+        assert cli.output == "file.txt"
 
-        args = Cli.parse(["--output"])
-        assert args.output == "stdout"
+        cli = Cli.parse(["--output"])
+        assert cli.output == "stdout"
 
-        args = Cli.parse(["--output", "custom.txt"])
-        assert args.output == "custom.txt"
+        cli = Cli.parse(["--output", "custom.txt"])
+        assert cli.output == "custom.txt"
 
         with pytest.raises(SystemExit):
             Cli.parse(["--unknown"])

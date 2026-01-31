@@ -26,9 +26,9 @@ class Cli(clap.Parser):
     verbose: bool = arg(short, long)
     """Enable verbose output."""
 
-args = Cli.parse()
-if args.verbose:
-    print(f"Reading {args.input}...")
+cli = Cli.parse()
+if cli.verbose:
+print(f"Reading {cli.input}...")
 ```
 
 See [/examples](https://github.com/adityasz/typed-clap/tree/master/examples)
@@ -55,8 +55,8 @@ for more examples.
   class Cli(clap.Parser):
       command: Add | List
 
-  args = Cli.parse()
-  match args.command:
+  cli = Cli.parse()
+  match cli.command:
       case Add(file):
           print(f"Adding {file}...")
       case List(directory):
@@ -78,8 +78,8 @@ for more examples.
   class Cli(clap.Parser):
       input_options: InputOptions
 
-  args = Cli.parse()
-  print(args.input_options.dpi or args.input_options.resolution)
+  cli = Cli.parse()
+  print(cli.input_options.dpi or cli.input_options.resolution)
   ```
 
 - **Separate short and long help** with `-h` and `--help`. See example output

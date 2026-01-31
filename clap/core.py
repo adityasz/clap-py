@@ -37,8 +37,8 @@ class ArgAction(StrEnum):
     class Cli(clap.Parser):
         output: str = arg(long, action=ArgAction.Set)
 
-    args = Cli.parse(["--output", "file.txt"])
-    assert args.output == "file.txt"
+    cli = Cli.parse(["--output", "file.txt"])
+    assert cli.output == "file.txt"
     ```
     """
     SetTrue = "store_true"
@@ -54,11 +54,11 @@ class ArgAction(StrEnum):
     class Cli(clap.Parser):
         verbose: bool = arg(long, action=ArgAction.SetTrue)
 
-    args = Cli.parse(["--verbose"])
-    assert args.verbose == True
+    cli = Cli.parse(["--verbose"])
+    assert cli.verbose == True
 
-    args = Cli.parse([])
-    assert args.verbose == False
+    cli = Cli.parse([])
+    assert cli.verbose == False
     ```
     """
     SetFalse = "store_false"
@@ -74,11 +74,11 @@ class ArgAction(StrEnum):
     class Cli(clap.Parser):
         quiet: bool = arg(long, action=ArgAction.SetFalse)
 
-    args = Cli.parse(["--quiet"])
-    assert args.quiet == False
+    cli = Cli.parse(["--quiet"])
+    assert cli.quiet == False
 
-    args = Cli.parse([])
-    assert args.quiet == True
+    cli = Cli.parse([])
+    assert cli.quiet == True
     ```
     """
     Append = "append"
@@ -94,11 +94,11 @@ class ArgAction(StrEnum):
     class Cli(clap.Parser):
         files: list[str] = arg(long, action=ArgAction.Append)
 
-    args = Cli.parse(["--files", "a.txt", "--files", "b.txt"])
-    assert args.files == ["a.txt", "b.txt"]
+    cli = Cli.parse(["--files", "a.txt", "--files", "b.txt"])
+    assert cli.files == ["a.txt", "b.txt"]
 
-    args = Cli.parse([])
-    assert args.files == []
+    cli = Cli.parse([])
+    assert cli.files == []
     ```
     """
     Count = "count"
@@ -114,11 +114,11 @@ class ArgAction(StrEnum):
     class Cli(clap.Parser):
         verbose: int = arg(short, action=ArgAction.Count)
 
-    args = Cli.parse(["-vvv"])
-    assert args.verbose == 3
+    cli = Cli.parse(["-vvv"])
+    assert cli.verbose == 3
 
-    args = Cli.parse([])
-    assert args.verbose == 0
+    cli = Cli.parse([])
+    assert cli.verbose == 0
     ```
     """
 

@@ -23,14 +23,14 @@ class TestEnums(unittest.TestCase):
         class Cli(clap.Parser):
             color: ColorChoice
 
-        args = Cli.parse(["auto"])
-        assert args.color == ColorChoice.Auto
+        cli = Cli.parse(["auto"])
+        assert cli.color == ColorChoice.Auto
 
-        args = Cli.parse(["always"])
-        assert args.color == ColorChoice.Always
+        cli = Cli.parse(["always"])
+        assert cli.color == ColorChoice.Always
 
-        args = Cli.parse(["never"])
-        assert args.color == ColorChoice.Never
+        cli = Cli.parse(["never"])
+        assert cli.color == ColorChoice.Never
 
         with pytest.raises(SystemExit):
             Cli.parse(["invalid"])
@@ -46,14 +46,14 @@ class TestEnums(unittest.TestCase):
         class Cli(clap.Parser):
             color: Optional[ColorChoice] = arg(short, long)
 
-        args = Cli.parse([])
-        assert args.color is None
+        cli = Cli.parse([])
+        assert cli.color is None
 
-        args = Cli.parse(["-c", "always"])
-        assert args.color == ColorChoice.Always
+        cli = Cli.parse(["-c", "always"])
+        assert cli.color == ColorChoice.Always
 
-        args = Cli.parse(["--color", "always"])
-        assert args.color == ColorChoice.Always
+        cli = Cli.parse(["--color", "always"])
+        assert cli.color == ColorChoice.Always
 
         with pytest.raises(SystemExit):
             Cli.parse(["-c"])
@@ -69,11 +69,11 @@ class TestEnums(unittest.TestCase):
         class Cli(clap.Parser):
             color: ColorChoice = arg(long, default_value=ColorChoice.Auto)
 
-        args = Cli.parse([])
-        assert args.color == ColorChoice.Auto
+        cli = Cli.parse([])
+        assert cli.color == ColorChoice.Auto
 
-        args = Cli.parse(["--color", "always"])
-        assert args.color == ColorChoice.Always
+        cli = Cli.parse(["--color", "always"])
+        assert cli.color == ColorChoice.Always
 
         with pytest.raises(SystemExit):
             Cli.parse(["--color"])

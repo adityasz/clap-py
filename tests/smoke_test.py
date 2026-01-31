@@ -6,8 +6,8 @@ def smoke_test():
     class Cli(clap.Parser):
         name: str
 
-    args = Cli.parse(["test"])
-    assert args.name == "test"
+    cli = Cli.parse(["test"])
+    assert cli.name == "test"
 
 
 if __name__ == "__main__":

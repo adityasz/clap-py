@@ -15,25 +15,25 @@ class TestActions(unittest.TestCase):
         class Cli(clap.Parser):
             files: Optional[list[str]] = arg(num_args="+")
 
-        args = Cli.parse([])
-        assert args.files is None
+        cli = Cli.parse([])
+        assert cli.files is None
 
-        args = Cli.parse(["one"])
-        assert args.files == ["one"]
+        cli = Cli.parse(["one"])
+        assert cli.files == ["one"]
 
-        args = Cli.parse(["one", "two"])
-        assert args.files == ["one", "two"]
+        cli = Cli.parse(["one", "two"])
+        assert cli.files == ["one", "two"]
 
     def test_store_const_action(self):
         @clap.command
         class Cli(clap.Parser):
             mode: Optional[str] = arg(long, default_missing_value="debug", num_args=0)
 
-        args = Cli.parse([])
-        assert args.mode is None
+        cli = Cli.parse([])
+        assert cli.mode is None
 
-        args = Cli.parse(["--mode"])
-        assert args.mode == "debug"
+        cli = Cli.parse(["--mode"])
+        assert cli.mode == "debug"
 
         with pytest.raises(SystemExit):
             Cli.parse(["--mode", "extra_arg"])
@@ -43,11 +43,11 @@ class TestActions(unittest.TestCase):
         class Cli(clap.Parser):
             include: Optional[list[str]] = arg(short="I", action=ArgAction.Append)
 
-        args = Cli.parse(["-I", "path1", "-I", "path2", "-I", "path3"])
-        assert args.include == ["path1", "path2", "path3"]
+        cli = Cli.parse(["-I", "path1", "-I", "path2", "-I", "path3"])
+        assert cli.include == ["path1", "path2", "path3"]
 
-        args = Cli.parse([])
-        assert args.include is None
+        cli = Cli.parse([])
+        assert cli.include is None
 
         with pytest.raises(SystemExit):
             Cli.parse(["-I"])
@@ -57,14 +57,14 @@ class TestActions(unittest.TestCase):
         class Cli(clap.Parser):
             verbose: int = arg(short, action=ArgAction.Count)
 
-        args = Cli.parse([])
-        assert args.verbose == 0
+        cli = Cli.parse([])
+        assert cli.verbose == 0
 
-        args = Cli.parse(["-v"])
-        assert args.verbose == 1
+        cli = Cli.parse(["-v"])
+        assert cli.verbose == 1
 
-        args = Cli.parse(["-vvv"])
-        assert args.verbose == 3
+        cli = Cli.parse(["-vvv"])
+        assert cli.verbose == 3
 
         with pytest.raises(SystemExit):
             Cli.parse(["-x"])
@@ -74,11 +74,11 @@ class TestActions(unittest.TestCase):
         class Cli(clap.Parser):
             no_cache: bool = arg(long, action=ArgAction.SetFalse, default_value=True)
 
-        args = Cli.parse([])
-        assert args.no_cache
+        cli = Cli.parse([])
+        assert cli.no_cache
 
-        args = Cli.parse(["--no-cache"])
-        assert not args.no_cache
+        cli = Cli.parse(["--no-cache"])
+        assert not cli.no_cache
 
         with pytest.raises(SystemExit):
             Cli.parse(["--no-cache", "false"])
@@ -88,11 +88,11 @@ class TestActions(unittest.TestCase):
         class Cli(clap.Parser):
             libs: list[str] = arg(short, action=ArgAction.Append)
 
-        args = Cli.parse([])
-        assert args.libs == []
+        cli = Cli.parse([])
+        assert cli.libs == []
 
-        args = Cli.parse(["-l", "lib1", "-l", "lib2"])
-        assert args.libs == ["lib1", "lib2"]
+        cli = Cli.parse(["-l", "lib1", "-l", "lib2"])
+        assert cli.libs == ["lib1", "lib2"]
 
         with pytest.raises(SystemExit):
             Cli.parse(["-l"])
@@ -102,11 +102,11 @@ class TestActions(unittest.TestCase):
         class Cli(clap.Parser):
             flags: list[str] = arg(long, action=ArgAction.Append, default_value=["default"])
 
-        args = Cli.parse([])
-        assert args.flags == ["default"]
+        cli = Cli.parse([])
+        assert cli.flags == ["default"]
 
-        args = Cli.parse(["--flags", "custom"])
-        assert args.flags == ["default", "custom"]
+        cli = Cli.parse(["--flags", "custom"])
+        assert cli.flags == ["default", "custom"]
 
         with pytest.raises(SystemExit):
             Cli.parse(["--invalid-flag", "value"])
@@ -121,11 +121,11 @@ class TestActions(unittest.TestCase):
                 default_missing_value="feature1",
             )
 
-        args = Cli.parse([])
-        assert args.features == []
+        cli = Cli.parse([])
+        assert cli.features == []
 
-        args = Cli.parse(["--enable-feature", "--enable-feature"])
-        assert args.features == ["feature1", "feature1"]
+        cli = Cli.parse(["--enable-feature", "--enable-feature"])
+        assert cli.features == ["feature1", "feature1"]
 
         with pytest.raises(SystemExit):
             Cli.parse(["--enable-feature", "value"])
@@ -135,11 +135,11 @@ class TestActions(unittest.TestCase):
         class Cli(clap.Parser):
             items: list[str] = arg(long, num_args="+")
 
-        args = Cli.parse([])
-        assert args.items == []
+        cli = Cli.parse([])
+        assert cli.items == []
 
-        args = Cli.parse(["--items", "a", "b", "--items", "c", "d"])
-        assert args.items == ["a", "b", "c", "d"]
+        cli = Cli.parse(["--items", "a", "b", "--items", "c", "d"])
+        assert cli.items == ["a", "b", "c", "d"]
 
         with pytest.raises(SystemExit):
             Cli.parse(["--items"])
@@ -149,8 +149,8 @@ class TestActions(unittest.TestCase):
         class Cli(clap.Parser):
             mode: str = arg(long, default_missing_value="production", num_args=0)
 
-        args = Cli.parse(["--mode"])
-        assert args.mode == "production"
+        cli = Cli.parse(["--mode"])
+        assert cli.mode == "production"
 
         with pytest.raises(SystemExit):
             Cli.parse([])
@@ -164,13 +164,13 @@ class TestActions(unittest.TestCase):
             enable: bool = arg(long, action=ArgAction.SetTrue)
             disable: bool = arg(long, action=ArgAction.SetFalse)
 
-        args = Cli.parse([])
-        assert not args.enable
-        assert args.disable
+        cli = Cli.parse([])
+        assert not cli.enable
+        assert cli.disable
 
-        args = Cli.parse(["--enable", "--disable"])
-        assert args.enable
-        assert not args.disable
+        cli = Cli.parse(["--enable", "--disable"])
+        assert cli.enable
+        assert not cli.disable
 
         with pytest.raises(SystemExit):
             Cli.parse(["--enable", "true"])
@@ -180,11 +180,11 @@ class TestActions(unittest.TestCase):
         class Cli(clap.Parser):
             level: int = arg(short="l", action=ArgAction.Count, default_value=5)
 
-        args = Cli.parse([])
-        assert args.level == 5
+        cli = Cli.parse([])
+        assert cli.level == 5
 
-        args = Cli.parse(["-ll"])
-        assert args.level == 7
+        cli = Cli.parse(["-ll"])
+        assert cli.level == 7
 
         with pytest.raises(SystemExit):
             Cli.parse(["-lx"])
@@ -202,17 +202,17 @@ class TestActions(unittest.TestCase):
                 num_args=0,
             )
 
-        args = Cli.parse(["-vv", "--debug", "-I", "lib1", "-I", "lib2", "--feature"])
-        assert args.verbose == 2
-        assert args.debug
-        assert args.includes == ["lib1", "lib2"]
-        assert args.features == ["enabled"]
+        cli = Cli.parse(["-vv", "--debug", "-I", "lib1", "-I", "lib2", "--feature"])
+        assert cli.verbose == 2
+        assert cli.debug
+        assert cli.includes == ["lib1", "lib2"]
+        assert cli.features == ["enabled"]
 
-        args = Cli.parse([])
-        assert args.verbose == 0
-        assert not args.debug
-        assert args.includes == []
-        assert args.features == []
+        cli = Cli.parse([])
+        assert cli.verbose == 0
+        assert not cli.debug
+        assert cli.includes == []
+        assert cli.features == []
 
         with pytest.raises(SystemExit):
             Cli.parse(["-I"])
