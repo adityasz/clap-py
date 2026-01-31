@@ -1,9 +1,21 @@
-# typed-clap[^1]
+<h1 align="center"><code>typed-clap</code></h1>
 
-![CI](https://github.com/adityasz/typed-clap/actions/workflows/ci.yml/badge.svg)
+<p align="center">
+  A declarative and type-safe argument parser for Python, inspired by
+  <a href="https://github.com/clap-rs/clap">clap-rs</a>.
+</p>
 
-A declarative and type-safe argument parser for Python, inspired by
-[clap-rs](https://github.com/clap-rs/clap).
+<p align="center">
+  <a href="https://pypi.org/project/typed-clap/">
+    <img alt="pypi" src="https://img.shields.io/pypi/v/typed-clap.svg">
+  </a>
+  <a href="https://pypi.org/project/typed-clap/">
+    <img alt="pypi" src="https://img.shields.io/pypi/pyversions/typed-clap.svg">
+  </a>
+  <a href="https://github.com/adityasz/typed-clap/actions/workflows/ci.yml">
+    <img alt="GithubActions" src="https://github.com/adityasz/typed-clap/actions/workflows/ci.yml/badge.svg">
+  </a>
+</p>
 
 ## Installation [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 
@@ -148,7 +160,7 @@ typed-clap is successfully type checked in CI by:
 - [mypy](https://mypy-lang.org/)
 - [basedpyright](https://docs.basedpyright.com/latest/)
 
-It can also be used with [ty](https://docs.astral.sh/ty/)[^2].
+It can also be used with [ty](https://docs.astral.sh/ty/)[^1].
 
 ## Contributing
 
@@ -177,8 +189,7 @@ creating a PR. Thank you!
 
 [clap-rs](https://github.com/clap-rs/clap). Most docstrings are lifted verbatim.
 
-[^1]: Because the names clap{,-py,-python} were already taken on PyPI :-(
-[^2]: ty is not a part of the CI because it gives some false positives in the
+[^1]: ty is not a part of the CI because it gives some false positives in the
 completely standard _internal_ code since ty is not complete and still a WIP.
 It does not have any issues with the APIs of this library or their usage,
 though.
