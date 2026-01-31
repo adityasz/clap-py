@@ -2,12 +2,32 @@
 name = "typed-clap"
 authors = [{name = "Aditya Singh", email = "1adityasingh@proton.me"}]
 maintainers = [{name = "Aditya Singh", email = "1adityasingh@proton.me"}]
-version = "0.11.0"
+version = "0.11.1"
 description = "A declarative and type-safe command-line argument parser."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.13"
 dependencies = []
+keywords = [
+    "clap",
+    "command-line",
+    "argument",
+    "cli",
+    "parser",
+    "argparse",
+    "declarative",
+    "derive",
+    "typed",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries",
+    "Typing :: Typed",
+]
 
 [project.urls]
 Homepage = "https://github.com/adityasz/typed-clap"

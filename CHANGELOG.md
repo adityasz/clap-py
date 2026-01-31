@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 0.11.1
+
+Released on 2026-01-31.
+
+### Enhancements
+
+- `@clap.group` decorated classes can now be initialized like dataclasses.
+
+### Fixed
+
+- The `default_value` list will now get overwritten for `list[T]` types when using
+  `ArgAction.Append` (the default action). The previous behavior matched
+  argparse but was stupid.
+
 ## 0.11.0
 
 Released on 2025-12-30.
