@@ -334,6 +334,9 @@ class Arg:
     required: Optional[bool] = None
     deprecated: Optional[bool] = None
     dest: Optional[str] = None
+    extend_default: Optional[Any] = None
+    """argparse has a "bug" where the values get appended to the default value
+    list if the extend action is used. This is a workaround for that."""
 
     def is_positional(self) -> bool:
         return not self.short and not self.long
@@ -388,6 +391,9 @@ class Arg:
                     kwargs.pop("nargs")
                 case _:
                     kwargs["action"] = "extend"
+                    if self.default_value is not None:
+                        self.extend_default = self.default_value
+                        kwargs["default"] = None
 
         if self.num_args == 0 and self.action == ArgAction.Set:
             kwargs["action"] = "store_const"

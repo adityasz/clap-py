@@ -468,6 +468,8 @@ def transform_value(value: Any, arg: Arg) -> Any:
     """Transform a parsed value based on its argument type."""
     match arg.ty:
         case ArgType.List(_, optional):
+            if value is None and arg.extend_default is not None:
+                return arg.extend_default
             if optional and arg.is_positional():
                 if value == []:
                     return None

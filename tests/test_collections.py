@@ -9,7 +9,7 @@ from clap import arg, long
 
 
 class TestListArguments(unittest.TestCase):
-    def test_positional_with_nargs_star(self):
+    def test_positional_nargs_star(self):
         @clap.command
         class Cli(clap.Parser):
             files: list[str] = arg(num_args="*")
@@ -23,7 +23,7 @@ class TestListArguments(unittest.TestCase):
         with pytest.raises(SystemExit):
             Cli.parse(["--unknown", "file1.txt"])
 
-    def test_option_with_nargs_star(self):
+    def test_option_nargs_star(self):
         @clap.command
         class Cli(clap.Parser):
             files: list[str] = arg(long, num_args="*")
@@ -37,7 +37,7 @@ class TestListArguments(unittest.TestCase):
         with pytest.raises(SystemExit):
             Cli.parse(["--unknown", "file1.txt"])
 
-    def test_list_of_paths(self):
+    def test_positional_nargs_plus(self):
         @clap.command
         class Cli(clap.Parser):
             files: list[Path] = arg(num_args="+")
@@ -54,7 +54,7 @@ class TestListArguments(unittest.TestCase):
         with pytest.raises(SystemExit):
             Cli.parse(["file1.txt", "--unknown"])
 
-    def test_optional_list_argument(self):
+    def test_optional_list(self):
         @clap.command
         class Cli(clap.Parser):
             tags: Optional[list[str]] = arg(long, num_args="*")
@@ -68,9 +68,26 @@ class TestListArguments(unittest.TestCase):
         args = Cli.parse(["--tags", "tag1", "tag2"])
         assert args.tags == ["tag1", "tag2"]
 
+    def test_list_with_default_value(self):
+        @clap.command
+        class Cli(clap.Parser):
+            values: list[int] = arg(long, default_value=[1, 2, 3], num_args="*")
+
+        args = Cli.parse([])
+        assert args.values == [1, 2, 3]
+
+        args = Cli.parse(["--values"])
+        assert args.values == []
+
+        args = Cli.parse(["--values", "4", "5", "6"])
+        assert args.values == [4, 5, 6]
+
+        args = Cli.parse(["--values", "4", "5", "--values", "6"])
+        assert args.values == [4, 5, 6]
+
 
 class TestTupleArguments(unittest.TestCase):
-    def test_tuple_three_elements(self):
+    def test_three_elements(self):
         @clap.command
         class Cli(clap.Parser):
             color: tuple[int, int, int]
@@ -90,7 +107,7 @@ class TestTupleArguments(unittest.TestCase):
         with pytest.raises(SystemExit):
             Cli.parse(["255", "not_a_number", "0"])
 
-    def test_tuple_nargs_mismatch_error(self):
+    def test_nargs_mismatch_error(self):
         @clap.command
         class Cli(clap.Parser):
             point: tuple[int, int] = arg(num_args=3)
