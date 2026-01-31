@@ -182,13 +182,13 @@ def command[T](
 
         setattr(cls, _COMMAND_DATA, command)
 
-        # delete default values of fields so that `dataclass` does not complain
+        # clear default values of fields so that `dataclass` does not complain
         # about mutable defaults (`Arg`)
         attrs = {}
         for name in cls.__annotations__:
             if attr := getattr(cls, name, None):
                 attrs[name] = attr
-                delattr(cls, name)
+                setattr(cls, name, None)
         setattr(cls, _ATTR_DEFAULTS, attrs)
 
         dataclass(cls, slots=True)
@@ -346,13 +346,13 @@ def subcommand[T](
         setattr(cls, _SUBCOMMAND_MARKER, True)
         setattr(cls, _COMMAND_DATA, command)
 
-        # delete default values of fields so that `dataclass` does not complain
+        # clear default values of fields so that `dataclass` does not complain
         # about mutable defaults (`Arg`)
         attrs = {}
         for name in cls.__annotations__:
             if attr := getattr(cls, name, None):
                 attrs[name] = attr
-                delattr(cls, name)
+                setattr(cls, name, None)
         setattr(cls, _ATTR_DEFAULTS, attrs)
 
         dataclass(cls, slots=True)
@@ -438,13 +438,13 @@ def group[T](
             ),
         )
 
-        # delete default values of fields so that `dataclass` does not complain
+        # clear default values of fields so that `dataclass` does not complain
         # about mutable defaults (`Arg`)
         attrs = {}
         for name in cls.__annotations__:
             if attr := getattr(cls, name, None):
                 attrs[name] = attr
-                delattr(cls, name)
+                setattr(cls, name, None)
         setattr(cls, _ATTR_DEFAULTS, attrs)
 
         dataclass(cls, slots=True)
