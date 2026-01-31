@@ -767,6 +767,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../group/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    group
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../actions/" class="md-nav__link">
         
   
@@ -831,34 +859,6 @@
     
   
     Parser
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../group/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Group
   
 
     
@@ -1624,21 +1624,20 @@ subcommands.</p>
 <span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
     <span class="n">command</span><span class="p">:</span> <span class="n">Add</span> <span class="o">|</span> <span class="n">Remove</span>
     <span class="c1"># Alternatively, you can write command: Union[Add, Remove]</span>
-
     <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">short</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">long</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-    <span class="n">args</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
 
     <span class="c1"># You can check for the existence of subcommands, and if found use their</span>
     <span class="c1"># matches just as you would the top level cmd</span>
-    <span class="k">match</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span><span class="p">:</span>
+    <span class="k">match</span> <span class="n">cli</span><span class="o">.</span><span class="n">command</span><span class="p">:</span>
         <span class="k">case</span> <span class="n">Add</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">quiet</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">cli</span><span class="o">.</span><span class="n">quiet</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;myapp add&#39; was used, name is: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">case</span> <span class="n">Remove</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">quiet</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">cli</span><span class="o">.</span><span class="n">quiet</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;myapp remove&#39; was used, name is: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 
@@ -1809,14 +1808,14 @@ for basic grouping and mutual exclusion.</p>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-    <span class="n">args</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
 
     <span class="c1"># Let&#39;s assume the old version 1.2.3</span>
     <span class="n">major</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">minor</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">patch</span> <span class="o">=</span> <span class="mi">3</span>
 
-    <span class="n">vers</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">vers</span>
+    <span class="n">vers</span> <span class="o">=</span> <span class="n">cli</span><span class="o">.</span><span class="n">vers</span>
     <span class="n">version</span><span class="p">:</span> <span class="nb">str</span>
 
     <span class="c1"># See if --set_ver was used to set the version manually</span>
@@ -1829,7 +1828,7 @@ for basic grouping and mutual exclusion.</p>
             <span class="k">case</span><span class="w"> </span><span class="kc">True</span><span class="p">,</span> <span class="k">_</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">major</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">minor</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="kc">True</span><span class="p">:</span> <span class="n">patch</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">()</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">AssertionError</span>
         <span class="n">version</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">major</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">minor</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">patch</span><span class="si">}</span><span class="s2">&quot;</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Version: </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -1872,22 +1871,16 @@ usage: <span style="font-weight: bold">04_02_groups.py</span> [OPTIONS] &lt;<spa
 <span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
     <span class="n">input_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="p">()</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Some regular input.&quot;&quot;&quot;</span>
-
     <span class="n">set_ver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">,</span> <span class="n">value_name</span><span class="o">=</span><span class="s2">&quot;VER&quot;</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set version manually.&quot;&quot;&quot;</span>
-
     <span class="n">major</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Auto inc major.&quot;&quot;&quot;</span>
-
     <span class="n">minor</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Auto inc minor.&quot;&quot;&quot;</span>
-
     <span class="n">patch</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Auto inc patch.&quot;&quot;&quot;</span>
-
     <span class="n">spec_in</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Some special input argument.&quot;&quot;&quot;</span>
-
     <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">short</span><span class="p">)</span>
 
 
@@ -2077,7 +2070,7 @@ they provide <a class="autorefs autorefs-external" href="https://docs.python.org
 example, pattern matching with positionals in <code>match</code>-<code>case</code>).</p>
 <p>This also brings some dataclass limitations: If fields without default values
 are present after fields with default values, type checkers will complain. There
-are no runtime implications, but to satisfy the type checkers, the following
+are no runtime implications, but to satisfy type checkers, the following
 (reasonable) workarounds can be used:</p>
 <ul>
 <li>

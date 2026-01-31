@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://adityasz.github.io/typed-clap/actions/">
       
       
-        <link rel="prev" href="../arg/">
+        <link rel="prev" href="../group/">
       
       
         <link rel="next" href="../help/">
@@ -529,6 +529,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../group/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    group
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -759,34 +787,6 @@
     
   
     Parser
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../group/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Group
   
 
     
@@ -1190,11 +1190,11 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
     <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="n">ArgAction</span><span class="o">.</span><span class="n">Append</span><span class="p">)</span>
 
-<span class="n">args</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([</span><span class="s2">&quot;--files&quot;</span><span class="p">,</span> <span class="s2">&quot;a.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;--files&quot;</span><span class="p">,</span> <span class="s2">&quot;b.txt&quot;</span><span class="p">])</span>
-<span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">files</span> <span class="o">==</span> <span class="p">[</span><span class="s2">&quot;a.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;b.txt&quot;</span><span class="p">]</span>
+<span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([</span><span class="s2">&quot;--files&quot;</span><span class="p">,</span> <span class="s2">&quot;a.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;--files&quot;</span><span class="p">,</span> <span class="s2">&quot;b.txt&quot;</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">cli</span><span class="o">.</span><span class="n">files</span> <span class="o">==</span> <span class="p">[</span><span class="s2">&quot;a.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;b.txt&quot;</span><span class="p">]</span>
 
-<span class="n">args</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([])</span>
-<span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">files</span> <span class="o">==</span> <span class="p">[]</span>
+<span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([])</span>
+<span class="k">assert</span> <span class="n">cli</span><span class="o">.</span><span class="n">files</span> <span class="o">==</span> <span class="p">[]</span>
 </code></pre></div>
 
     </div>
@@ -1229,11 +1229,11 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
     <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">short</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="n">ArgAction</span><span class="o">.</span><span class="n">Count</span><span class="p">)</span>
 
-<span class="n">args</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([</span><span class="s2">&quot;-vvv&quot;</span><span class="p">])</span>
-<span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">verbose</span> <span class="o">==</span> <span class="mi">3</span>
+<span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([</span><span class="s2">&quot;-vvv&quot;</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">cli</span><span class="o">.</span><span class="n">verbose</span> <span class="o">==</span> <span class="mi">3</span>
 
-<span class="n">args</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([])</span>
-<span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">verbose</span> <span class="o">==</span> <span class="mi">0</span>
+<span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([])</span>
+<span class="k">assert</span> <span class="n">cli</span><span class="o">.</span><span class="n">verbose</span> <span class="o">==</span> <span class="mi">0</span>
 </code></pre></div>
 
     </div>
@@ -1268,8 +1268,8 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
     <span class="n">output</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="n">ArgAction</span><span class="o">.</span><span class="n">Set</span><span class="p">)</span>
 
-<span class="n">args</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([</span><span class="s2">&quot;--output&quot;</span><span class="p">,</span> <span class="s2">&quot;file.txt&quot;</span><span class="p">])</span>
-<span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="s2">&quot;file.txt&quot;</span>
+<span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([</span><span class="s2">&quot;--output&quot;</span><span class="p">,</span> <span class="s2">&quot;file.txt&quot;</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">cli</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="s2">&quot;file.txt&quot;</span>
 </code></pre></div>
 
     </div>
@@ -1304,11 +1304,11 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
     <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="n">ArgAction</span><span class="o">.</span><span class="n">SetFalse</span><span class="p">)</span>
 
-<span class="n">args</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([</span><span class="s2">&quot;--quiet&quot;</span><span class="p">])</span>
-<span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">quiet</span> <span class="o">==</span> <span class="kc">False</span>
+<span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([</span><span class="s2">&quot;--quiet&quot;</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">cli</span><span class="o">.</span><span class="n">quiet</span> <span class="o">==</span> <span class="kc">False</span>
 
-<span class="n">args</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([])</span>
-<span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">quiet</span> <span class="o">==</span> <span class="kc">True</span>
+<span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([])</span>
+<span class="k">assert</span> <span class="n">cli</span><span class="o">.</span><span class="n">quiet</span> <span class="o">==</span> <span class="kc">True</span>
 </code></pre></div>
 
     </div>
@@ -1343,11 +1343,11 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Cli</span><span class="p">(</span><span class="n">clap</span><span class="o">.</span><span class="n">Parser</span><span class="p">):</span>
     <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="n">long</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="n">ArgAction</span><span class="o">.</span><span class="n">SetTrue</span><span class="p">)</span>
 
-<span class="n">args</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([</span><span class="s2">&quot;--verbose&quot;</span><span class="p">])</span>
-<span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">verbose</span> <span class="o">==</span> <span class="kc">True</span>
+<span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([</span><span class="s2">&quot;--verbose&quot;</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">cli</span><span class="o">.</span><span class="n">verbose</span> <span class="o">==</span> <span class="kc">True</span>
 
-<span class="n">args</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([])</span>
-<span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">verbose</span> <span class="o">==</span> <span class="kc">False</span>
+<span class="n">cli</span> <span class="o">=</span> <span class="n">Cli</span><span class="o">.</span><span class="n">parse</span><span class="p">([])</span>
+<span class="k">assert</span> <span class="n">cli</span><span class="o">.</span><span class="n">verbose</span> <span class="o">==</span> <span class="kc">False</span>
 </code></pre></div>
 
     </div>
@@ -1647,7 +1647,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../arg/" class="md-footer__link md-footer__link--prev" aria-label="Previous: arg">
+          <a href="../group/" class="md-footer__link md-footer__link--prev" aria-label="Previous: group">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1657,7 +1657,7 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                arg
+                group
               </div>
             </div>
           </a>

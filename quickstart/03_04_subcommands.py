@@ -20,21 +20,20 @@ class Remove:
 class Cli(clap.Parser):
     command: Add | Remove
     # Alternatively, you can write command: Union[Add, Remove]
-
     quiet: bool = arg(short=True, long=True)
 
 
 def main():
-    args = Cli.parse()
+    cli = Cli.parse()
 
     # You can check for the existence of subcommands, and if found use their
     # matches just as you would the top level cmd
-    match args.command:
+    match cli.command:
         case Add(name):
-            if not args.quiet:
+            if not cli.quiet:
                 print(f"'myapp add' was used, name is: {name}")
         case Remove(name):
-            if not args.quiet:
+            if not cli.quiet:
                 print(f"'myapp remove' was used, name is: {name}")
 
 

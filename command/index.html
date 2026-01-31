@@ -590,6 +590,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../group/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    group
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../actions/" class="md-nav__link">
         
   
@@ -654,34 +682,6 @@
     
   
     Parser
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../group/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Group
   
 
     
@@ -1549,13 +1549,13 @@ abbreviation is unambiguous.</p>
 
         <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">_COMMAND_DATA</span><span class="p">,</span> <span class="n">command</span><span class="p">)</span>
 
-        <span class="c1"># delete default values of fields so that `dataclass` does not complain</span>
+        <span class="c1"># clear default values of fields so that `dataclass` does not complain</span>
         <span class="c1"># about mutable defaults (`Arg`)</span>
         <span class="n">attrs</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__annotations__</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">attr</span> <span class="o">:=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
                 <span class="n">attrs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span>
-                <span class="nb">delattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">_ATTR_DEFAULTS</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
 
         <span class="n">dataclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

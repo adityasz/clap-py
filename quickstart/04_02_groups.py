@@ -22,14 +22,14 @@ class Cli(clap.Parser):
 
 
 def main():
-    args = Cli.parse()
+    cli = Cli.parse()
 
     # Let's assume the old version 1.2.3
     major = 1
     minor = 2
     patch = 3
 
-    vers = args.vers
+    vers = cli.vers
     version: str
 
     # See if --set_ver was used to set the version manually
@@ -42,7 +42,7 @@ def main():
             case True, _, _: major += 1
             case _, True, _: minor += 1
             case _, _, True: patch += 1
-            case _: raise RuntimeError()
+            case _: raise AssertionError
         version = f"{major}.{minor}.{patch}"
 
     print(f"Version: {version}")
